@@ -14,6 +14,7 @@ function americanToDecimal(odds: string): number {
   if (odds.startsWith('+')) {
     return 1 + (value / 100);
   } else {
+    // For negative odds
     return 1 + (100 / value);
   }
 }
@@ -38,7 +39,16 @@ function calculateCombinedOdds(bets: Array<{ odds: string }>): string {
   }, 1);
 
   // Convert back to American odds
-  return decimalToAmerican(combinedDecimal);
+  const american = decimalToAmerican(combinedDecimal);
+  
+  // Format the result
+  if (american.startsWith('-')) {
+    return american;
+  } else if (american.startsWith('+')) {
+    return american;
+  } else {
+    return `+${american}`;
+  }
 }
 
 export function BetSlip() {
