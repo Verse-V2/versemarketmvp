@@ -122,7 +122,10 @@ export function BetSlip() {
   return (
     <>
       {/* Mobile Bottom Sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+      <div className={`
+        fixed bottom-0 left-0 right-0 z-50 md:hidden
+        ${!isExpanded ? 'pointer-events-none' : ''}
+      `}>
         <div 
           className={`
             transform transition-transform duration-300 ease-in-out
@@ -133,7 +136,10 @@ export function BetSlip() {
         >
           {/* Header */}
           <div 
-            className="flex items-center justify-between px-4 py-4 h-16 cursor-pointer shrink-0"
+            className={`
+              flex items-center justify-between px-4 py-4 h-16 cursor-pointer shrink-0
+              ${!isExpanded ? 'pointer-events-auto' : ''}
+            `}
             onClick={toggleExpanded}
           >
             <div className="flex items-center gap-2">
