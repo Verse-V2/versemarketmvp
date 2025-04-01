@@ -1,0 +1,209 @@
+"use client";
+
+import React, { useState } from 'react';
+import { useBetSlip } from '@/lib/bet-slip-context';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { X, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
+import Image from 'next/image';
+
+export function BetSlip() {
+  const { bets, removeBet, clearBets, hasConflictingBets, getConflictingMarkets } = useBetSlip();
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleExpanded = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  if (bets.length === 0) {
+    return null;
+  }
+
+  const conflictingBetsExist = hasConflictingBets();
+  const conflictingMarkets = conflictingBetsExist ? getConflictingMarkets() : [];
+
+  const ConflictWarning = () => (
+    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-3">
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            Cannot combine multiple bets from the same event
+          </p>
+          <div className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+            Please remove one of the following bets:
+            <ul className="list-disc list-inside mt-1 space-y-1">
+              {conflictingMarkets.map(market => (
+                <li key={market.id} className="text-xs">
+                  {market.question}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Bottom Sheet */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+        <div 
+          className={`
+            transform transition-transform duration-300 ease-in-out
+            ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-3.5rem)]'}
+            bg-background rounded-t-xl shadow-lg border-t border-gray-200 dark:border-gray-800
+          `}
+        >
+          {/* Header */}
+          <div 
+            className="flex items-center justify-between px-4 py-3 cursor-pointer"
+            onClick={toggleExpanded}
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Bet Slip</span>
+              <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-sm">
+                {bets.length}
+              </span>
+            </div>
+            {isExpanded ? (
+              <ChevronDown className="h-5 w-5" />
+            ) : (
+              <ChevronUp className="h-5 w-5" />
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="px-4 pb-4 space-y-3">
+            {conflictingBetsExist && <ConflictWarning />}
+            
+            {bets.map((bet) => (
+              <Card key={bet.outcomeId} className="p-3">
+                <div className="flex items-start gap-3">
+                  {bet.imageUrl && (
+                    <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-md">
+                      <Image
+                        src={bet.imageUrl}
+                        alt={bet.marketQuestion}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <p className="text-sm font-medium line-clamp-2">{bet.marketQuestion}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
+                      </div>
+                      <button
+                        onClick={() => removeBet(bet.outcomeId)}
+                        className="shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="mt-2 flex justify-between items-center">
+                      <span className="text-sm font-medium">{bet.odds}</span>
+                      <span className="text-xs text-gray-500">
+                        {(bet.probability * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+
+            <div className="flex gap-3 mt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={clearBets}
+              >
+                Clear All
+              </Button>
+              <Button 
+                className="flex-1"
+                disabled={conflictingBetsExist}
+              >
+                Place Bets
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block fixed right-4 bottom-4 top-20 w-80 bg-background rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
+        <div className="p-4 h-full flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Bet Slip</span>
+              <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-sm">
+                {bets.length}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearBets}
+            >
+              Clear All
+            </Button>
+          </div>
+
+          <div className="flex-1 overflow-auto space-y-3">
+            {conflictingBetsExist && <ConflictWarning />}
+            
+            {bets.map((bet) => (
+              <Card key={bet.outcomeId} className="p-3">
+                <div className="flex items-start gap-3">
+                  {bet.imageUrl && (
+                    <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-md">
+                      <Image
+                        src={bet.imageUrl}
+                        alt={bet.marketQuestion}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <p className="text-sm font-medium line-clamp-2">{bet.marketQuestion}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
+                      </div>
+                      <button
+                        onClick={() => removeBet(bet.outcomeId)}
+                        className="shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="mt-2 flex justify-between items-center">
+                      <span className="text-sm font-medium">{bet.odds}</span>
+                      <span className="text-xs text-gray-500">
+                        {(bet.probability * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <Button 
+            className="mt-4"
+            disabled={conflictingBetsExist}
+          >
+            Place Bets
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+} 

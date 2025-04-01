@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, ArrowRight } from "lucide-react";
+import { useBetSlip } from "@/lib/bet-slip-context";
 
 interface MarketCardProps {
   market: Market;
@@ -14,6 +15,8 @@ interface MarketCardProps {
 }
 
 export function MarketCard({ market, hideViewDetails = false, hideComments = false }: MarketCardProps) {
+  const { addBet, isBetInSlip } = useBetSlip();
+
   // Format the end date
   const formattedEndDate = market.endDate
     ? `Ends ${formatDistanceToNow(new Date(market.endDate), { addSuffix: true })}`
@@ -46,6 +49,21 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
       // Underdog: positive odds
       const odds = Math.round(100 / prob - 100);
       return `+${odds.toLocaleString()}`;
+    }
+  };
+
+  const handleBetClick = (outcome: { name: string; probability: number }) => {
+    const outcomeId = `${market.id}-${outcome.name}`;
+    if (!isBetInSlip(outcomeId)) {
+      addBet({
+        marketId: market.id,
+        marketQuestion: market.question,
+        outcomeId,
+        outcomeName: outcome.name,
+        odds: toAmericanOdds(outcome.probability),
+        probability: outcome.probability,
+        imageUrl: market.imageUrl,
+      });
     }
   };
 
@@ -89,45 +107,62 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
         {hasTopSubmarkets ? (
           <div className="space-y-2">
             <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Top Markets:</div>
-            {market.topSubmarkets!.map((submarket, index) => (
-              <Button 
-                key={index} 
-                variant="outline" 
-                className="w-full justify-between py-1 h-auto mb-1 hover:bg-gray-50 dark:hover:bg-gray-800 group"
-              >
-                <span className="text-sm truncate text-left">
-                  {submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '')}
-                </span>
-                <span className={`text-sm font-semibold ${
-                  submarket.probability > 0.5 ? "text-green-700 dark:text-green-400 group-hover:text-green-800 dark:group-hover:text-green-300" : 
-                  submarket.probability > 0.2 ? "text-yellow-700 dark:text-yellow-400 group-hover:text-yellow-800 dark:group-hover:text-yellow-300" : 
-                  "text-red-700 dark:text-red-400 group-hover:text-red-800 dark:group-hover:text-red-300"
-                }`}>
-                  {toAmericanOdds(submarket.probability)}
-                </span>
-              </Button>
-            ))}
+            {market.topSubmarkets!.map((submarket, index) => {
+              const outcomeId = `${market.id}-${submarket.question}`;
+              const isSelected = isBetInSlip(outcomeId);
+              return (
+                <Button 
+                  key={index} 
+                  variant={isSelected ? "default" : "outline"}
+                  className={`w-full justify-between py-1 h-auto mb-1 hover:bg-gray-50 dark:hover:bg-gray-800 group ${
+                    isSelected ? 'bg-primary text-primary-foreground' : ''
+                  }`}
+                  onClick={() => handleBetClick({
+                    name: submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, ''),
+                    probability: submarket.probability
+                  })}
+                >
+                  <span className="text-sm truncate text-left">
+                    {submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '')}
+                  </span>
+                  <span className={`text-sm font-semibold ${
+                    isSelected ? '' :
+                    submarket.probability > 0.5 ? "text-green-700 dark:text-green-400 group-hover:text-green-800 dark:group-hover:text-green-300" : 
+                    submarket.probability > 0.2 ? "text-yellow-700 dark:text-yellow-400 group-hover:text-yellow-800 dark:group-hover:text-yellow-300" : 
+                    "text-red-700 dark:text-red-400 group-hover:text-red-800 dark:group-hover:text-red-300"
+                  }`}>
+                    {toAmericanOdds(submarket.probability)}
+                  </span>
+                </Button>
+              );
+            })}
           </div>
         ) : (
           <div className="space-y-4">
             {market.outcomes && market.outcomes.length > 0 ? (
               <>
                 <div className="flex flex-col gap-2">
-                  {market.outcomes.slice(0, 2).map((outcome, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{outcome.name}</span>
-                      <Button 
-                        variant="outline" 
-                        className={`py-1 h-auto ${
-                          outcome.name.toLowerCase() === 'yes' 
-                            ? 'border-green-500 text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-400 dark:hover:bg-green-900/20' 
-                            : 'border-red-500 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-900/20'
-                        }`}
-                      >
-                        {toAmericanOdds(outcome.probability)}
-                      </Button>
-                    </div>
-                  ))}
+                  {market.outcomes.slice(0, 2).map((outcome, index) => {
+                    const outcomeId = `${market.id}-${outcome.name}`;
+                    const isSelected = isBetInSlip(outcomeId);
+                    return (
+                      <div key={index} className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{outcome.name}</span>
+                        <Button 
+                          variant={isSelected ? "default" : "outline"}
+                          className={`py-1 h-auto ${
+                            isSelected ? 'bg-primary text-primary-foreground' :
+                            outcome.name.toLowerCase() === 'yes' 
+                              ? 'border-green-500 text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-400 dark:hover:bg-green-900/20' 
+                              : 'border-red-500 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-900/20'
+                          }`}
+                          onClick={() => handleBetClick(outcome)}
+                        >
+                          {toAmericanOdds(outcome.probability)}
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
                 
                 {market.outcomes.length > 2 && (
