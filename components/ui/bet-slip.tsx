@@ -73,24 +73,37 @@ export function BetSlip() {
       return '0.00';
     }
 
-    // For now, we'll use a simple calculation based on the first bet's odds
-    // This should be updated to handle multiple bets properly
-    const bet = bets[0];
     const entry = Number(entryAmount);
     
-    // Convert American odds to multiplier
-    let multiplier = 1;
-    const odds = bet.odds;
-    if (odds.startsWith('+')) {
-      const americanOdds = Number(odds.substring(1));
-      multiplier = (americanOdds / 100) + 1;
+    if (bets.length > 1) {
+      // Use combined odds for multiple picks
+      const combinedOdds = calculateCombinedOdds(bets);
+      // Convert combined American odds to multiplier
+      let multiplier = 1;
+      if (combinedOdds.startsWith('+')) {
+        const americanOdds = Number(combinedOdds.substring(1));
+        multiplier = (americanOdds / 100) + 1;
+      } else {
+        const americanOdds = Math.abs(Number(combinedOdds));
+        multiplier = (100 / americanOdds) + 1;
+      }
+      const prize = entry * multiplier;
+      return prize.toFixed(2);
     } else {
-      const americanOdds = Math.abs(Number(odds));
-      multiplier = (100 / americanOdds) + 1;
+      // Single pick calculation
+      const bet = bets[0];
+      let multiplier = 1;
+      const odds = bet.odds;
+      if (odds.startsWith('+')) {
+        const americanOdds = Number(odds.substring(1));
+        multiplier = (americanOdds / 100) + 1;
+      } else {
+        const americanOdds = Math.abs(Number(odds));
+        multiplier = (100 / americanOdds) + 1;
+      }
+      const prize = entry * multiplier;
+      return prize.toFixed(2);
     }
-
-    const prize = entry * multiplier;
-    return prize.toFixed(2);
   };
 
   const ConflictWarning = () => (
