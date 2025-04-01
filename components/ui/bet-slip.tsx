@@ -269,31 +269,41 @@ export function BetSlip() {
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      placeholder={`Enter ${currency === 'cash' ? 'Cash' : 'Coins'}`}
-                      value={entryAmount}
-                      onChange={(e) => setEntryAmount(e.target.value)}
-                      className="text-right pl-8"
-                    />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      {currency === 'cash' ? '$' : '₡'}
-                    </span>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">
+                      Entry
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        placeholder={`Enter ${currency === 'cash' ? 'Cash' : 'Coins'}`}
+                        value={entryAmount}
+                        onChange={(e) => setEntryAmount(e.target.value)}
+                        className="text-right pl-8"
+                      />
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        {currency === 'cash' ? '$' : '₡'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative">
-                    <Input
-                      type="text"
-                      value={`${calculatePrize()}`}
-                      readOnly
-                      disabled
-                      className="text-right pl-8"
-                    />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      {currency === 'cash' ? '$' : '₡'}
-                    </span>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">
+                      Prize
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        value={`${calculatePrize()}`}
+                        readOnly
+                        disabled
+                        className="text-right pl-8"
+                      />
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        {currency === 'cash' ? '$' : '₡'}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <Button 
@@ -381,31 +391,41 @@ export function BetSlip() {
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      placeholder={`Enter ${currency === 'cash' ? 'Cash' : 'Coins'}`}
-                      value={entryAmount}
-                      onChange={(e) => setEntryAmount(e.target.value)}
-                      className="text-right pl-8"
-                    />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      {currency === 'cash' ? '$' : '₡'}
-                    </span>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">
+                      Entry
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        placeholder={`Enter ${currency === 'cash' ? 'Cash' : 'Coins'}`}
+                        value={entryAmount}
+                        onChange={(e) => setEntryAmount(e.target.value)}
+                        className="text-right pl-8"
+                      />
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        {currency === 'cash' ? '$' : '₡'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative">
-                    <Input
-                      type="text"
-                      value={`${calculatePrize()}`}
-                      readOnly
-                      disabled
-                      className="text-right pl-8"
-                    />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      {currency === 'cash' ? '$' : '₡'}
-                    </span>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">
+                      Prize
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        value={`${calculatePrize()}`}
+                        readOnly
+                        disabled
+                        className="text-right pl-8"
+                      />
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        {currency === 'cash' ? '$' : '₡'}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <Button 
