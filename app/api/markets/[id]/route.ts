@@ -6,9 +6,9 @@ const POLYMARKET_API_URL = 'https://gamma-api.polymarket.com';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const eventId = params.id;
+  const eventId = context.params.id;
 
   if (!eventId) {
     return NextResponse.json(
