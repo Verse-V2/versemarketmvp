@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { BetSlipProvider } from "@/lib/bet-slip-context";
+import { CurrencyProvider } from "@/lib/currency-context";
 import { BetSlip } from "@/components/ui/bet-slip";
 
 const geistSans = Geist({
@@ -36,10 +37,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <BetSlipProvider>
-            {children}
-            <BetSlip />
-          </BetSlipProvider>
+          <CurrencyProvider>
+            <BetSlipProvider>
+              {children}
+              <BetSlip />
+            </BetSlipProvider>
+          </CurrencyProvider>
         </ThemeProvider>
       </body>
     </html>

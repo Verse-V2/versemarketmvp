@@ -1,4 +1,5 @@
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CurrencyToggle } from "@/components/currency-toggle";
 import Link from "next/link";
 
 export function Header() {
@@ -12,7 +13,8 @@ export function Header() {
             </Link>
           </div>
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-            <nav className="flex items-center">
+            <nav className="flex items-center space-x-4">
+              <CurrencyToggle />
               <ThemeToggle />
             </nav>
           </div>
