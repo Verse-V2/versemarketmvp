@@ -214,7 +214,7 @@ export function BetSlip() {
           {/* Content */}
           <div className={`
             px-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0
-            ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+            ${isExpanded ? 'opacity-100' : 'opacity-0'}
             transition-opacity duration-200
           `}>
             <div className="flex-1 overflow-y-auto space-y-3">
