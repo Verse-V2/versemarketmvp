@@ -340,7 +340,6 @@ function EventDetails() {
           <CardContent>
             <div className="h-[300px] w-full">
               <SimplePriceChart 
-                marketId={marketData.id} 
                 hasMultipleMarkets={!!(marketData.marketsCount && marketData.marketsCount > 1)}
                 topSubmarkets={marketData.topSubmarkets}
               />

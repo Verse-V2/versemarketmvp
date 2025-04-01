@@ -77,12 +77,11 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 const LINE_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#ca8a04', '#9333ea', '#f97316'];
 const LINE_NAMES = ['Yes', 'No', 'Option 1', 'Option 2', 'Option 3', 'Option 4'];
 
-// We're declaring marketId as an unused parameter as it will be used in future implementation
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// SimplePriceChart component that displays either 2 lines (Yes/No) or up to 4 lines for submarkets
 const SimplePriceChart: React.FC<SimplePriceChartProps> = ({ 
-  marketId, 
   hasMultipleMarkets = false, 
   topSubmarkets = []
+  // marketId is intentionally not destructured as it will be used in future implementation
 }) => {
   const renderLines = () => {
     if (hasMultipleMarkets && topSubmarkets && topSubmarkets.length > 0) {
