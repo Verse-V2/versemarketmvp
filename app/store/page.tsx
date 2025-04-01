@@ -5,12 +5,12 @@ import { PackageCard } from "@/components/ui/package-card";
 import { PurchaseSheet } from "@/components/ui/purchase-sheet";
 
 const packages = [
-  { points: 50000, bonusCash: 5.00, price: 5.00 },
-  { points: 75000, bonusCash: 7.50, price: 7.50 },
-  { points: 100000, bonusCash: 10.00, price: 10.00 },
-  { points: 150000, bonusCash: 15.00, price: 15.00 },
-  { points: 200000, bonusCash: 20.00, price: 20.00 },
-  { points: 250000, bonusCash: 25.00, price: 25.00 },
+  { points: 5000, bonusCash: 5.00, price: 5.00 },
+  { points: 7500, bonusCash: 7.50, price: 7.50 },
+  { points: 10000, bonusCash: 10.00, price: 10.00 },
+  { points: 15000, bonusCash: 15.00, price: 15.00 },
+  { points: 20000, bonusCash: 20.00, price: 20.00 },
+  { points: 25000, bonusCash: 25.00, price: 25.00 },
 ];
 
 export default function StorePage() {
