@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useBetSlip } from '@/lib/bet-slip-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
+import { ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { Input } from "@/components/ui/input";
 import { useCurrency } from "@/lib/currency-context";
@@ -129,9 +129,12 @@ export function BetSlip() {
                       </div>
                       <button
                         onClick={() => removeBet(bet.outcomeId)}
-                        className="shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        className="shrink-0"
                       >
-                        <X className="h-4 w-4" />
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="8" cy="8" r="7.5" stroke="#FF0000"/>
+                          <path d="M5.25 8H10.75" stroke="#FF0000" strokeLinecap="round"/>
+                        </svg>
                       </button>
                     </div>
                     <div className="mt-2 flex justify-between items-center">
@@ -189,13 +192,15 @@ export function BetSlip() {
             </div>
 
             <div className="flex gap-3 mt-4">
-              <Button
-                variant="outline"
-                className="flex-1"
+              <button
                 onClick={clearBets}
+                className="shrink-0"
               >
-                Clear All
-              </Button>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="8" r="7.5" stroke="#808080"/>
+                  <path d="M5.25 5.25L10.75 10.75M5.25 10.75L10.75 5.25" stroke="#808080" strokeLinecap="round"/>
+                </svg>
+              </button>
               <Button 
                 className="flex-1"
                 disabled={conflictingBetsExist || !entryAmount || Number(entryAmount) <= 0}
@@ -217,13 +222,15 @@ export function BetSlip() {
                 {bets.length}
               </span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={clearBets}
+              className="shrink-0"
             >
-              Clear All
-            </Button>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8" cy="8" r="7.5" stroke="#808080"/>
+                <path d="M5.25 5.25L10.75 10.75M5.25 10.75L10.75 5.25" stroke="#808080" strokeLinecap="round"/>
+              </svg>
+            </button>
           </div>
 
           <div className="flex-1 overflow-auto space-y-3">
@@ -251,9 +258,12 @@ export function BetSlip() {
                       </div>
                       <button
                         onClick={() => removeBet(bet.outcomeId)}
-                        className="shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        className="shrink-0"
                       >
-                        <X className="h-4 w-4" />
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="8" cy="8" r="7.5" stroke="#FF0000"/>
+                          <path d="M5.25 8H10.75" stroke="#FF0000" strokeLinecap="round"/>
+                        </svg>
                       </button>
                     </div>
                     <div className="mt-2 flex justify-between items-center">
@@ -311,12 +321,23 @@ export function BetSlip() {
             </div>
           </div>
 
-          <Button 
-            className="mt-4"
-            disabled={conflictingBetsExist || !entryAmount || Number(entryAmount) <= 0}
-          >
-            Place Bets
-          </Button>
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={clearBets}
+              className="shrink-0"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8" cy="8" r="7.5" stroke="#808080"/>
+                <path d="M5.25 5.25L10.75 10.75M5.25 10.75L10.75 5.25" stroke="#808080" strokeLinecap="round"/>
+              </svg>
+            </button>
+            <Button 
+              className="flex-1"
+              disabled={conflictingBetsExist || !entryAmount || Number(entryAmount) <= 0}
+            >
+              Place Bets
+            </Button>
+          </div>
         </div>
       </div>
     </>
