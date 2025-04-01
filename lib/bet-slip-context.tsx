@@ -63,7 +63,7 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
     });
 
     return Array.from(marketCounts.entries())
-      .filter(([_, count]) => count > 1)
+      .filter(([, count]) => count > 1)
       .map(([id]) => ({
         id,
         question: marketInfo.get(id) || ''
