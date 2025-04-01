@@ -181,12 +181,12 @@ export function BetSlip() {
     <>
       {/* Mobile Bottom Sheet */}
       <div className={`
-        fixed bottom-[64px] left-0 right-0 z-[60] md:hidden
+        fixed bottom-0 left-0 right-0 z-[60] md:hidden
       `}>
         <div 
           className={`
             transform transition-transform duration-300 ease-in-out
-            ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-3.5rem)]'}
+            ${isExpanded ? 'translate-y-[-64px]' : 'translate-y-[calc(100%-3.5rem-64px)]'}
             bg-background shadow-lg border-t border-gray-200 dark:border-gray-800
             max-h-[calc(85vh-64px)] flex flex-col
           `}
