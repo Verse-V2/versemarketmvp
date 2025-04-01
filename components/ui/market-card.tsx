@@ -1,6 +1,7 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Market } from "@/lib/polymarket-api";
-import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -72,7 +73,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
 
   return (
     <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-0">
         <div className="flex gap-4 items-start">
           {market.imageUrl && (
             <div className="relative w-16 h-16 shrink-0 overflow-hidden rounded-md">
@@ -90,23 +91,16 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-start gap-2 mb-1">
               <CardTitle className="text-lg line-clamp-2">{market.question}</CardTitle>
-              <div className="flex gap-1 items-center shrink-0 ml-2">
-                {market.category && (
-                  <Badge variant="outline" className="whitespace-nowrap shrink-0">
-                    {market.category}
-                  </Badge>
-                )}
-              </div>
             </div>
             <CardDescription className="text-gray-500 dark:text-gray-400">{formattedEndDate}</CardDescription>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="py-2 flex-grow">
+      <CardContent className="py-1 flex-grow">
         {hasTopSubmarkets ? (
-          <div className="space-y-2">
-            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Top Markets:</div>
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Top Markets:</div>
             {market.topSubmarkets!.map((submarket, index) => {
               const outcomeId = `${market.id}-${submarket.question}`;
               const isSelected = isBetInSlip(outcomeId);
@@ -114,7 +108,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                 <Button 
                   key={index} 
                   variant={isSelected ? "default" : "outline"}
-                  className={`w-full justify-between py-1 h-auto mb-1 hover:bg-gray-50 dark:hover:bg-gray-800 group ${
+                  className={`w-full justify-between py-2 h-12 mb-1 hover:bg-gray-50 dark:hover:bg-gray-800 group ${
                     isSelected ? 'bg-primary text-primary-foreground' : ''
                   }`}
                   onClick={() => handleBetClick({
@@ -138,10 +132,10 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
             })}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {market.outcomes && market.outcomes.length > 0 ? (
               <>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1">
                   {market.outcomes.slice(0, 2).map((outcome, index) => {
                     const outcomeId = `${market.id}-${outcome.name}`;
                     const isSelected = isBetInSlip(outcomeId);
@@ -150,7 +144,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                         <span className="text-sm font-medium">{outcome.name}</span>
                         <Button 
                           variant={isSelected ? "default" : "outline"}
-                          className={`py-1 h-auto ${
+                          className={`py-2 h-12 min-w-[100px] ${
                             isSelected ? 'bg-primary text-primary-foreground' :
                             outcome.name.toLowerCase() === 'yes' 
                               ? 'border-green-500 text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-400 dark:hover:bg-green-900/20' 
@@ -177,7 +171,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
       </CardContent>
 
       {(!hideComments || !hideViewDetails) && (
-        <CardFooter className="pt-2 flex justify-between items-center">
+        <CardFooter className="pt-1 flex justify-between items-center">
           {!hideComments && (
             <div className="text-xs flex items-center text-gray-600 dark:text-gray-400">
               <MessageSquare className="h-4 w-4 mr-1" />
