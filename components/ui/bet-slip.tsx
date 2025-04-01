@@ -234,8 +234,9 @@ export function BetSlip() {
             {/* Bottom Fixed Section */}
             <div className="mt-4 space-y-4 shrink-0">
               {bets.length > 1 && (
-                <div className="text-sm text-muted-foreground">
-                  {bets.length} leg combo ({calculateCombinedOdds(bets)})
+                <div className="text-sm text-muted-foreground flex justify-between items-center">
+                  <span>{bets.length} leg combo</span>
+                  <span>({calculateCombinedOdds(bets)})</span>
                 </div>
               )}
 
@@ -361,8 +362,9 @@ export function BetSlip() {
             {/* Bottom Fixed Section */}
             <div className="mt-4 space-y-4 shrink-0">
               {bets.length > 1 && (
-                <div className="text-sm text-muted-foreground">
-                  {bets.length} leg combo ({calculateCombinedOdds(bets)})
+                <div className="text-sm text-muted-foreground flex justify-between items-center">
+                  <span>{bets.length} leg combo</span>
+                  <span>({calculateCombinedOdds(bets)})</span>
                 </div>
               )}
 
