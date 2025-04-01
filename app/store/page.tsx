@@ -18,18 +18,26 @@ export default function StorePage() {
   };
 
   return (
-    <main className="container max-w-2xl mx-auto p-4 pb-20">
-      <h1 className="text-2xl font-bold mb-6">Store</h1>
-      <div className="space-y-3">
-        {packages.map((pkg, index) => (
-          <PackageCard
-            key={index}
-            points={pkg.points}
-            bonusCash={pkg.bonusCash}
-            price={pkg.price}
-            onClick={() => handlePurchase(pkg)}
-          />
-        ))}
+    <main className="min-h-screen bg-background">
+      <div className="container max-w-2xl mx-auto p-6 pb-24">
+        <div className="space-y-2 mb-8">
+          <h1 className="text-2xl font-bold">Store</h1>
+          <p className="text-muted-foreground">
+            Purchase Verse Coins to place bets and earn rewards. Each package includes bonus Verse Cash.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {packages.map((pkg, index) => (
+            <PackageCard
+              key={index}
+              points={pkg.points}
+              bonusCash={pkg.bonusCash}
+              price={pkg.price}
+              onClick={() => handlePurchase(pkg)}
+            />
+          ))}
+        </div>
       </div>
     </main>
   );
