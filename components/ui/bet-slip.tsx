@@ -8,6 +8,8 @@ import { ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { Input } from "@/components/ui/input";
 import { useCurrency } from "@/lib/currency-context";
+import { useEntries } from "@/lib/entries-context";
+import { useRouter } from "next/navigation";
 
 function americanToDecimal(odds: string): number {
   // Remove commas before parsing the number
@@ -73,6 +75,8 @@ function calculateCombinedOdds(bets: Array<{ odds: string }>): string {
 export function BetSlip() {
   const { bets, removeBet, clearBets, hasConflictingBets, getConflictingMarkets } = useBetSlip();
   const { currency } = useCurrency();
+  const { addEntry } = useEntries();
+  const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [entryAmount, setEntryAmount] = useState('');
 
@@ -123,6 +127,31 @@ export function BetSlip() {
       const prize = entry * multiplier;
       return prize.toFixed(2);
     }
+  };
+
+  const handlePlaceBets = () => {
+    if (!entryAmount || Number(entryAmount) <= 0 || bets.length === 0) {
+      return;
+    }
+
+    const entry = Number(entryAmount);
+    const prize = Number(calculatePrize());
+
+    addEntry({
+      entry,
+      prize,
+      selections: bets.map(bet => ({
+        id: bet.outcomeId,
+        marketQuestion: bet.marketQuestion,
+        outcomeName: bet.outcomeName,
+        odds: bet.odds,
+        imageUrl: bet.imageUrl
+      }))
+    });
+
+    clearBets();
+    setEntryAmount('');
+    router.push('/my-entries');
   };
 
   const ConflictWarning = () => (
@@ -231,63 +260,51 @@ export function BetSlip() {
               ))}
             </div>
 
-            {/* Bottom Fixed Section */}
-            <div className="mt-4 space-y-4 shrink-0">
-              {bets.length > 1 && (
-                <div className="text-sm text-muted-foreground flex justify-between items-center">
-                  <span>{bets.length} leg combo</span>
-                  <span>({calculateCombinedOdds(bets)})</span>
-                </div>
-              )}
-
-              {/* Entry and Prize Inputs */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label htmlFor="entry" className="text-sm font-medium">
-                    Entry
-                  </label>
+            {bets.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {bets.length > 1 && (
+                  <div className="text-sm text-muted-foreground flex justify-between items-center">
+                    <span>{bets.length} leg combo</span>
+                    <span>{calculateCombinedOdds(bets)}</span>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-2">
                   <div className="relative">
                     <Input
-                      id="entry"
                       type="number"
                       min="0"
                       step="0.1"
-                      placeholder="0.00"
+                      placeholder={`Enter ${currency === 'cash' ? 'Cash' : 'Coins'}`}
                       value={entryAmount}
                       onChange={(e) => setEntryAmount(e.target.value)}
-                      className="pl-8"
+                      className="text-right pl-8"
                     />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                       {currency === 'cash' ? '$' : '₡'}
                     </span>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="prize" className="text-sm font-medium">
-                    Prize
-                  </label>
                   <div className="relative">
                     <Input
-                      id="prize"
                       type="text"
-                      value={calculatePrize()}
+                      value={`${calculatePrize()}`}
+                      readOnly
                       disabled
-                      className="pl-8 bg-muted"
+                      className="text-right pl-8"
                     />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                       {currency === 'cash' ? '$' : '₡'}
                     </span>
                   </div>
                 </div>
+                <Button 
+                  className="w-full" 
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist}
+                  onClick={handlePlaceBets}
+                >
+                  Place Entry
+                </Button>
               </div>
-
-              <Button 
-                className="w-full"
-                disabled={conflictingBetsExist || !entryAmount || Number(entryAmount) <= 0}
-              >
-                Place Entry
-              </Button>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -299,22 +316,18 @@ export function BetSlip() {
             <div className="flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Pick Slip</span>
-                <span className="bg-[#0BC700] text-white rounded-full px-2 py-0.5 text-sm">
+                <span className="bg-[#0BC700] text-white rounded-full px-2.5 py-1 text-sm">
                   {bets.length}
                 </span>
               </div>
-              <button
-                onClick={clearBets}
-                className="shrink-0"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="8" cy="8" r="7.5" stroke="#808080"/>
-                  <path d="M5.25 5.25L10.75 10.75M5.25 10.75L10.75 5.25" stroke="#808080" strokeLinecap="round"/>
-                </svg>
-              </button>
+              {bets.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearBets}>
+                  Clear
+                </Button>
+              )}
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 mt-4 min-h-0">
+            <div className="mt-4 flex-1 overflow-y-auto space-y-3">
               {conflictingBetsExist && <ConflictWarning />}
               
               {bets.map((bet) => (
@@ -359,63 +372,51 @@ export function BetSlip() {
               ))}
             </div>
 
-            {/* Bottom Fixed Section */}
-            <div className="mt-4 space-y-4 shrink-0">
-              {bets.length > 1 && (
-                <div className="text-sm text-muted-foreground flex justify-between items-center">
-                  <span>{bets.length} leg combo</span>
-                  <span>({calculateCombinedOdds(bets)})</span>
-                </div>
-              )}
-
-              {/* Entry and Prize Inputs */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label htmlFor="entry-desktop" className="text-sm font-medium">
-                    Entry
-                  </label>
+            {bets.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {bets.length > 1 && (
+                  <div className="text-sm text-muted-foreground flex justify-between items-center">
+                    <span>{bets.length} leg combo</span>
+                    <span>{calculateCombinedOdds(bets)}</span>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-2">
                   <div className="relative">
                     <Input
-                      id="entry-desktop"
                       type="number"
                       min="0"
                       step="0.1"
-                      placeholder="0.00"
+                      placeholder={`Enter ${currency === 'cash' ? 'Cash' : 'Coins'}`}
                       value={entryAmount}
                       onChange={(e) => setEntryAmount(e.target.value)}
-                      className="pl-8"
+                      className="text-right pl-8"
                     />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                       {currency === 'cash' ? '$' : '₡'}
                     </span>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="prize-desktop" className="text-sm font-medium">
-                    Prize
-                  </label>
                   <div className="relative">
                     <Input
-                      id="prize-desktop"
                       type="text"
-                      value={calculatePrize()}
+                      value={`${calculatePrize()}`}
+                      readOnly
                       disabled
-                      className="pl-8 bg-muted"
+                      className="text-right pl-8"
                     />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                       {currency === 'cash' ? '$' : '₡'}
                     </span>
                   </div>
                 </div>
+                <Button 
+                  className="w-full" 
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist}
+                  onClick={handlePlaceBets}
+                >
+                  Place Entry
+                </Button>
               </div>
-
-              <Button 
-                className="w-full"
-                disabled={conflictingBetsExist || !entryAmount || Number(entryAmount) <= 0}
-              >
-                Place Entry
-              </Button>
-            </div>
+            )}
           </div>
         </div>
       </div>
