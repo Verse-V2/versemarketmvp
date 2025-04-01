@@ -14,7 +14,7 @@ export default function Home() {
 
   // All possible tag options
   const categories = [
-    "All", "NBA", "Basketball", "Sports", "Politics", "Crypto", 
+    "All", "NBA", "NFL", "Sports", "Politics", "Crypto", 
     "Tech", "Culture", "World", "Trump", "Economy"
   ];
 
