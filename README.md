@@ -2,7 +2,19 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, set up your environment variables by creating a `.env.local` file in the root directory with the following content:
+
+```
+# The Graph API key for accessing Gateway
+NEXT_PUBLIC_GRAPH_API_KEY=your_api_key_here
+
+# Polymarket Subgraph ID - replace with the correct ID for the Polymarket subgraph
+NEXT_PUBLIC_POLYMARKET_SUBGRAPH_ID=81Dm16JjuFSrqz813HysXoUPvzTwE7fsfPk2RTf66nyC
+```
+
+You'll need to obtain an API key from [The Graph](https://thegraph.com/studio/) to access the hosted service.
+
+Then, run the development server:
 
 ```bash
 npm run dev
@@ -28,6 +40,16 @@ To learn more about Next.js, take a look at the following resources:
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## The Graph Integration
+
+This project uses [The Graph](https://thegraph.com/) to fetch data from the Polymarket subgraph. To access this data, you need to:
+
+1. Sign up for an account on [The Graph](https://thegraph.com/studio/)
+2. Create an API key in your account dashboard
+3. Add the API key to your `.env.local` file as `NEXT_PUBLIC_GRAPH_API_KEY`
+
+The subgraph provides market price history and other market data that powers the charts and market displays in the application.
 
 ## Deploy on Vercel
 
