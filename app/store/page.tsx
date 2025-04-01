@@ -20,14 +20,14 @@ export default function StorePage() {
   return (
     <main className="min-h-screen bg-background">
       <div className="container max-w-2xl mx-auto p-6 pb-24">
-        <div className="space-y-2 mb-8">
-          <h1 className="text-2xl font-bold">Store</h1>
-          <p className="text-muted-foreground">
+        <div className="space-y-1.5 mb-6">
+          <h1 className="text-lg font-semibold">Store</h1>
+          <p className="text-sm text-muted-foreground">
             Purchase Verse Coins to place bets and earn rewards. Each package includes bonus Verse Cash.
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {packages.map((pkg, index) => (
             <PackageCard
               key={index}
