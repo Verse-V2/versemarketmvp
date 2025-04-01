@@ -152,14 +152,14 @@ export function BetSlip() {
     <>
       {/* Mobile Bottom Sheet */}
       <div className={`
-        fixed bottom-0 left-0 right-0 z-50 md:hidden
+        fixed bottom-[64px] left-0 right-0 z-[60] md:hidden
         ${!isExpanded ? 'pointer-events-none' : ''}
       `}>
         <div 
           className={`
             transform transition-transform duration-300 ease-in-out
             ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-3.5rem)]'}
-            bg-background rounded-t-xl shadow-lg border-t border-gray-200 dark:border-gray-800
+            bg-background shadow-lg border-t border-gray-200 dark:border-gray-800
             max-h-[85vh] flex flex-col
           `}
         >
@@ -293,8 +293,8 @@ export function BetSlip() {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:block fixed right-4 bottom-4 w-80">
-        <div className="bg-background rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 flex flex-col max-h-[calc(100vh-6rem)]">
+      <div className="hidden md:block fixed right-4 bottom-[64px] w-80">
+        <div className="bg-background shadow-lg border border-gray-200 dark:border-gray-800 flex flex-col max-h-[calc(100vh-6rem)]">
           <div className="p-4 flex flex-col min-h-0">
             <div className="flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
