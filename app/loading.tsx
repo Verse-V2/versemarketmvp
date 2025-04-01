@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Loading() {
   const categories = [
-    "All", "New", "Sports", "Politics", "Crypto", 
+    "All", "NBA", "Basketball", "Sports", "Politics", "Crypto", 
     "Tech", "Culture", "World", "Trump", "Economy"
   ];
 

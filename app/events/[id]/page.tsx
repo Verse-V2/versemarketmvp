@@ -36,12 +36,25 @@ const toAmericanOdds = (prob: number) => {
   }
 };
 
+// New interface for related events
+interface RelatedEvent {
+  id: string;
+  slug: string;
+  title: string;
+  image: string;
+  probability?: number;
+  endDate?: string;
+  volume?: string;
+}
+
 function EventDetails() {
   const params = useParams();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [marketData, setMarketData] = useState<Market | null>(null);
+  const [relatedEvents, setRelatedEvents] = useState<RelatedEvent[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -90,6 +103,37 @@ function EventDetails() {
           }
         }
         
+        // Find the top sorted market (highest probability market)
+        let topSortedMarket = mainMarket;
+        if (data.markets.length > 1) {
+          const marketsWithProbability = data.markets
+            .filter(m => m.outcomePrices)
+            .map(m => {
+              let probability = 0;
+              if (m.outcomePrices) {
+                try {
+                  const prices = JSON.parse(m.outcomePrices);
+                  probability = parseFloat(prices[0] || "0");
+                } catch (e) {
+                  console.error('Error parsing prices:', e);
+                }
+              }
+              return {
+                market: m,
+                probability: probability
+              };
+            });
+            
+          const sortedMarkets = [...marketsWithProbability].sort((a, b) => {
+            // Sort by highest probability first
+            return b.probability - a.probability;
+          });
+          
+          if (sortedMarkets.length > 0) {
+            topSortedMarket = sortedMarkets[0].market;
+          }
+        }
+        
         // Create the market data object for the MarketCard component
         const marketDataObj = {
           id: data.id,
@@ -103,6 +147,7 @@ function EventDetails() {
           imageUrl: data.image,
           status: data.active ? 'active' : 'inactive',
           marketsCount: data.markets.length,
+          description: topSortedMarket?.description || 'No description available for this market.',
           topSubmarkets: data.markets.length > 1 ? 
             (() => {
               const unsortedSubmarkets = data.markets.map(m => {
@@ -118,7 +163,8 @@ function EventDetails() {
                 return {
                   id: m.id,
                   question: m.question || '',
-                  probability: probability
+                  probability: probability,
+                  groupItemTitle: m.groupItemTitle
                 };
               });
               
@@ -132,6 +178,12 @@ function EventDetails() {
         };
         
         setMarketData(marketDataObj);
+        
+        // Fetch related events based on tags if the event has tags
+        if (data.tags && data.tags.length > 0) {
+          fetchRelatedEvents(data.tags, data.id);
+        }
+        
         setError(null);
       } catch (error) {
         console.error('Error loading event:', error);
@@ -143,6 +195,92 @@ function EventDetails() {
 
     fetchEvent();
   }, [params.id]);
+
+  // Function to fetch related events based on tags
+  const fetchRelatedEvents = async (tags: any[], currentEventId: string) => {
+    setLoadingRelated(true);
+    try {
+      // Extract tag slugs for filtering
+      const tagSlugs = tags.map(tag => tag.slug);
+      
+      // Fetch related events from API - This is a simplified example
+      // In a real implementation, you'd call your API with the tag information
+      let relatedData: RelatedEvent[] = [];
+      
+      try {
+        // Mock API call - replace with actual API call
+        const response = await polymarketService.getEventsByTags(tagSlugs);
+        
+        // Filter out the current event and limit to 4 related events
+        relatedData = response
+          .filter((event: any) => event.id !== currentEventId)
+          .slice(0, 4)
+          .map((event: any) => {
+            let probability = 0;
+            if (event.markets && event.markets.length > 0 && event.markets[0].outcomePrices) {
+              try {
+                const prices = JSON.parse(event.markets[0].outcomePrices);
+                probability = parseFloat(prices[0] || "0");
+              } catch (e) {
+                console.error('Error parsing related event prices:', e);
+              }
+            }
+            
+            return {
+              id: event.id,
+              slug: event.slug,
+              title: event.title,
+              image: event.image,
+              probability: probability,
+              endDate: event.endDate,
+              volume: event.volume?.toString()
+            };
+          });
+      } catch (error) {
+        console.error('Error fetching related events:', error);
+        
+        // Fallback to some sample related events if API fails
+        // In a real implementation, you might want to handle this differently
+        relatedData = [
+          {
+            id: "12815",
+            slug: "nba-champion-2024-2025",
+            title: "NBA Champion",
+            image: "https://polymarket-upload.s3.us-east-2.amazonaws.com/nba-champion-2024-2025-NiYghxjb7928.png",
+            endDate: "2025-06-23T12:00:00Z",
+            volume: "1602633105",
+          },
+          {
+            id: "507871",
+            slug: "will-the-los-angeles-lakers-win-the-2025-nba-finals",
+            title: "Will the Los Angeles Lakers win the 2025 NBA Finals?",
+            image: "https://polymarket-upload.s3.us-east-2.amazonaws.com/New+NBA+Team+Logos+/LAL.png",
+            probability: 0.0685,
+          },
+          {
+            id: "507884",
+            slug: "will-the-oklahoma-city-thunder-win-the-2025-nba-finals",
+            title: "Will the Oklahoma City Thunder win the 2025 NBA Finals?",
+            image: "https://polymarket-upload.s3.us-east-2.amazonaws.com/New+NBA+Team+Logos+/OKC.png",
+            probability: 0.325,
+          },
+          {
+            id: "507857",
+            slug: "will-the-boston-celtics-win-the-2025-nba-finals",
+            title: "Will the Boston Celtics win the 2025 NBA Finals?",
+            image: "https://polymarket-upload.s3.us-east-2.amazonaws.com/New+NBA+Team+Logos+/BOS.png",
+            probability: 0.285,
+          }
+        ];
+      }
+      
+      setRelatedEvents(relatedData);
+    } catch (error) {
+      console.error('Error processing related events:', error);
+    } finally {
+      setLoadingRelated(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -159,6 +297,25 @@ function EventDetails() {
       </div>
     );
   }
+
+  // Format a date string as "MMM DD, YYYY"
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // Format volume for display
+  const formatVolume = (volume: string) => {
+    const num = parseFloat(volume);
+    if (num >= 1_000_000_000) {
+      return `$${(num / 1_000_000_000).toFixed(1)}B`;
+    } else if (num >= 1_000_000) {
+      return `$${(num / 1_000_000).toFixed(1)}M`;
+    } else if (num >= 1_000) {
+      return `$${(num / 1_000).toFixed(1)}K`;
+    }
+    return `$${num.toFixed(0)}`;
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
@@ -194,13 +351,7 @@ function EventDetails() {
           <CardContent>
             <div className="space-y-3">
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                This market resolves to YES if the event occurs before the expiration date, and NO otherwise.
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Resolution will be determined by reliable and publicly available information.
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                If the event is rescheduled to a date before the expiration date, the market will remain open.
+                {marketData.description}
               </p>
             </div>
           </CardContent>
@@ -241,6 +392,62 @@ function EventDetails() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Related Events Card */}
+        {relatedEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Related</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingRelated ? (
+                <div className="flex justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {relatedEvents.map((relEvent) => (
+                    <div key={relEvent.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                      <Link href={`/events/${relEvent.id}`} className="block">
+                        <div className="flex items-center p-3">
+                          <div className="w-12 h-12 mr-3 rounded-md overflow-hidden flex-shrink-0">
+                            <img 
+                              src={relEvent.image} 
+                              alt={relEvent.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm line-clamp-2">{relEvent.title}</p>
+                            <div className="flex justify-between items-center mt-1">
+                              {relEvent.probability !== undefined ? (
+                                <>
+                                  <div className="text-xs text-gray-500">{(relEvent.probability * 100).toFixed(1)}% Yes</div>
+                                  <div className="text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-2 py-0.5 rounded-full">
+                                    {toAmericanOdds(relEvent.probability)}
+                                  </div>
+                                </>
+                              ) : relEvent.endDate && relEvent.volume ? (
+                                <>
+                                  <div className="text-xs text-gray-500">{formatDate(relEvent.endDate)}</div>
+                                  <div className="text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-2 py-0.5 rounded-full">
+                                    {formatVolume(relEvent.volume)}
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="text-xs text-gray-500">Related market</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

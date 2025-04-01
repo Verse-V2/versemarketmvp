@@ -94,7 +94,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                 className="w-full justify-between py-1 h-auto mb-1 hover:bg-gray-50 dark:hover:bg-gray-800 group"
               >
                 <span className="text-sm truncate text-left">
-                  {submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '')}
+                  {submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '')}
                 </span>
                 <span className={`text-sm font-semibold ${
                   submarket.probability > 0.5 ? "text-green-700 dark:text-green-400 group-hover:text-green-800 dark:group-hover:text-green-300" : 

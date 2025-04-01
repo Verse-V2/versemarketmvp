@@ -1,16 +1,44 @@
+'use client';
+
+import { useState, useEffect } from "react";
 import { getMarkets } from "@/lib/polymarket-api";
 import { MarketCard } from "@/components/ui/market-card";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
+import type { Market } from "@/lib/polymarket-api";
 
-export default async function Home() {
-  // Fetch markets from Polymarket API
-  const markets = await getMarkets(50);
+export default function Home() {
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTag, setActiveTag] = useState('All');
 
+  // All possible tag options
   const categories = [
-    "All", "New", "Sports", "Politics", "Crypto", 
+    "All", "NBA", "Basketball", "Sports", "Politics", "Crypto", 
     "Tech", "Culture", "World", "Trump", "Economy"
   ];
+
+  useEffect(() => {
+    async function fetchMarkets() {
+      setLoading(true);
+      try {
+        // Use tag filter if not "All"
+        const tagFilter = activeTag !== 'All' ? activeTag : undefined;
+        const data = await getMarkets(100, tagFilter);
+        setMarkets(data);
+      } catch (error) {
+        console.error("Failed to fetch markets:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMarkets();
+  }, [activeTag]);
+
+  const handleTagClick = (tag: string) => {
+    setActiveTag(tag);
+  };
 
   return (
     <>
@@ -23,12 +51,13 @@ export default async function Home() {
             
             <div className="relative mb-4">
               <div className="flex overflow-x-auto pb-2 space-x-2 -mx-4 px-4 no-scrollbar">
-                {categories.map((category, index) => (
+                {categories.map((category) => (
                   <Button 
                     key={category} 
-                    variant={index === 0 ? "default" : "outline"}
+                    variant={category === activeTag ? "default" : "outline"}
                     size="sm"
                     className="whitespace-nowrap"
+                    onClick={() => handleTagClick(category)}
                   >
                     {category}
                   </Button>
@@ -38,7 +67,11 @@ export default async function Home() {
             </div>
           </div>
 
-          {markets.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+            </div>
+          ) : markets.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {markets.map((market) => (
                 <MarketCard key={market.id} market={market} />
@@ -46,8 +79,8 @@ export default async function Home() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-xl">No markets available at the moment</p>
-              <p className="text-gray-500 dark:text-gray-400 mt-2">Please check back later</p>
+              <p className="text-xl">No markets available for this category</p>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">Try selecting a different category</p>
             </div>
           )}
         </div>
