@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
+import { NextRequest } from 'next/server';
 
 const POLYMARKET_API_URL = 'https://gamma-api.polymarket.com';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const eventId = params.id;
