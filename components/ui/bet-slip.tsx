@@ -128,11 +128,12 @@ export function BetSlip() {
             transform transition-transform duration-300 ease-in-out
             ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-3.5rem)]'}
             bg-background rounded-t-xl shadow-lg border-t border-gray-200 dark:border-gray-800
+            max-h-[85vh] flex flex-col
           `}
         >
           {/* Header */}
           <div 
-            className="flex items-center justify-between px-4 py-4 h-16 cursor-pointer"
+            className="flex items-center justify-between px-4 py-4 h-16 cursor-pointer shrink-0"
             onClick={toggleExpanded}
           >
             <div className="flex items-center gap-2">
@@ -149,8 +150,8 @@ export function BetSlip() {
           </div>
 
           {/* Content */}
-          <div className="px-4 pb-4 flex flex-col h-[calc(100vh-4rem)]">
-            <div className="flex-1 overflow-auto space-y-3">
+          <div className="px-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto space-y-3">
               {conflictingBetsExist && <ConflictWarning />}
               
               {bets.map((bet) => (
@@ -196,7 +197,7 @@ export function BetSlip() {
             </div>
 
             {/* Bottom Fixed Section */}
-            <div className="mt-4 space-y-4">
+            <div className="mt-4 space-y-4 shrink-0">
               {bets.length > 1 && (
                 <div className="text-sm text-muted-foreground">
                   {bets.length} leg combo ({calculateCombinedOdds(bets)})
@@ -256,126 +257,128 @@ export function BetSlip() {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:block fixed right-4 bottom-4 top-20 w-80 bg-background rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
-        <div className="p-4 h-full flex flex-col">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">Pick Slip</span>
-              <span className="bg-[#0BC700] text-white rounded-full px-2 py-0.5 text-sm">
-                {bets.length}
-              </span>
+      <div className="hidden md:block fixed right-4 bottom-4 w-80">
+        <div className="bg-background rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 flex flex-col max-h-[calc(100vh-6rem)]">
+          <div className="p-4 flex flex-col min-h-0">
+            <div className="flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Pick Slip</span>
+                <span className="bg-[#0BC700] text-white rounded-full px-2 py-0.5 text-sm">
+                  {bets.length}
+                </span>
+              </div>
+              <button
+                onClick={clearBets}
+                className="shrink-0"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="8" r="7.5" stroke="#808080"/>
+                  <path d="M5.25 5.25L10.75 10.75M5.25 10.75L10.75 5.25" stroke="#808080" strokeLinecap="round"/>
+                </svg>
+              </button>
             </div>
-            <button
-              onClick={clearBets}
-              className="shrink-0"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="8" cy="8" r="7.5" stroke="#808080"/>
-                <path d="M5.25 5.25L10.75 10.75M5.25 10.75L10.75 5.25" stroke="#808080" strokeLinecap="round"/>
-              </svg>
-            </button>
-          </div>
 
-          <div className="flex-1 overflow-auto space-y-3 mt-4">
-            {conflictingBetsExist && <ConflictWarning />}
-            
-            {bets.map((bet) => (
-              <Card key={bet.outcomeId} className="p-3">
-                <div className="flex items-start gap-3">
-                  {bet.imageUrl && (
-                    <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-md">
-                      <Image
-                        src={bet.imageUrl}
-                        alt={bet.marketQuestion}
-                        fill
-                        sizes="48px"
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <p className="text-sm font-medium line-clamp-2">{bet.marketQuestion}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
+            <div className="flex-1 overflow-y-auto space-y-3 mt-4 min-h-0">
+              {conflictingBetsExist && <ConflictWarning />}
+              
+              {bets.map((bet) => (
+                <Card key={bet.outcomeId} className="p-3">
+                  <div className="flex items-start gap-3">
+                    {bet.imageUrl && (
+                      <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-md">
+                        <Image
+                          src={bet.imageUrl}
+                          alt={bet.marketQuestion}
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
                       </div>
-                      <button
-                        onClick={() => removeBet(bet.outcomeId)}
-                        className="shrink-0"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <circle cx="8" cy="8" r="7.5" stroke="#FF0000"/>
-                          <path d="M5.25 8H10.75" stroke="#FF0000" strokeLinecap="round"/>
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="mt-2 flex justify-between items-center">
-                      <span className="text-sm font-medium">{bet.odds}</span>
-                      <span className="text-xs text-gray-500">
-                        {(bet.probability * 100).toFixed(1)}%
-                      </span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <p className="text-sm font-medium line-clamp-2">{bet.marketQuestion}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
+                        </div>
+                        <button
+                          onClick={() => removeBet(bet.outcomeId)}
+                          className="shrink-0"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="8" cy="8" r="7.5" stroke="#FF0000"/>
+                            <path d="M5.25 8H10.75" stroke="#FF0000" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="mt-2 flex justify-between items-center">
+                        <span className="text-sm font-medium">{bet.odds}</span>
+                        <span className="text-xs text-gray-500">
+                          {(bet.probability * 100).toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Bottom Fixed Section */}
-          <div className="mt-4 space-y-4">
-            {bets.length > 1 && (
-              <div className="text-sm text-muted-foreground">
-                {bets.length} leg combo ({calculateCombinedOdds(bets)})
-              </div>
-            )}
-
-            {/* Entry and Prize Inputs */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label htmlFor="entry-desktop" className="text-sm font-medium">
-                  Entry
-                </label>
-                <div className="relative">
-                  <Input
-                    id="entry-desktop"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    placeholder="0.00"
-                    value={entryAmount}
-                    onChange={(e) => setEntryAmount(e.target.value)}
-                    className="pl-8"
-                  />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    {currency === 'cash' ? '$' : '₡'}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="prize-desktop" className="text-sm font-medium">
-                  Prize
-                </label>
-                <div className="relative">
-                  <Input
-                    id="prize-desktop"
-                    type="text"
-                    value={calculatePrize()}
-                    disabled
-                    className="pl-8 bg-muted"
-                  />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    {currency === 'cash' ? '$' : '₡'}
-                  </span>
-                </div>
-              </div>
+                </Card>
+              ))}
             </div>
 
-            <Button 
-              className="w-full"
-              disabled={conflictingBetsExist || !entryAmount || Number(entryAmount) <= 0}
-            >
-              Place Entry
-            </Button>
+            {/* Bottom Fixed Section */}
+            <div className="mt-4 space-y-4 shrink-0">
+              {bets.length > 1 && (
+                <div className="text-sm text-muted-foreground">
+                  {bets.length} leg combo ({calculateCombinedOdds(bets)})
+                </div>
+              )}
+
+              {/* Entry and Prize Inputs */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label htmlFor="entry-desktop" className="text-sm font-medium">
+                    Entry
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="entry-desktop"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder="0.00"
+                      value={entryAmount}
+                      onChange={(e) => setEntryAmount(e.target.value)}
+                      className="pl-8"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      {currency === 'cash' ? '$' : '₡'}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="prize-desktop" className="text-sm font-medium">
+                    Prize
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="prize-desktop"
+                      type="text"
+                      value={calculatePrize()}
+                      disabled
+                      className="pl-8 bg-muted"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      {currency === 'cash' ? '$' : '₡'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                className="w-full"
+                disabled={conflictingBetsExist || !entryAmount || Number(entryAmount) <= 0}
+              >
+                Place Entry
+              </Button>
+            </div>
           </div>
         </div>
       </div>
