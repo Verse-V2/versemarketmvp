@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { PackageCard } from "@/components/ui/package-card";
+import { PurchaseSheet } from "@/components/ui/purchase-sheet";
 
 const packages = [
   { points: 50000, bonusCash: 5.00, price: 5.00 },
@@ -12,9 +14,10 @@ const packages = [
 ];
 
 export default function StorePage() {
+  const [selectedPackage, setSelectedPackage] = useState<typeof packages[0] | null>(null);
+
   const handlePurchase = (pkg: typeof packages[0]) => {
-    // TODO: Implement purchase flow
-    console.log('Purchase package:', pkg);
+    setSelectedPackage(pkg);
   };
 
   return (
@@ -39,6 +42,16 @@ export default function StorePage() {
           ))}
         </div>
       </div>
+
+      {selectedPackage && (
+        <PurchaseSheet
+          isOpen={true}
+          onClose={() => setSelectedPackage(null)}
+          points={selectedPackage.points}
+          bonusCash={selectedPackage.bonusCash}
+          price={selectedPackage.price}
+        />
+      )}
     </main>
   );
 } 
