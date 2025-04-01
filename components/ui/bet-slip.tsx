@@ -182,21 +182,19 @@ export function BetSlip() {
       {/* Mobile Bottom Sheet */}
       <div className={`
         fixed bottom-[64px] left-0 right-0 z-[60] md:hidden
-        ${!isExpanded ? 'pointer-events-none' : ''}
       `}>
         <div 
           className={`
             transform transition-transform duration-300 ease-in-out
             ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-3.5rem)]'}
             bg-background shadow-lg border-t border-gray-200 dark:border-gray-800
-            max-h-[85vh] flex flex-col
+            max-h-[calc(85vh-64px)] flex flex-col
           `}
         >
           {/* Header */}
           <div 
             className={`
-              flex items-center justify-between px-4 py-4 h-16 cursor-pointer shrink-0
-              ${!isExpanded ? 'pointer-events-auto' : ''}
+              flex items-center justify-between px-4 py-4 h-14 cursor-pointer shrink-0
             `}
             onClick={toggleExpanded}
           >
@@ -214,7 +212,11 @@ export function BetSlip() {
           </div>
 
           {/* Content */}
-          <div className="px-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0">
+          <div className={`
+            px-4 pb-4 flex-1 overflow-hidden flex flex-col min-h-0
+            ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+            transition-opacity duration-200
+          `}>
             <div className="flex-1 overflow-y-auto space-y-3">
               {conflictingBetsExist && <ConflictWarning />}
               
