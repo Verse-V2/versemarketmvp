@@ -6,10 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
+import { Input } from "@/components/ui/input";
+import { useCurrency } from "@/lib/currency-context";
 
 export function BetSlip() {
   const { bets, removeBet, clearBets, hasConflictingBets, getConflictingMarkets } = useBetSlip();
+  const { currency } = useCurrency();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [entryAmount, setEntryAmount] = useState('');
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -21,6 +25,31 @@ export function BetSlip() {
 
   const conflictingBetsExist = hasConflictingBets();
   const conflictingMarkets = conflictingBetsExist ? getConflictingMarkets() : [];
+
+  const calculatePrize = () => {
+    if (!entryAmount || Number(entryAmount) <= 0 || bets.length === 0) {
+      return '0.00';
+    }
+
+    // For now, we'll use a simple calculation based on the first bet's odds
+    // This should be updated to handle multiple bets properly
+    const bet = bets[0];
+    const entry = Number(entryAmount);
+    
+    // Convert American odds to multiplier
+    let multiplier = 1;
+    const odds = bet.odds;
+    if (odds.startsWith('+')) {
+      const americanOdds = Number(odds.substring(1));
+      multiplier = (americanOdds / 100) + 1;
+    } else {
+      const americanOdds = Math.abs(Number(odds));
+      multiplier = (100 / americanOdds) + 1;
+    }
+
+    const prize = entry * multiplier;
+    return prize.toFixed(2);
+  };
 
   const ConflictWarning = () => (
     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-3">
@@ -62,8 +91,8 @@ export function BetSlip() {
             onClick={toggleExpanded}
           >
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-base">Bet Slip</span>
-              <span className="bg-primary text-primary-foreground rounded-full px-2.5 py-1 text-sm">
+              <span className="font-semibold text-base">Pick Slip</span>
+              <span className="bg-[#0BC700] text-white rounded-full px-2.5 py-1 text-sm">
                 {bets.length}
               </span>
             </div>
@@ -116,6 +145,49 @@ export function BetSlip() {
               </Card>
             ))}
 
+            {/* Entry and Prize Inputs - Mobile */}
+            <div className="mt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label htmlFor="entry" className="text-sm font-medium">
+                    Entry
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="entry"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder="0.00"
+                      value={entryAmount}
+                      onChange={(e) => setEntryAmount(e.target.value)}
+                      className="pl-8"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      {currency === 'cash' ? '$' : '₡'}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="prize" className="text-sm font-medium">
+                    Prize
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="prize"
+                      type="text"
+                      value={calculatePrize()}
+                      disabled
+                      className="pl-8 bg-muted"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      {currency === 'cash' ? '$' : '₡'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-3 mt-4">
               <Button
                 variant="outline"
@@ -126,7 +198,7 @@ export function BetSlip() {
               </Button>
               <Button 
                 className="flex-1"
-                disabled={conflictingBetsExist}
+                disabled={conflictingBetsExist || !entryAmount || Number(entryAmount) <= 0}
               >
                 Place Bets
               </Button>
@@ -140,8 +212,8 @@ export function BetSlip() {
         <div className="p-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className="font-semibold">Bet Slip</span>
-              <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-sm">
+              <span className="font-semibold">Pick Slip</span>
+              <span className="bg-[#0BC700] text-white rounded-full px-2 py-0.5 text-sm">
                 {bets.length}
               </span>
             </div>
@@ -196,9 +268,52 @@ export function BetSlip() {
             ))}
           </div>
 
+          {/* Entry and Prize Inputs - Desktop */}
+          <div className="mt-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label htmlFor="entry-desktop" className="text-sm font-medium">
+                  Entry
+                </label>
+                <div className="relative">
+                  <Input
+                    id="entry-desktop"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="0.00"
+                    value={entryAmount}
+                    onChange={(e) => setEntryAmount(e.target.value)}
+                    className="pl-8"
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    {currency === 'cash' ? '$' : '₡'}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="prize-desktop" className="text-sm font-medium">
+                  Prize
+                </label>
+                <div className="relative">
+                  <Input
+                    id="prize-desktop"
+                    type="text"
+                    value={calculatePrize()}
+                    disabled
+                    className="pl-8 bg-muted"
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    {currency === 'cash' ? '$' : '₡'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <Button 
             className="mt-4"
-            disabled={conflictingBetsExist}
+            disabled={conflictingBetsExist || !entryAmount || Number(entryAmount) <= 0}
           >
             Place Bets
           </Button>
