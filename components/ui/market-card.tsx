@@ -16,7 +16,7 @@ interface MarketCardProps {
 }
 
 export function MarketCard({ market, hideViewDetails = false, hideComments = false }: MarketCardProps) {
-  const { addBet, isBetInSlip } = useBetSlip();
+  const { addBet, removeBet, isBetInSlip } = useBetSlip();
 
   // Format the end date
   const formattedEndDate = market.endDate
@@ -60,7 +60,9 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
       : outcome.name;
     const outcomeId = `${market.id}-${outcomeName}`;
     
-    if (!isBetInSlip(outcomeId)) {
+    if (isBetInSlip(outcomeId)) {
+      removeBet(outcomeId);
+    } else {
       addBet({
         marketId: market.id,
         marketQuestion: market.question,
