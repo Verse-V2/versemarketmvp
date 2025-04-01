@@ -237,19 +237,19 @@ export function BetSlip() {
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
                         <p className="text-sm font-medium line-clamp-2 flex-1">{bet.marketQuestion}</p>
-                        <span className="text-sm font-medium ml-2">{bet.odds}</span>
-                      </div>
-                      <div className="flex justify-between items-center mt-1">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
                         <button
                           onClick={() => removeBet(bet.outcomeId)}
-                          className="shrink-0"
+                          className="shrink-0 ml-2"
                         >
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="8" cy="8" r="7.5" stroke="#FF0000"/>
                             <path d="M5.25 8H10.75" stroke="#FF0000" strokeLinecap="round"/>
                           </svg>
                         </button>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
+                        <span className="text-sm font-medium">{bet.odds}</span>
                       </div>
                     </div>
                   </div>
@@ -354,19 +354,19 @@ export function BetSlip() {
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
                         <p className="text-sm font-medium line-clamp-2 flex-1">{bet.marketQuestion}</p>
-                        <span className="text-sm font-medium ml-2">{bet.odds}</span>
-                      </div>
-                      <div className="flex justify-between items-center mt-1">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
                         <button
                           onClick={() => removeBet(bet.outcomeId)}
-                          className="shrink-0"
+                          className="shrink-0 ml-2"
                         >
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="8" cy="8" r="7.5" stroke="#FF0000"/>
                             <path d="M5.25 8H10.75" stroke="#FF0000" strokeLinecap="round"/>
                           </svg>
                         </button>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
+                        <span className="text-sm font-medium">{bet.odds}</span>
                       </div>
                     </div>
                   </div>
