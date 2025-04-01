@@ -47,7 +47,7 @@ export default function Home() {
         <div className="w-full max-w-7xl">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Timeline</h1>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">Explore the latest markets from Verse</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">Explore the latest from Verse</p>
             
             <div className="relative mb-4">
               <div className="flex overflow-x-auto pb-2 space-x-2 -mx-4 px-4 no-scrollbar">
