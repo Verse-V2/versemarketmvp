@@ -3,6 +3,28 @@ import axios from 'axios';
 
 const POLYMARKET_API_URL = 'https://gamma-api.polymarket.com';
 
+interface PolymarketEvent {
+  id: string;
+  title: string;
+  slug: string;
+  volume: string;
+  liquidity: string;
+  endDate: string;
+  tags?: Array<{
+    id: string;
+    name?: string;
+    label?: string;
+    slug?: string;
+  }>;
+  [key: string]: unknown;
+}
+
+interface FormattedTag {
+  id: string;
+  label: string;
+  slug: string;
+}
+
 export async function GET() {
   try {
     const response = await axios.get(`${POLYMARKET_API_URL}/events`, {
@@ -21,11 +43,11 @@ export async function GET() {
       }
     });
 
-    const eventsWithFormattedTags = response.data.map((event: any) => {
-      const formattedTags = event.tags ? event.tags.map((tag: any) => ({
+    const eventsWithFormattedTags = response.data.map((event: PolymarketEvent) => {
+      const formattedTags: FormattedTag[] = event.tags ? event.tags.map((tag) => ({
         id: tag.id,
-        label: tag.name || tag.label,
-        slug: tag.slug || tag.name?.toLowerCase().replace(/\s+/g, '-') || ''
+        label: tag.name || tag.label || '',
+        slug: tag.slug || (tag.name?.toLowerCase().replace(/\s+/g, '-') || '')
       })) : [];
       
       return {

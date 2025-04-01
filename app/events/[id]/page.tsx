@@ -12,6 +12,7 @@ import { Header } from '@/components/ui/header';
 import { Market } from '@/lib/polymarket-api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 // Dynamically import the client-side chart component
 const SimplePriceChart = dynamic(() => import('@/components/simple-price-chart'), {
@@ -197,11 +198,11 @@ function EventDetails() {
   }, [params.id]);
 
   // Function to fetch related events based on tags
-  const fetchRelatedEvents = async (tags: any[], currentEventId: string) => {
+  const fetchRelatedEvents = async (tags: Array<{ id?: string; label?: string; slug?: string }>, currentEventId: string) => {
     setLoadingRelated(true);
     try {
       // Extract tag slugs for filtering
-      const tagSlugs = tags.map(tag => tag.slug);
+      const tagSlugs = tags.map(tag => tag.slug || '');
       
       // Fetch related events from API - This is a simplified example
       // In a real implementation, you'd call your API with the tag information
@@ -213,9 +214,9 @@ function EventDetails() {
         
         // Filter out the current event and limit to 4 related events
         relatedData = response
-          .filter((event: any) => event.id !== currentEventId)
+          .filter((event: Event) => event.id !== currentEventId)
           .slice(0, 4)
-          .map((event: any) => {
+          .map((event: Event) => {
             let probability = 0;
             if (event.markets && event.markets.length > 0 && event.markets[0].outcomePrices) {
               try {
@@ -230,7 +231,7 @@ function EventDetails() {
               id: event.id,
               slug: event.slug,
               title: event.title,
-              image: event.image,
+              image: event.image || '',
               probability: probability,
               endDate: event.endDate,
               volume: event.volume?.toString()
@@ -411,9 +412,11 @@ function EventDetails() {
                       <Link href={`/events/${relEvent.id}`} className="block">
                         <div className="flex items-center p-3">
                           <div className="w-12 h-12 mr-3 rounded-md overflow-hidden flex-shrink-0">
-                            <img 
+                            <Image 
                               src={relEvent.image} 
                               alt={relEvent.title}
+                              width={48}
+                              height={48}
                               className="w-full h-full object-cover"
                             />
                           </div>

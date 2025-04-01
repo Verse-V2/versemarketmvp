@@ -28,15 +28,25 @@ const SAMPLE_PRICE_DATA = [
 ];
 
 interface SimplePriceChartProps {
-  marketId?: string;
+  marketId?: string; // This is intentionally unused for now, will be used for fetching real data later
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    value: number;
+    name: string;
+    dataKey: string;
+  }>;
+  label?: number;
+}
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-700 shadow-md">
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-          {format(new Date(label), 'MMM d, yyyy')}
+          {format(new Date(label || 0), 'MMM d, yyyy')}
         </p>
         <p className="font-medium mb-1">
           Yes: <span className="text-blue-500">{(payload[0].value * 100).toFixed(1)}%</span>
@@ -50,6 +60,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// We're declaring marketId as an unused parameter as it will be used in future implementation
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SimplePriceChart: React.FC<SimplePriceChartProps> = ({ marketId }) => {
   return (
     <div className="w-full h-full">

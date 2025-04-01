@@ -33,6 +33,44 @@ export interface Event {
   tags?: Array<{ id?: string; label?: string; slug?: string }>;
 }
 
+// Raw market data from API
+interface RawMarket {
+  id: string;
+  question?: string;
+  slug?: string;
+  description?: string;
+  volume?: string;
+  liquidity?: string;
+  outcomes?: string;
+  outcomePrices?: string;
+  active?: boolean;
+  closed?: boolean;
+  negRisk?: boolean;
+  bestBid?: number;
+  bestAsk?: number;
+  lastTradePrice?: number;
+  groupItemTitle?: string;
+  [key: string]: unknown;
+}
+
+// Raw event data from API
+interface RawEvent {
+  id: string;
+  title?: string;
+  slug?: string;
+  description?: string;
+  volume?: string;
+  liquidity?: string;
+  endDate?: string;
+  startDate?: string;
+  image?: string;
+  active?: boolean;
+  closed?: boolean;
+  markets?: RawMarket[];
+  tags?: Array<{ id?: string; name?: string; slug?: string }>;
+  [key: string]: unknown;
+}
+
 class PolymarketService {
   private baseUrl: string;
 
@@ -50,14 +88,14 @@ class PolymarketService {
         throw new Error(`API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as RawEvent;
       
       // Transform the data to match our interface
       if (!data) return null;
       
       // Process the markets data
       const markets = Array.isArray(data.markets) 
-        ? data.markets.map((market: any) => ({
+        ? data.markets.map((market: RawMarket) => ({
             id: market.id,
             question: market.question || '',
             slug: market.slug || '',
@@ -115,16 +153,16 @@ class PolymarketService {
       
       // Filter events that have matching tags
       const relatedEvents = allEvents
-        .filter((event: any) => {
+        .filter((event: RawEvent) => {
           // Check if this event has any tags that match our tag slugs
           return event.tags && Array.isArray(event.tags) && 
-                 event.tags.some((tag: any) => tag.slug && tagSlugs.includes(tag.slug));
+                 event.tags.some((tag) => tag.slug && tagSlugs.includes(tag.slug));
         })
         .slice(0, 4) // Limit to 4 related events
-        .map((event: any) => {
+        .map((event: RawEvent) => {
           // Format to match our Event interface
           const markets = Array.isArray(event.markets) 
-            ? event.markets.map((market: any) => ({
+            ? event.markets.map((market: RawMarket) => ({
                 id: market.id,
                 question: market.question || '',
                 slug: market.slug || '',

@@ -19,12 +19,14 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
     ? `Ends ${formatDistanceToNow(new Date(market.endDate), { addSuffix: true })}`
     : "No end date";
 
-  // Format volume and liquidity to show with $ and no decimal places
+  // These formatted values will be used in future iterations of the component
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formattedVolume = `$${Number(market.volume).toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   })}`;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formattedLiquidity = `$${Number(market.liquidity).toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
