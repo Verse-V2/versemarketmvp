@@ -2,58 +2,38 @@
 
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
+import { useEntries, type EntryStatus } from "@/lib/entries-context";
 
-type EntryStatus = "active" | "won" | "lost";
-
-// Sample data structure
-const sampleEntries = [
-  {
-    id: "1",
-    date: "2024-03-20T15:30:00Z",
-    status: "active" as EntryStatus,
-    entry: 10.00,
-    prize: 25.00,
-    selections: [
-      {
-        id: "s1",
-        marketQuestion: "Who will win the match?",
-        outcomeName: "Team Liquid",
-        odds: "+150",
-        imageUrl: "/sample-team-1.jpg",
-      }
-    ]
-  },
-  {
-    id: "2",
-    date: "2024-03-19T18:00:00Z",
-    status: "won" as EntryStatus,
-    entry: 5.00,
-    prize: 63.60,
-    selections: [
-      {
-        id: "s2",
-        marketQuestion: "Map 1 Winner",
-        outcomeName: "Cloud9",
-        odds: "+208",
-        imageUrl: "/sample-team-2.jpg",
-      },
-      {
-        id: "s3",
-        marketQuestion: "Map 2 Total Rounds",
-        outcomeName: "Over 25.5",
-        odds: "+326",
-        imageUrl: "/sample-map.jpg",
-      },
-      {
-        id: "s4",
-        marketQuestion: "First Blood Map 3",
-        outcomeName: "FaZe Clan",
-        odds: "-2198",
-        imageUrl: "/sample-team-3.jpg",
-      }
-    ]
+function americanToDecimal(odds: string): number {
+  const value = parseInt(odds.replace(/[+\-,]/g, ''));
+  if (odds.startsWith('+')) {
+    return (value / 100) + 1;
+  } else {
+    return 1 + (100 / value);
   }
-];
+}
+
+function decimalToAmerican(decimal: number): string {
+  if (decimal <= 2) {
+    const americanOdds = Math.round(-100 / (decimal - 1));
+    return americanOdds.toString();
+  } else {
+    const americanOdds = Math.round((decimal - 1) * 100);
+    return `+${americanOdds}`;
+  }
+}
+
+function calculateCombinedOdds(selections: Array<{ odds: string }>): string {
+  if (selections.length <= 1) return '';
+  
+  const combinedDecimal = selections.reduce((acc, selection) => {
+    const decimal = americanToDecimal(selection.odds);
+    return acc * decimal;
+  }, 1);
+
+  const american = decimalToAmerican(combinedDecimal);
+  return american.startsWith('+') ? american : `+${american}`;
+}
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -64,7 +44,7 @@ function formatDate(dateString: string) {
   });
 }
 
-function EntryCard({ entry }: { entry: typeof sampleEntries[0] }) {
+function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["entries"][0] }) {
   const statusColors: Record<EntryStatus, string> = {
     active: "bg-blue-500",
     won: "bg-[#0BC700]",
@@ -124,7 +104,7 @@ function EntryCard({ entry }: { entry: typeof sampleEntries[0] }) {
       {entry.selections.length > 1 && (
         <div className="text-sm text-muted-foreground flex justify-between items-center pt-2 border-t">
           <span>{entry.selections.length} leg combo</span>
-          <span>+1272</span>
+          <span>{calculateCombinedOdds(entry.selections)}</span>
         </div>
       )}
     </Card>
@@ -132,6 +112,8 @@ function EntryCard({ entry }: { entry: typeof sampleEntries[0] }) {
 }
 
 export default function EntriesPage() {
+  const { state } = useEntries();
+
   return (
     <main className="min-h-screen bg-background">
       <div className="container max-w-2xl mx-auto p-6 pb-24">
@@ -143,9 +125,15 @@ export default function EntriesPage() {
         </div>
 
         <div className="space-y-4">
-          {sampleEntries.map((entry) => (
-            <EntryCard key={entry.id} entry={entry} />
-          ))}
+          {state.entries.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              No entries yet. Place your first bet to get started!
+            </div>
+          ) : (
+            state.entries.map((entry) => (
+              <EntryCard key={entry.id} entry={entry} />
+            ))
+          )}
         </div>
       </div>
     </main>

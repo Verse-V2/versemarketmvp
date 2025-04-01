@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { BetSlipProvider } from "@/lib/bet-slip-context";
 import { CurrencyProvider } from "@/lib/currency-context";
+import { EntriesProvider } from "@/lib/entries-context";
 import { BetSlip } from "@/components/ui/bet-slip";
 import { BottomNav } from "@/components/bottom-nav";
 
@@ -39,11 +40,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <CurrencyProvider>
-            <BetSlipProvider>
-              {children}
-              <BetSlip />
-              <BottomNav />
-            </BetSlipProvider>
+            <EntriesProvider>
+              <BetSlipProvider>
+                {children}
+                <BetSlip />
+                <BottomNav />
+              </BetSlipProvider>
+            </EntriesProvider>
           </CurrencyProvider>
         </ThemeProvider>
       </body>
