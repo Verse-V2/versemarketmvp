@@ -58,12 +58,12 @@ export function BetSlip() {
         >
           {/* Header */}
           <div 
-            className="flex items-center justify-between px-4 py-3 cursor-pointer"
+            className="flex items-center justify-between px-4 py-4 h-16 cursor-pointer"
             onClick={toggleExpanded}
           >
             <div className="flex items-center gap-2">
-              <span className="font-semibold">Bet Slip</span>
-              <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-sm">
+              <span className="font-semibold text-base">Bet Slip</span>
+              <span className="bg-primary text-primary-foreground rounded-full px-2.5 py-1 text-sm">
                 {bets.length}
               </span>
             </div>
