@@ -235,11 +235,12 @@ export function BetSlip() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-2">
-                        <div>
-                          <p className="text-sm font-medium line-clamp-2">{bet.marketQuestion}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
-                        </div>
+                      <div className="flex justify-between items-start">
+                        <p className="text-sm font-medium line-clamp-2 flex-1">{bet.marketQuestion}</p>
+                        <span className="text-sm font-medium ml-2">{bet.odds}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
                         <button
                           onClick={() => removeBet(bet.outcomeId)}
                           className="shrink-0"
@@ -249,12 +250,6 @@ export function BetSlip() {
                             <path d="M5.25 8H10.75" stroke="#FF0000" strokeLinecap="round"/>
                           </svg>
                         </button>
-                      </div>
-                      <div className="mt-2 flex justify-between items-center">
-                        <span className="text-sm font-medium">{bet.odds}</span>
-                        <span className="text-xs text-gray-500">
-                          {(bet.probability * 100).toFixed(1)}%
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -322,7 +317,7 @@ export function BetSlip() {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:block fixed right-4 bottom-[64px] w-80">
+      <div className="hidden md:block fixed right-4 bottom-[64px] w-96">
         <div className="bg-background shadow-lg border border-gray-200 dark:border-gray-800 flex flex-col max-h-[calc(100vh-6rem)]">
           <div className="p-4 flex flex-col min-h-0">
             <div className="flex items-center justify-between shrink-0">
@@ -357,11 +352,12 @@ export function BetSlip() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-2">
-                        <div>
-                          <p className="text-sm font-medium line-clamp-2">{bet.marketQuestion}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
-                        </div>
+                      <div className="flex justify-between items-start">
+                        <p className="text-sm font-medium line-clamp-2 flex-1">{bet.marketQuestion}</p>
+                        <span className="text-sm font-medium ml-2">{bet.odds}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{bet.outcomeName}</p>
                         <button
                           onClick={() => removeBet(bet.outcomeId)}
                           className="shrink-0"
@@ -371,12 +367,6 @@ export function BetSlip() {
                             <path d="M5.25 8H10.75" stroke="#FF0000" strokeLinecap="round"/>
                           </svg>
                         </button>
-                      </div>
-                      <div className="mt-2 flex justify-between items-center">
-                        <span className="text-sm font-medium">{bet.odds}</span>
-                        <span className="text-xs text-gray-500">
-                          {(bet.probability * 100).toFixed(1)}%
-                        </span>
                       </div>
                     </div>
                   </div>
