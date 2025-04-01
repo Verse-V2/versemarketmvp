@@ -182,6 +182,7 @@ export function BetSlip() {
       {/* Mobile Bottom Sheet */}
       <div className={`
         fixed bottom-0 left-0 right-0 z-[60] md:hidden
+        ${!isExpanded ? 'pointer-events-none' : ''}
       `}>
         <div 
           className={`
@@ -195,6 +196,7 @@ export function BetSlip() {
           <div 
             className={`
               flex items-center justify-between px-4 py-2 h-10 cursor-pointer shrink-0
+              ${!isExpanded ? 'pointer-events-auto' : ''}
             `}
             onClick={toggleExpanded}
           >
