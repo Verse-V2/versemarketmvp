@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
-import { NextRequest } from 'next/server';
 
 const POLYMARKET_API_URL = 'https://gamma-api.polymarket.com';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const eventId = params.id;
+  const { id } = await params;
 
-  if (!eventId) {
+  if (!id) {
     return NextResponse.json(
       { error: 'Event ID is required' },
       { status: 400 }
@@ -18,7 +17,7 @@ export async function GET(
   }
 
   try {
-    const response = await axios.get(`${POLYMARKET_API_URL}/events/${eventId}`, {
+    const response = await axios.get(`${POLYMARKET_API_URL}/events/${id}`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
