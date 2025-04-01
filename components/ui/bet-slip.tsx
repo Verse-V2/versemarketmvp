@@ -9,16 +9,6 @@ import Image from 'next/image';
 import { Input } from "@/components/ui/input";
 import { useCurrency } from "@/lib/currency-context";
 
-interface Bet {
-  outcomeId: string;
-  marketId: string;
-  marketTitle: string;
-  outcomeTitle: string;
-  americanOdds: number;
-  probability: number;
-  isConflicting?: boolean;
-}
-
 function americanToDecimal(odds: string): number {
   const value = parseInt(odds.replace(/[+\-]/, ''));
   if (odds.startsWith('+')) {
