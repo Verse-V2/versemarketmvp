@@ -54,13 +54,18 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
   };
 
   const handleBetClick = (outcome: { name: string; probability: number }) => {
-    const outcomeId = `${market.id}-${outcome.name}`;
+    // For submarkets, we need to use the groupItemTitle or cleaned question as the name
+    const outcomeName = outcome.name.includes('?') 
+      ? outcome.name.replace(/Will the |win the 2025 NBA Finals\?/g, '')
+      : outcome.name;
+    const outcomeId = `${market.id}-${outcomeName}`;
+    
     if (!isBetInSlip(outcomeId)) {
       addBet({
         marketId: market.id,
         marketQuestion: market.question,
         outcomeId,
-        outcomeName: outcome.name,
+        outcomeName,
         odds: toAmericanOdds(outcome.probability),
         probability: outcome.probability,
         imageUrl: market.imageUrl,
@@ -102,25 +107,26 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
           <div className="space-y-1">
             <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Top Markets:</div>
             {market.topSubmarkets!.map((submarket, index) => {
-              const outcomeId = `${market.id}-${submarket.question}`;
+              const outcomeName = submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '');
+              const outcomeId = `${market.id}-${outcomeName}`;
               const isSelected = isBetInSlip(outcomeId);
               return (
                 <Button 
                   key={index} 
-                  variant={isSelected ? "default" : "outline"}
+                  variant={isSelected ? "outline" : "outline"}
                   className={`w-full justify-between py-2 h-12 mb-1 hover:bg-gray-50 dark:hover:bg-gray-800 group ${
-                    isSelected ? 'bg-primary text-primary-foreground' : ''
+                    isSelected ? 'bg-primary/10 border-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30' : ''
                   }`}
                   onClick={() => handleBetClick({
-                    name: submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, ''),
+                    name: outcomeName,
                     probability: submarket.probability
                   })}
                 >
                   <span className="text-sm truncate text-left">
-                    {submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '')}
+                    {outcomeName}
                   </span>
                   <span className={`text-sm font-semibold ${
-                    isSelected ? '' :
+                    isSelected ? 'text-primary' :
                     submarket.probability > 0.5 ? "text-green-700 dark:text-green-400 group-hover:text-green-800 dark:group-hover:text-green-300" : 
                     submarket.probability > 0.2 ? "text-yellow-700 dark:text-yellow-400 group-hover:text-yellow-800 dark:group-hover:text-yellow-300" : 
                     "text-red-700 dark:text-red-400 group-hover:text-red-800 dark:group-hover:text-red-300"
@@ -143,9 +149,9 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                       <div key={index} className="flex justify-between items-center">
                         <span className="text-sm font-medium">{outcome.name}</span>
                         <Button 
-                          variant={isSelected ? "default" : "outline"}
+                          variant={isSelected ? "outline" : "outline"}
                           className={`py-2 h-12 min-w-[100px] ${
-                            isSelected ? 'bg-primary text-primary-foreground' :
+                            isSelected ? 'bg-primary/10 border-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30' :
                             outcome.name.toLowerCase() === 'yes' 
                               ? 'border-green-500 text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-400 dark:hover:bg-green-900/20' 
                               : 'border-red-500 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-900/20'
