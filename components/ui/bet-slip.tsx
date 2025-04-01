@@ -186,7 +186,7 @@ export function BetSlip() {
         <div 
           className={`
             transform transition-transform duration-300 ease-in-out
-            ${isExpanded ? 'translate-y-[-64px]' : 'translate-y-[calc(100%-3.5rem-64px)]'}
+            ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-3.5rem)]'}
             bg-background shadow-lg border-t border-gray-200 dark:border-gray-800
             max-h-[calc(85vh-64px)] flex flex-col
           `}
