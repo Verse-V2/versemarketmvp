@@ -10,45 +10,64 @@ import { Input } from "@/components/ui/input";
 import { useCurrency } from "@/lib/currency-context";
 
 function americanToDecimal(odds: string): number {
-  const value = parseInt(odds.replace(/[+\-]/, ''));
+  // Remove commas before parsing the number
+  const value = parseInt(odds.replace(/[+\-,]/g, ''));
   if (odds.startsWith('+')) {
-    return 1 + (value / 100);
+    return (value / 100) + 1;
   } else {
-    // For negative odds
+    // For negative odds, we need to do: 1 + (100/abs(odds))
+    // Example: -2198 should become 1.0455 (not 51!)
     return 1 + (100 / value);
   }
 }
 
 function decimalToAmerican(decimal: number): string {
-  if (decimal >= 2) {
-    const american = Math.round((decimal - 1) * 100);
-    return `+${american}`;
+  // For decimal odds like 13.72 (from our example), we want +1272
+  // The formula is different depending on whether the resulting American odds should be positive or negative
+  const decimalOdds = decimal;
+  
+  if (decimalOdds <= 2) {
+    // Negative American odds
+    const americanOdds = Math.round(-100 / (decimalOdds - 1));
+    return americanOdds.toString();
   } else {
-    const american = Math.round(-100 / (decimal - 1));
-    return american.toString();
+    // Positive American odds
+    const americanOdds = Math.round((decimalOdds - 1) * 100);
+    return `+${americanOdds}`;
   }
 }
 
 function calculateCombinedOdds(bets: Array<{ odds: string }>): string {
   if (bets.length <= 1) return '';
   
+  console.log('Starting odds calculation for bets:', bets.map(b => b.odds).join(', '));
+  
   // Convert all American odds to decimal, multiply them together
   const combinedDecimal = bets.reduce((acc, bet) => {
     const decimal = americanToDecimal(bet.odds);
+    console.log(`Converting ${bet.odds} to decimal: ${decimal}`);
+    console.log(`Current accumulator: ${acc} * ${decimal} = ${acc * decimal}`);
     return acc * decimal;
   }, 1);
 
+  console.log('Final combined decimal odds:', combinedDecimal);
+
   // Convert back to American odds
   const american = decimalToAmerican(combinedDecimal);
+  console.log('Converted back to American odds:', american);
   
   // Format the result
+  let result;
   if (american.startsWith('-')) {
-    return american;
+    result = american;
   } else if (american.startsWith('+')) {
-    return american;
+    result = american;
   } else {
-    return `+${american}`;
+    result = `+${american}`;
   }
+  
+  console.log('Final formatted result:', result);
+  return result;
 }
 
 export function BetSlip() {
