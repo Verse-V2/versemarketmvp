@@ -187,7 +187,7 @@ export function BetSlip() {
         <div 
           className={`
             transform transition-transform duration-300 ease-in-out
-            ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-3.5rem)]'}
+            ${isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-4rem)]'}
             bg-background shadow-lg border-t border-gray-200 dark:border-gray-800
             max-h-[calc(85vh-64px)] flex flex-col
           `}
@@ -195,7 +195,7 @@ export function BetSlip() {
           {/* Header */}
           <div 
             className={`
-              flex items-center justify-between px-4 py-2 h-14 cursor-pointer shrink-0
+              flex items-center justify-between px-4 py-2 h-16 cursor-pointer shrink-0
               ${!isExpanded ? 'pointer-events-auto' : ''}
             `}
             onClick={toggleExpanded}
