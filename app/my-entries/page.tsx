@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useEntries, type EntryStatus } from "@/lib/entries-context";
+import { useEntries } from "@/lib/entries-context";
 import { ChevronUp, ChevronDown, Send } from "lucide-react";
 import { useState } from "react";
 
