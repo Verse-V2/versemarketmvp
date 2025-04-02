@@ -138,9 +138,6 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <span className="text-lg">{selection.odds}</span>
-                  <span className="text-sm text-gray-400">
-                    {formatDate(entry.date)}
-                  </span>
                 </div>
               </div>
             </div>
