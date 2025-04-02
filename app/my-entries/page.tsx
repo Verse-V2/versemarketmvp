@@ -40,7 +40,7 @@ function calculateCombinedOdds(selections: Array<{ odds: string }>): string {
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
+    month: 'numeric',
     day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
@@ -167,7 +167,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
           <div className="text-sm text-gray-400">
             <span>Bet ID: {entry.id}</span>
             <span className="mx-2">•</span>
-            <span>Placed: {formatDate(entry.date)}</span>
+            <span>{formatDate(entry.date)}</span>
           </div>
           <Button
             variant="ghost"
