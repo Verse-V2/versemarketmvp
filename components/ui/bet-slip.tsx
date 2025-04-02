@@ -195,7 +195,7 @@ export function BetSlip() {
           {/* Header */}
           <div 
             className={`
-              flex items-center justify-between px-4 py-2 h-10 cursor-pointer shrink-0
+              flex items-center justify-between px-4 py-2 h-14 cursor-pointer shrink-0
               ${!isExpanded ? 'pointer-events-auto' : ''}
             `}
             onClick={toggleExpanded}
