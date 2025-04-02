@@ -55,9 +55,9 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
   return (
     <Card className="bg-[#131415] text-white overflow-hidden p-0 rounded-lg flex flex-col">
       {/* Header */}
-      <div className="px-3 pt-3 pb-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0">
+      <div className="px-3 py-2">
+        <div className="flex items-center justify-between mb-1">
+          <div>
             <div className="flex items-center gap-2">
               {entry.selections.length > 1 ? (
                 <h3 className="text-lg font-semibold m-0">
@@ -101,7 +101,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
           {entry.selections.map((selection, index) => (
             <div 
               key={selection.id}
-              className="p-4 border-b border-[#2A2A2D] last:border-b-0 relative"
+              className="px-4 py-3 border-b border-[#2A2A2D] last:border-b-0 relative"
             >
               {/* Dotted line */}
               {index < entry.selections.length - 1 && (
@@ -111,7 +111,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
                 />
               )}
               <div className="flex items-start justify-between">
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full border-2 border-gray-600 shrink-0" />
                     <h4 className="text-lg font-semibold">
@@ -136,7 +136,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
                     <span>{selection.outcomeName}</span>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-3">
+                <div className="flex flex-col items-end gap-2">
                   <span className="text-lg">{selection.odds}</span>
                   <span className="text-sm text-gray-400">
                     {formatDate(entry.date)}
@@ -148,38 +148,34 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
         </div>
       )}
 
+      {/* Legs Toggle Section */}
+      <div className="flex items-center justify-between px-4 py-1 border-t border-[#2A2A2D] h-8">
+        <button 
+          onClick={() => setShowLegs(!showLegs)}
+          className="flex items-center text-gray-400 hover:text-white text-sm focus:outline-none"
+        >
+          {showLegs ? "Hide Legs" : "Show Legs"}
+          {showLegs ? (
+            <ChevronUp className="ml-2 h-4 w-4" />
+          ) : (
+            <ChevronDown className="ml-2 h-4 w-4" />
+          )}
+        </button>
+        <span className="text-xs text-gray-400">{entry.selections.length} selections</span>
+      </div>
+
       {/* Footer */}
-      <div className="bg-[#1C1D1E] mt-auto">
-        <div className="p-4 border-t border-[#2A2A2D] flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-400 hover:text-white"
-              onClick={() => setShowLegs(!showLegs)}
-            >
-              {showLegs ? (
-                <>
-                  Hide Legs
-                  <ChevronUp className="ml-2 h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  Show Legs
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-            <div className="text-sm text-gray-400">
-              <span>Bet ID: {entry.id}</span>
-              <span className="mx-2">•</span>
-              <span>Placed: {formatDate(entry.date)}</span>
-            </div>
+      <div className="bg-[#1C1D1E]">
+        <div className="px-4 py-2 border-t border-[#2A2A2D] flex items-center justify-between">
+          <div className="text-sm text-gray-400">
+            <span>Bet ID: {entry.id}</span>
+            <span className="mx-2">•</span>
+            <span>Placed: {formatDate(entry.date)}</span>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="text-[#0BC700] hover:text-[#0FE800]"
+            className="text-[#0BC700] hover:text-[#0FE800] h-7 w-7"
           >
             <Send className="h-4 w-4" />
           </Button>
