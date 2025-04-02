@@ -29,7 +29,7 @@ export async function GET() {
   try {
     const response = await axios.get(`${POLYMARKET_API_URL}/events`, {
       params: {
-        limit: 100,
+        limit: 300,
         order: 'volume',
         ascending: false,
         active: true,

@@ -24,7 +24,7 @@ export default function Home() {
       try {
         // Use tag filter if not "All"
         const tagFilter = activeTag !== 'All' ? activeTag : undefined;
-        const data = await getMarkets(100, tagFilter);
+        const data = await getMarkets(300, tagFilter);
         setMarkets(data);
       } catch (error) {
         console.error("Failed to fetch markets:", error);
