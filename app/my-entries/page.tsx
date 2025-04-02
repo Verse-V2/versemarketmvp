@@ -59,9 +59,15 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
         <div className="flex items-center justify-between">
           <div className="space-y-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold m-0">
-                {entry.selections.length} Pick Parlay
-              </h3>
+              {entry.selections.length > 1 ? (
+                <h3 className="text-lg font-semibold m-0">
+                  {entry.selections.length} Pick Parlay
+                </h3>
+              ) : (
+                <h3 className="text-lg font-semibold m-0">
+                  {entry.selections[0]?.outcomeName.toLowerCase().includes('no') ? 'No' : 'Yes'}
+                </h3>
+              )}
               <span className="text-lg">{odds}</span>
             </div>
             <p className="text-sm text-gray-400 uppercase">PREDICTION</p>
