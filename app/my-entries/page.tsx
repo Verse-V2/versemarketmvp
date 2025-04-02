@@ -66,7 +66,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
             </div>
             <p className="text-sm text-gray-400 uppercase">PREDICTION</p>
           </div>
-          <Button variant="outline" className="bg-[#2A2A2D] text-white hover:bg-[#3A3A3D] border-0">
+          <Button variant="outline" className="bg-[#FFCC00] text-black hover:bg-[#FFDD33] border-0 dark:bg-[#FFCC00] dark:text-black dark:hover:bg-[#FFDD33]">
             Open
           </Button>
         </div>
@@ -173,7 +173,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
           <Button
             variant="ghost"
             size="icon"
-            className="text-gray-400 hover:text-white"
+            className="text-[#0BC700] hover:text-[#0FE800]"
           >
             <Send className="h-4 w-4" />
           </Button>
