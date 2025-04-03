@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useEntries } from "@/lib/entries-context";
 import { ChevronUp, ChevronDown, Send } from "lucide-react";
 import { useState } from "react";
+import { ShareDialog } from "@/components/ui/share-dialog";
 
 function americanToDecimal(odds: string): number {
   const value = parseInt(odds.replace(/[+\-,]/g, ''));
@@ -50,10 +51,30 @@ function formatDate(dateString: string) {
 
 function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["entries"][0] }) {
   const [showLegs, setShowLegs] = useState(true);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const odds = entry.selections.length > 1 ? calculateCombinedOdds(entry.selections) : entry.selections[0]?.odds;
+
+  // Get entry title based on selections
+  const entryTitle = entry.selections.length > 1 
+    ? `${entry.selections.length} Pick Parlay` 
+    : entry.selections[0]?.marketQuestion || 'Prediction';
 
   return (
     <Card className="bg-[#131415] text-white overflow-hidden p-0 rounded-lg flex flex-col">
+      {/* Share Dialog */}
+      <ShareDialog 
+        isOpen={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+        entryId={entry.id}
+        entryTitle={entryTitle}
+        selections={entry.selections}
+        entry={{
+          entry: entry.entry,
+          prize: entry.prize,
+          date: entry.date
+        }}
+      />
+      
       {/* Header */}
       <div className="px-3 py-2">
         <div className="flex items-center justify-between mb-1">
@@ -173,6 +194,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
             variant="ghost"
             size="icon"
             className="text-[#0BC700] hover:text-[#0FE800] h-7 w-7"
+            onClick={() => setShowShareDialog(true)}
           >
             <Send className="h-4 w-4" />
           </Button>
