@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Copy, Twitter, Facebook, Link as LinkIcon } from "lucide-react";
+import { X, Copy, Twitter, Facebook } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 
