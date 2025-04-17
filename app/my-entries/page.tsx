@@ -7,6 +7,7 @@ import { useEntries } from "@/lib/entries-context";
 import { ChevronUp, ChevronDown, Send } from "lucide-react";
 import { useState } from "react";
 import { ShareDialog } from "@/components/ui/share-dialog";
+import { Header } from "@/components/ui/header";
 
 function americanToDecimal(odds: string): number {
   const value = parseInt(odds.replace(/[+\-,]/g, ''));
@@ -209,6 +210,7 @@ export default function EntriesPage() {
 
   return (
     <main className="min-h-screen bg-background">
+      <Header />
       <div className="container max-w-2xl mx-auto p-6 pb-24">
         <div className="space-y-1.5 mb-6">
           <h1 className="text-lg font-semibold">My Entries</h1>
