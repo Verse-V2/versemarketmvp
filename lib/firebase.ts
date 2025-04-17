@@ -1,7 +1,7 @@
 "use client";
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Firebase configuration values are read from environment variables so that
@@ -23,6 +23,14 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 // Initialize Analytics and Auth
 export const auth = getAuth(app);
+
+// Set persistence to local
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence)
+    .catch((error) => {
+      console.error("Error setting auth persistence:", error);
+    });
+}
 
 // Only initialize analytics in the browser and if it's supported
 export const analytics = typeof window !== 'undefined' 

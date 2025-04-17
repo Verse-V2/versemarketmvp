@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
+import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();
@@ -50,9 +51,13 @@ export default function Home() {
     }
   }, [activeTag, user]);
 
-  // If not authenticated, show nothing while redirecting
-  if (!user) {
-    return null;
+  // Show loading state while checking auth
+  if (user === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      </div>
+    );
   }
 
   const handleTagClick = (tag: string) => {
