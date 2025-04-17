@@ -10,6 +10,7 @@ export interface BetEntry {
   status: EntryStatus;
   entry: number;
   prize: number;
+  currency: 'cash' | 'coins';
   selections: {
     id: string;
     marketQuestion: string;

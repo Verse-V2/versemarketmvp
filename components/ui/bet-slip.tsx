@@ -140,6 +140,7 @@ export function BetSlip() {
     addEntry({
       entry,
       prize,
+      currency,
       selections: bets.map(bet => ({
         id: bet.outcomeId,
         marketQuestion: bet.marketQuestion,
@@ -202,7 +203,7 @@ export function BetSlip() {
           >
             <div className="flex items-center gap-2">
               <span className="font-semibold text-base">Pick Slip</span>
-              <span className="bg-[#0BC700] text-white rounded-full px-2.5 py-1 text-sm">
+              <span className={`${currency === 'cash' ? 'bg-[#0BC700]' : 'bg-[#FFCC00] text-black'} rounded-full px-2.5 py-1 text-sm`}>
                 {bets.length}
               </span>
             </div>
@@ -325,7 +326,7 @@ export function BetSlip() {
             <div className="flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Pick Slip</span>
-                <span className="bg-[#0BC700] text-white rounded-full px-2.5 py-1 text-sm">
+                <span className={`${currency === 'cash' ? 'bg-[#0BC700]' : 'bg-[#FFCC00] text-black'} rounded-full px-2.5 py-1 text-sm`}>
                   {bets.length}
                 </span>
               </div>

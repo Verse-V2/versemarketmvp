@@ -8,6 +8,7 @@ import { ChevronUp, ChevronDown, Send } from "lucide-react";
 import { useState } from "react";
 import { ShareDialog } from "@/components/ui/share-dialog";
 import { Header } from "@/components/ui/header";
+import { useCurrency } from "@/lib/currency-context";
 
 function americanToDecimal(odds: string): number {
   const value = parseInt(odds.replace(/[+\-,]/g, ''));
@@ -54,6 +55,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
   const [showLegs, setShowLegs] = useState(true);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const odds = entry.selections.length > 1 ? calculateCombinedOdds(entry.selections) : entry.selections[0]?.odds;
+  const { currency } = useCurrency();
 
   // Get entry title based on selections
   const entryTitle = entry.selections.length > 1 
@@ -90,7 +92,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
                   {entry.selections[0]?.outcomeName.toLowerCase().includes('no') ? 'No' : 'Yes'}
                 </h3>
               )}
-              <span className="text-lg">{odds}</span>
+              <span className={`text-lg ${entry.currency === 'cash' ? 'text-[#0BC700]' : 'text-[#FFCC00]'}`}>{odds}</span>
             </div>
             <p className="text-sm text-gray-400 uppercase">PREDICTION</p>
           </div>
@@ -101,18 +103,22 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
 
         <div className="flex items-center gap-3">
           <Image
-            src="/verse-coin.png"
-            alt="Verse Coin"
+            src={entry.currency === 'cash' ? "/cash-icon.png" : "/verse-coin.png"}
+            alt={entry.currency === 'cash' ? "Verse Cash" : "Verse Coin"}
             width={24}
             height={24}
             className="object-contain"
           />
           <div className="flex items-center gap-2 text-gray-400">
             <span>WAGER</span>
-            <span className="text-white">${entry.entry.toFixed(2)}</span>
+            <span className={`text-white ${entry.currency === 'cash' ? 'text-[#0BC700]' : 'text-[#FFCC00]'}`}>
+              {entry.currency === 'cash' ? '$' : '₡'}{entry.entry.toFixed(2)}
+            </span>
             <span>•</span>
             <span>TO PAY</span>
-            <span className="text-white">${entry.prize.toFixed(2)}</span>
+            <span className={`text-white ${entry.currency === 'cash' ? 'text-[#0BC700]' : 'text-[#FFCC00]'}`}>
+              {entry.currency === 'cash' ? '$' : '₡'}{entry.prize.toFixed(2)}
+            </span>
           </div>
         </div>
       </div>
@@ -207,6 +213,10 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
 
 export default function EntriesPage() {
   const { state } = useEntries();
+  const { currency } = useCurrency();
+
+  // Filter entries based on current currency
+  const filteredEntries = state.entries.filter(entry => entry.currency === currency);
 
   return (
     <main className="min-h-screen bg-background">
@@ -220,12 +230,12 @@ export default function EntriesPage() {
         </div>
 
         <div className="space-y-4">
-          {state.entries.length === 0 ? (
+          {filteredEntries.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              No entries yet. Place your first bet to get started!
+              No {currency} entries yet. Place your first bet to get started!
             </div>
           ) : (
-            state.entries.map((entry) => (
+            filteredEntries.map((entry) => (
               <EntryCard key={entry.id} entry={entry} />
             ))
           )}
