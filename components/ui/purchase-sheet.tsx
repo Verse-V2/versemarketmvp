@@ -21,7 +21,6 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
   const formattedPoints = points.toLocaleString();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const { coinBalance, cashBalance } = useUserBalance();
   const user = useAuth();
   const db = getFirestore();
 

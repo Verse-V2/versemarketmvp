@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { doc, onSnapshot, getFirestore } from 'firebase/firestore';
-import { auth } from '@/lib/firebase';
 
 interface UserBalanceContextType {
   coinBalance: number;
