@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, AuthError } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -45,9 +45,10 @@ export default function AuthPage() {
 
       // On success, redirect to home page
       router.push('/');
-    } catch (e: any) {
+    } catch (e: unknown) {
       // Handle common Firebase auth errors with user-friendly messages
-      const errorMessage = e.code ? getErrorMessage(e.code) : 'An error occurred';
+      const error = e as AuthError;
+      const errorMessage = error.code ? getErrorMessage(error.code) : 'An error occurred';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -77,9 +78,11 @@ export default function AuthPage() {
     <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
-          <img
+          <Image
             src="/Logo_F_White3x.png"
             alt="Verse Logo"
+            width={256}
+            height={64}
             className="max-w-full w-64"
           />
         </div>
@@ -126,7 +129,7 @@ export default function AuthPage() {
           >
             {isRegister
               ? 'Already have an account? Sign in'
-              : <>Don't have an account? <span className="text-[#0BC700]">Sign up</span></>}
+              : <>Don&apos;t have an account? <span className="text-[#0BC700]">Sign up</span></>}
           </Button>
         </div>
       </div>

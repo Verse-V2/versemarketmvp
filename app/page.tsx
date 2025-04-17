@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
-import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();
