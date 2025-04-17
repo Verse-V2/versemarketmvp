@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Event } from '@/lib/polymarket-service';
 import { MarketCard } from '@/components/ui/market-card';
-import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { Header } from '@/components/ui/header';

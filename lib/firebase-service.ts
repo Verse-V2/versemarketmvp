@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, doc, getDoc, getDocs, query, where, limit, orderBy, onSnapshot } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDoc, getDocs, query, where, limit, orderBy, onSnapshot, DocumentData } from 'firebase/firestore';
 import type { Market } from './polymarket-api';
 import type { Event } from './polymarket-service';
 
@@ -17,6 +17,34 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+
+// Define interfaces for our Firebase data structure
+interface FirebaseMarket {
+  id: string;
+  question?: string;
+  outcomes?: string;
+  outcomePrices?: string;
+  active?: boolean;
+  groupItemTitle?: string;
+  description?: string;
+}
+
+interface FirebaseEvent extends DocumentData {
+  id: string;
+  title?: string;
+  slug?: string;
+  description?: string;
+  volume?: number;
+  liquidity?: number;
+  endDate?: string;
+  startDate?: string;
+  image?: string;
+  active?: boolean;
+  closed?: boolean;
+  markets?: FirebaseMarket[];
+  tags?: Array<{ id?: string; label?: string; slug?: string }>;
+  commentCount?: number;
+}
 
 class FirebaseService {
   // Get a single event by ID
@@ -60,75 +88,10 @@ class FirebaseService {
       }
 
       const querySnapshot = await getDocs(q);
-      const events = querySnapshot.docs.map(doc => doc.data());
+      const events = querySnapshot.docs.map(doc => doc.data() as FirebaseEvent);
 
-      // Transform events to Market interface (similar to existing getMarkets function)
-      return events.map((event: any) => {
-        let outcomes: { name: string; probability: number }[] = [];
-        let topSubmarkets: { id: string; question: string; probability: number; groupItemTitle?: string }[] = [];
-
-        if (event.markets && Array.isArray(event.markets)) {
-          const marketWithOutcomes = event.markets.find((m: any) => 
-            m.active !== false && m.outcomes && m.outcomePrices);
-
-          if (marketWithOutcomes) {
-            try {
-              const outcomeNames = JSON.parse(marketWithOutcomes.outcomes);
-              const outcomePrices = JSON.parse(marketWithOutcomes.outcomePrices);
-              
-              outcomes = outcomeNames.map((name: string, index: number) => ({
-                name: name,
-                probability: parseFloat(outcomePrices[index] || "0")
-              }));
-            } catch (error) {
-              console.error('Error parsing outcomes:', error);
-            }
-          }
-
-          // Process submarkets if there are multiple markets
-          if (event.markets.length > 1) {
-            const processedSubmarkets = event.markets
-              .filter((m: any) => m.active !== false && m.outcomes && m.outcomePrices)
-              .map((market: any) => {
-                try {
-                  const outcomePrices = JSON.parse(market.outcomePrices);
-                  return {
-                    id: market.id || "",
-                    question: market.question || "",
-                    probability: parseFloat(outcomePrices[0] || "0"),
-                    groupItemTitle: market.groupItemTitle
-                  };
-                } catch (error) {
-                  console.error('Error parsing submarkets:', error);
-                  return null;
-                }
-              })
-              .filter((m: any) => m !== null)
-              .sort((a: any, b: any) => b.probability - a.probability)
-              .slice(0, 4);
-
-            topSubmarkets = processedSubmarkets;
-          }
-        }
-
-        return {
-          id: event.id,
-          question: event.title || "Unknown Market",
-          slug: event.slug || `market-${event.id}`,
-          outcomes,
-          volume: event.volume?.toString() || "0",
-          liquidity: event.liquidity?.toString() || "0",
-          endDate: event.endDate || "",
-          category: event.tags?.[0]?.label,
-          imageUrl: event.image,
-          status: event.active ? "active" : "inactive",
-          marketsCount: Array.isArray(event.markets) ? event.markets.length : 1,
-          commentCount: event.commentCount,
-          description: event.description,
-          topSubmarkets: topSubmarkets.length > 0 ? topSubmarkets : undefined,
-          tags: event.tags
-        };
-      });
+      // Transform events to Market interface
+      return events.map(event => this.transformEventToMarket(event));
     } catch (error) {
       console.error("Error fetching events from Firebase:", error);
       return [];
@@ -168,8 +131,7 @@ class FirebaseService {
     
     const unsubscribe = onSnapshot(docRef, (doc) => {
       if (doc.exists()) {
-        const event = doc.data();
-        // Transform the event data to Market format (similar to getEvents transformation)
+        const event = doc.data() as FirebaseEvent;
         const market = this.transformEventToMarket(event);
         callback(market);
       }
@@ -202,7 +164,7 @@ class FirebaseService {
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const events = snapshot.docs.map(doc => doc.data());
+      const events = snapshot.docs.map(doc => doc.data() as FirebaseEvent);
       const markets = events.map(event => this.transformEventToMarket(event));
       callback(markets);
     }, (error) => {
@@ -213,18 +175,18 @@ class FirebaseService {
   }
 
   // Helper function to transform event data to Market format
-  private transformEventToMarket(event: any): Market {
+  private transformEventToMarket(event: FirebaseEvent): Market {
     let outcomes: { name: string; probability: number }[] = [];
     let topSubmarkets: { id: string; question: string; probability: number; groupItemTitle?: string }[] = [];
 
     if (event.markets && Array.isArray(event.markets)) {
-      const marketWithOutcomes = event.markets.find((m: any) => 
+      const marketWithOutcomes = event.markets.find((m: FirebaseMarket) => 
         m.active !== false && m.outcomes && m.outcomePrices);
 
       if (marketWithOutcomes) {
         try {
-          const outcomeNames = JSON.parse(marketWithOutcomes.outcomes);
-          const outcomePrices = JSON.parse(marketWithOutcomes.outcomePrices);
+          const outcomeNames = JSON.parse(marketWithOutcomes.outcomes || '[]');
+          const outcomePrices = JSON.parse(marketWithOutcomes.outcomePrices || '[]');
           
           outcomes = outcomeNames.map((name: string, index: number) => ({
             name: name,
@@ -238,10 +200,10 @@ class FirebaseService {
       // Process submarkets if there are multiple markets
       if (event.markets.length > 1) {
         const processedSubmarkets = event.markets
-          .filter((m: any) => m.active !== false && m.outcomes && m.outcomePrices)
-          .map((market: any) => {
+          .filter((m: FirebaseMarket) => m.active !== false && m.outcomes && m.outcomePrices)
+          .map((market: FirebaseMarket) => {
             try {
-              const outcomePrices = JSON.parse(market.outcomePrices);
+              const outcomePrices = JSON.parse(market.outcomePrices || '[]');
               return {
                 id: market.id || "",
                 question: market.question || "",
@@ -253,8 +215,8 @@ class FirebaseService {
               return null;
             }
           })
-          .filter((m: any) => m !== null)
-          .sort((a: any, b: any) => b.probability - a.probability)
+          .filter((m): m is NonNullable<typeof m> => m !== null)
+          .sort((a, b) => b.probability - a.probability)
           .slice(0, 4);
 
         topSubmarkets = processedSubmarkets;
