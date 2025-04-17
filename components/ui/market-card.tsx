@@ -56,13 +56,49 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
     }
   };
 
+  // Check if odds exceed max limit
+  const isOddsExceedingLimit = (prob: number): boolean => {
+    if (prob <= 0 || prob >= 1) return true;
+    
+    let odds: number;
+    if (prob > 0.5) {
+      odds = Math.round(-100 / (prob - 1));
+    } else {
+      odds = Math.round(100 / prob - 100);
+    }
+    
+    return odds > 3000 || odds < -3000;
+  };
+
+  const handleBetClick = (outcome: { name: string; probability: number }) => {
+    // For submarkets, we need to use the groupItemTitle or cleaned question as the name
+    const outcomeName = outcome.name.includes('?') 
+      ? outcome.name.replace(/Will the |win the 2025 NBA Finals\?/g, '')
+      : outcome.name;
+    const outcomeId = `${market.id}-${outcomeName}`;
+    
+    if (isBetInSlip(outcomeId)) {
+      removeBet(outcomeId);
+    } else {
+      addBet({
+        marketId: market.id,
+        marketQuestion: market.question,
+        outcomeId,
+        outcomeName,
+        odds: toAmericanOdds(outcome.probability),
+        probability: outcome.probability,
+        imageUrl: market.imageUrl,
+      });
+    }
+  };
+
   // Check for odds changes and trigger animation
   useEffect(() => {
     const currentOdds: Record<string, string> = {};
     
     // Collect all current odds
     if (market.topSubmarkets && market.topSubmarkets.length > 0) {
-      market.topSubmarkets.forEach((submarket, index) => {
+      market.topSubmarkets.forEach((submarket) => {
         const outcomeName = submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '');
         const outcomeId = `${market.id}-${outcomeName}`;
         currentOdds[outcomeId] = toAmericanOdds(submarket.probability);
@@ -98,28 +134,6 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
     // Store current odds for next comparison
     previousOddsRef.current = currentOdds;
   }, [market]);
-
-  const handleBetClick = (outcome: { name: string; probability: number }) => {
-    // For submarkets, we need to use the groupItemTitle or cleaned question as the name
-    const outcomeName = outcome.name.includes('?') 
-      ? outcome.name.replace(/Will the |win the 2025 NBA Finals\?/g, '')
-      : outcome.name;
-    const outcomeId = `${market.id}-${outcomeName}`;
-    
-    if (isBetInSlip(outcomeId)) {
-      removeBet(outcomeId);
-    } else {
-      addBet({
-        marketId: market.id,
-        marketQuestion: market.question,
-        outcomeId,
-        outcomeName,
-        odds: toAmericanOdds(outcome.probability),
-        probability: outcome.probability,
-        imageUrl: market.imageUrl,
-      });
-    }
-  };
 
   const hasMultipleMarkets = market.marketsCount && market.marketsCount > 1;
   const hasTopSubmarkets = hasMultipleMarkets && market.topSubmarkets && market.topSubmarkets.length > 0;
@@ -161,29 +175,34 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                   const outcomeId = `${market.id}-${outcomeName}`;
                   const isSelected = isBetInSlip(outcomeId);
                   const isFlashing = flashingOdds[outcomeId];
+                  const isDisabled = isOddsExceedingLimit(submarket.probability);
                   return (
                     <Button 
                       key={index} 
                       variant={isSelected ? "outline" : "outline"}
                       className={`pointer-events-auto w-full justify-between py-2 h-12 mb-1 hover:bg-gray-50 dark:hover:bg-gray-800 group ${
                         isSelected ? 'bg-primary/10 border-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30' : ''
-                      } ${isFlashing ? 'odds-changed' : ''}`}
+                      } ${isFlashing ? 'odds-changed' : ''} ${
+                        isDisabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent dark:hover:bg-transparent' : ''
+                      }`}
                       onClick={(e) => {
                         e.preventDefault();
-                        handleBetClick({
-                          name: outcomeName,
-                          probability: submarket.probability
-                        });
+                        if (!isDisabled) {
+                          handleBetClick({
+                            name: outcomeName,
+                            probability: submarket.probability
+                          });
+                        }
                       }}
+                      disabled={isDisabled}
                     >
                       <span className="text-sm truncate text-left">
                         {outcomeName}
                       </span>
                       <span className={`text-sm font-semibold ${
+                        isDisabled ? 'text-gray-500 dark:text-gray-400' :
                         isSelected ? 'text-primary' :
-                        submarket.probability > 0.5 ? "text-green-700 dark:text-green-400 group-hover:text-green-800 dark:group-hover:text-green-300" : 
-                        submarket.probability > 0.2 ? "text-yellow-700 dark:text-yellow-400 group-hover:text-yellow-800 dark:group-hover:text-yellow-300" : 
-                        "text-red-700 dark:text-red-400 group-hover:text-red-800 dark:group-hover:text-red-300"
+                        'text-green-600 dark:text-green-400 group-hover:text-green-700 dark:group-hover:text-green-300'
                       } ${isFlashing ? 'odds-changed-text' : ''}`}>
                         {toAmericanOdds(submarket.probability)}
                       </span>
@@ -200,6 +219,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                         const outcomeId = `${market.id}-${outcome.name}`;
                         const isSelected = isBetInSlip(outcomeId);
                         const isFlashing = flashingOdds[outcomeId];
+                        const isDisabled = isOddsExceedingLimit(outcome.probability);
                         return (
                           <div key={index} className="flex justify-between items-center">
                             <span className="text-sm font-medium">{outcome.name}</span>
@@ -207,14 +227,17 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                               variant={isSelected ? "outline" : "outline"}
                               className={`pointer-events-auto py-2 h-12 min-w-[100px] ${
                                 isSelected ? 'bg-primary/10 border-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30' :
-                                outcome.name.toLowerCase() === 'yes' 
-                                  ? 'border-green-500 text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-400 dark:hover:bg-green-900/20' 
-                                  : 'border-red-500 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-900/20'
-                              } ${isFlashing ? 'odds-changed' : ''}`}
+                                'border-green-500 text-green-600 hover:bg-green-50 dark:border-green-600 dark:text-green-400 dark:hover:bg-green-900/20'
+                              } ${isFlashing ? 'odds-changed' : ''} ${
+                                isDisabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent dark:hover:bg-transparent border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400' : ''
+                              }`}
                               onClick={(e) => {
                                 e.preventDefault();
-                                handleBetClick(outcome);
+                                if (!isDisabled) {
+                                  handleBetClick(outcome);
+                                }
                               }}
+                              disabled={isDisabled}
                             >
                               <span className={isFlashing ? 'odds-changed-text' : ''}>
                                 {toAmericanOdds(outcome.probability)}
