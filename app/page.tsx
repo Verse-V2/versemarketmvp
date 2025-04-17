@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getMarkets } from "@/lib/polymarket-api";
 import { MarketCard } from "@/components/ui/market-card";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
+import { firebaseService } from "@/lib/firebase-service";
 
 export default function Home() {
   const router = useRouter();
@@ -30,24 +30,23 @@ export default function Home() {
   ];
 
   useEffect(() => {
-    async function fetchMarkets() {
-      setLoading(true);
-      try {
-        // Use tag filter if not "All"
-        const tagFilter = activeTag !== 'All' ? activeTag : undefined;
-        const data = await getMarkets(300, tagFilter);
-        setMarkets(data);
-      } catch (error) {
-        console.error("Failed to fetch markets:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+    if (!user) return;
 
-    // Only fetch if user is authenticated
-    if (user) {
-      fetchMarkets();
-    }
+    setLoading(true);
+    
+    // Use tag filter if not "All"
+    const tagFilter = activeTag !== 'All' ? activeTag : undefined;
+    
+    // Set up real-time listener for market updates
+    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 300, (updatedMarkets) => {
+      setMarkets(updatedMarkets);
+      setLoading(false);
+    });
+
+    // Cleanup listener when component unmounts or filter changes
+    return () => {
+      unsubscribe();
+    };
   }, [activeTag, user]);
 
   // Show loading state while checking auth
@@ -64,50 +63,46 @@ export default function Home() {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <Header />
-      <main className="flex min-h-screen flex-col items-center bg-white dark:bg-black p-4 md:p-8 lg:p-24">
-        <div className="w-full max-w-7xl">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4">Timeline</h1>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">Welcome, {user.email}</p>
-            
-            <div className="relative mb-4">
-              <div className="flex overflow-x-auto pb-2 space-x-2 -mx-4 px-4 no-scrollbar">
-                {categories.map((category) => (
-                  <Button 
-                    key={category} 
-                    variant={category === activeTag ? "default" : "outline"}
-                    size="sm"
-                    className="whitespace-nowrap"
-                    onClick={() => handleTagClick(category)}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-              <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-black to-transparent pointer-events-none"></div>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-            </div>
-          ) : markets.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {markets.map((market) => (
-                <MarketCard key={market.id} market={market} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-xl">No markets available for this category</p>
-              <p className="text-gray-500 dark:text-gray-400 mt-2">Try selecting a different category</p>
-            </div>
-          )}
+      
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex flex-wrap gap-2 mb-8">
+          {categories.map((tag) => (
+            <Button
+              key={tag}
+              variant={activeTag === tag ? "default" : "outline"}
+              onClick={() => handleTagClick(tag)}
+              className="text-sm"
+            >
+              {tag}
+            </Button>
+          ))}
         </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-[300px] bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg"
+              />
+            ))}
+          </div>
+        ) : markets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {markets.map((market) => (
+              <MarketCard key={market.id} market={market} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">
+              No markets found for the selected category.
+            </p>
+          </div>
+        )}
       </main>
-    </>
+    </div>
   );
 }

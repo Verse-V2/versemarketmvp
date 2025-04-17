@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Event } from '@/lib/polymarket-service';
-import { polymarketService } from '@/lib/polymarket-service';
 import { MarketCard } from '@/components/ui/market-card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -13,6 +12,7 @@ import { Market } from '@/lib/polymarket-api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { firebaseService } from '@/lib/firebase-service';
 
 // Dynamically import the client-side chart component
 const SimplePriceChart = dynamic(() => import('@/components/simple-price-chart'), {
@@ -66,7 +66,7 @@ function EventDetails() {
       }
 
       try {
-        const data = await polymarketService.getEventById(params.id as string);
+        const data = await firebaseService.getEventById(params.id as string);
         if (!data) {
           throw new Error('Event not found');
         }
@@ -186,6 +186,17 @@ function EventDetails() {
         }
         
         setError(null);
+
+        // Set up real-time listener for market updates
+        const unsubscribe = firebaseService.onMarketUpdate(data.id, (updatedMarket) => {
+          setMarketData(updatedMarket);
+        });
+
+        // Cleanup listener when component unmounts or event ID changes
+        return () => {
+          unsubscribe();
+        };
+
       } catch (error) {
         console.error('Error loading event:', error);
         setError(error instanceof Error ? error.message : 'Failed to load event details');
@@ -204,76 +215,34 @@ function EventDetails() {
       // Extract tag slugs for filtering
       const tagSlugs = tags.map(tag => tag.slug || '');
       
-      // Fetch related events from API - This is a simplified example
-      // In a real implementation, you'd call your API with the tag information
-      let relatedData: RelatedEvent[] = [];
+      // Fetch related events from Firebase
+      const response = await firebaseService.getEventsByTags(tagSlugs);
       
-      try {
-        // Mock API call - replace with actual API call
-        const response = await polymarketService.getEventsByTags(tagSlugs);
-        
-        // Filter out the current event and limit to 4 related events
-        relatedData = response
-          .filter((event: Event) => event.id !== currentEventId)
-          .slice(0, 4)
-          .map((event: Event) => {
-            let probability = 0;
-            if (event.markets && event.markets.length > 0 && event.markets[0].outcomePrices) {
-              try {
-                const prices = JSON.parse(event.markets[0].outcomePrices);
-                probability = parseFloat(prices[0] || "0");
-              } catch (e) {
-                console.error('Error parsing related event prices:', e);
-              }
+      // Filter out the current event and limit to 4 related events
+      const relatedData = response
+        .filter((event: Event) => event.id !== currentEventId)
+        .slice(0, 4)
+        .map((event: Event) => {
+          let probability = 0;
+          if (event.markets && event.markets.length > 0 && event.markets[0].outcomePrices) {
+            try {
+              const prices = JSON.parse(event.markets[0].outcomePrices);
+              probability = parseFloat(prices[0] || "0");
+            } catch (e) {
+              console.error('Error parsing related event prices:', e);
             }
-            
-            return {
-              id: event.id,
-              slug: event.slug,
-              title: event.title,
-              image: event.image || '',
-              probability: probability,
-              endDate: event.endDate,
-              volume: event.volume?.toString()
-            };
-          });
-      } catch (error) {
-        console.error('Error fetching related events:', error);
-        
-        // Fallback to some sample related events if API fails
-        // In a real implementation, you might want to handle this differently
-        relatedData = [
-          {
-            id: "12815",
-            slug: "nba-champion-2024-2025",
-            title: "NBA Champion",
-            image: "https://polymarket-upload.s3.us-east-2.amazonaws.com/nba-champion-2024-2025-NiYghxjb7928.png",
-            endDate: "2025-06-23T12:00:00Z",
-            volume: "1602633105",
-          },
-          {
-            id: "507871",
-            slug: "will-the-los-angeles-lakers-win-the-2025-nba-finals",
-            title: "Will the Los Angeles Lakers win the 2025 NBA Finals?",
-            image: "https://polymarket-upload.s3.us-east-2.amazonaws.com/New+NBA+Team+Logos+/LAL.png",
-            probability: 0.0685,
-          },
-          {
-            id: "507884",
-            slug: "will-the-oklahoma-city-thunder-win-the-2025-nba-finals",
-            title: "Will the Oklahoma City Thunder win the 2025 NBA Finals?",
-            image: "https://polymarket-upload.s3.us-east-2.amazonaws.com/New+NBA+Team+Logos+/OKC.png",
-            probability: 0.325,
-          },
-          {
-            id: "507857",
-            slug: "will-the-boston-celtics-win-the-2025-nba-finals",
-            title: "Will the Boston Celtics win the 2025 NBA Finals?",
-            image: "https://polymarket-upload.s3.us-east-2.amazonaws.com/New+NBA+Team+Logos+/BOS.png",
-            probability: 0.285,
           }
-        ];
-      }
+          
+          return {
+            id: event.id,
+            slug: event.slug,
+            title: event.title,
+            image: event.image || '',
+            probability: probability,
+            endDate: event.endDate,
+            volume: event.volume?.toString()
+          };
+        });
       
       setRelatedEvents(relatedData);
     } catch (error) {
@@ -285,16 +254,26 @@ function EventDetails() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto max-w-3xl px-4 py-8">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !event || !marketData) {
     return (
-      <div className="text-center text-red-500 py-8">
-        {error || 'Event not found'}
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto max-w-3xl px-4 py-8">
+          <div className="text-center text-red-500 py-8">
+            {error || 'Event not found'}
+          </div>
+        </div>
       </div>
     );
   }
@@ -319,110 +298,72 @@ function EventDetails() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-      <div className="mb-6">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="flex items-center gap-2">
-            <ArrowLeftIcon className="h-4 w-4" />
-            Back to Timeline
-          </Button>
-        </Link>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="container mx-auto max-w-3xl px-4 py-8">
+        <div className="mb-6">
+          <Link href="/" className="inline-flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
+            Back to Markets
+          </Link>
+        </div>
 
-      <div className="space-y-6">
-        <MarketCard market={marketData} hideViewDetails={true} hideComments={true} />
-        
-        {/* Price Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Price History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] w-full">
-              <SimplePriceChart 
-                hasMultipleMarkets={!!(marketData.marketsCount && marketData.marketsCount > 1)}
-                topSubmarkets={marketData.topSubmarkets}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Rules Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Rules</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {marketData.description}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Comments Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Comments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex gap-3 pb-4 border-b border-gray-100 dark:border-gray-800">
-                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full shrink-0"></div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <p className="text-sm font-medium">User123</p>
-                    <p className="text-xs text-gray-500">2 hours ago</p>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    I think the odds are undervalued. Based on recent developments, this is more likely than the market suggests.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full shrink-0"></div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <p className="text-sm font-medium">Trader456</p>
-                    <p className="text-xs text-gray-500">5 hours ago</p>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Just added more to my position. The sentiment seems to be shifting based on latest news.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Related Events Card */}
-        {relatedEvents.length > 0 && (
+        <div className="space-y-6">
+          <MarketCard market={marketData} hideViewDetails />
+          
+          {/* Price Chart */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Related</CardTitle>
+              <CardTitle>Price History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SimplePriceChart />
+            </CardContent>
+          </Card>
+
+          {/* Rules Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Rules</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  {marketData.description}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Related Events */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Related Events</CardTitle>
             </CardHeader>
             <CardContent>
               {loadingRelated ? (
-                <div className="flex justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+                <div className="space-y-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-24 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg" />
+                  ))}
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              ) : relatedEvents.length > 0 ? (
+                <div className="space-y-4">
                   {relatedEvents.map((relEvent) => (
                     <div key={relEvent.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                       <Link href={`/events/${relEvent.id}`} className="block">
-                        <div className="flex items-center p-3">
-                          <div className="w-12 h-12 mr-3 rounded-md overflow-hidden flex-shrink-0">
-                            <Image 
-                              src={relEvent.image} 
-                              alt={relEvent.title}
-                              width={48}
-                              height={48}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+                        <div className="flex p-4 gap-4">
+                          {relEvent.image && (
+                            <div className="relative w-16 h-16 flex-shrink-0">
+                              <Image
+                                src={relEvent.image}
+                                alt={relEvent.title}
+                                fill
+                                className="object-cover rounded-lg"
+                              />
+                            </div>
+                          )}
+                          
                           <div className="flex-1">
                             <p className="font-semibold text-sm line-clamp-2">{relEvent.title}</p>
                             <div className="flex justify-between items-center mt-1">
@@ -450,20 +391,15 @@ function EventDetails() {
                     </div>
                   ))}
                 </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">No related events found.</p>
               )}
             </CardContent>
           </Card>
-        )}
+        </div>
       </div>
     </div>
   );
 }
 
-export default function EventPage() {
-  return (
-    <>
-      <Header />
-      <EventDetails />
-    </>
-  );
-} 
+export default EventDetails; 
