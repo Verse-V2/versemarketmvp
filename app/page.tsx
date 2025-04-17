@@ -1,16 +1,27 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { getMarkets } from "@/lib/polymarket-api";
 import { MarketCard } from "@/components/ui/market-card";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
+import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
 
 export default function Home() {
+  const router = useRouter();
+  const user = useAuth();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTag, setActiveTag] = useState('All');
+
+  // Redirect to auth page if not logged in
+  useEffect(() => {
+    if (user === null) {
+      router.push('/auth');
+    }
+  }, [user, router]);
 
   // All possible tag options
   const categories = [
@@ -33,8 +44,16 @@ export default function Home() {
       }
     }
 
-    fetchMarkets();
-  }, [activeTag]);
+    // Only fetch if user is authenticated
+    if (user) {
+      fetchMarkets();
+    }
+  }, [activeTag, user]);
+
+  // If not authenticated, show nothing while redirecting
+  if (!user) {
+    return null;
+  }
 
   const handleTagClick = (tag: string) => {
     setActiveTag(tag);
@@ -47,7 +66,7 @@ export default function Home() {
         <div className="w-full max-w-7xl">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Timeline</h1>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">Explore the latest from Verse</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">Welcome, {user.email}</p>
             
             <div className="relative mb-4">
               <div className="flex overflow-x-auto pb-2 space-x-2 -mx-4 px-4 no-scrollbar">
