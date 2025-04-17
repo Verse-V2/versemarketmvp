@@ -55,7 +55,6 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
   const [showLegs, setShowLegs] = useState(true);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const odds = entry.selections.length > 1 ? calculateCombinedOdds(entry.selections) : entry.selections[0]?.odds;
-  const { currency } = useCurrency();
 
   // Get entry title based on selections
   const entryTitle = entry.selections.length > 1 
