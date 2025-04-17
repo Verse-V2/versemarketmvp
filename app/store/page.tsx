@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PackageCard } from "@/components/ui/package-card";
 import { PurchaseSheet } from "@/components/ui/purchase-sheet";
 import { Header } from "@/components/ui/header";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
 
 const packages = [
   { points: 5000, bonusCash: 5.00, price: 5.00 },
@@ -16,6 +18,19 @@ const packages = [
 
 export default function StorePage() {
   const [selectedPackage, setSelectedPackage] = useState<typeof packages[0] | null>(null);
+  const user = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  // If not authenticated, show nothing while redirecting
+  if (!user) {
+    return null;
+  }
 
   const handlePurchase = (pkg: typeof packages[0]) => {
     setSelectedPackage(pkg);

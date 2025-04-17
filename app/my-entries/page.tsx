@@ -9,6 +9,9 @@ import { useState } from "react";
 import { ShareDialog } from "@/components/ui/share-dialog";
 import { Header } from "@/components/ui/header";
 import { useCurrency } from "@/lib/currency-context";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 function americanToDecimal(odds: string): number {
   const value = parseInt(odds.replace(/[+\-,]/g, ''));
@@ -213,6 +216,19 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
 export default function EntriesPage() {
   const { state } = useEntries();
   const { currency } = useCurrency();
+  const user = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  // If not authenticated, show nothing while redirecting
+  if (!user) {
+    return null;
+  }
 
   // Filter entries based on current currency
   const filteredEntries = state.entries.filter(entry => entry.currency === currency);
