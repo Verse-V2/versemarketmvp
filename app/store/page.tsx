@@ -23,7 +23,7 @@ export default function StorePage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login');
+      router.push('/auth');
     }
   }, [user, router]);
 

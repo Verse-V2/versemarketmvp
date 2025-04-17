@@ -221,7 +221,7 @@ export default function EntriesPage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login');
+      router.push('/auth');
     }
   }, [user, router]);
 
