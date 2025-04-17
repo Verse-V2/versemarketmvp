@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, ArrowRight } from "lucide-react";
 import { useBetSlip } from "@/lib/bet-slip-context";
+import { useEffect, useRef, useState } from "react";
 
 interface MarketCardProps {
   market: Market;
@@ -17,6 +18,8 @@ interface MarketCardProps {
 
 export function MarketCard({ market, hideViewDetails = false, hideComments = false }: MarketCardProps) {
   const { addBet, removeBet, isBetInSlip } = useBetSlip();
+  const previousOddsRef = useRef<Record<string, string>>({});
+  const [flashingOdds, setFlashingOdds] = useState<Record<string, boolean>>({});
 
   // Format the end date
   const formattedEndDate = market.endDate
@@ -52,6 +55,49 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
       return `+${odds.toLocaleString()}`;
     }
   };
+
+  // Check for odds changes and trigger animation
+  useEffect(() => {
+    const currentOdds: Record<string, string> = {};
+    
+    // Collect all current odds
+    if (market.topSubmarkets && market.topSubmarkets.length > 0) {
+      market.topSubmarkets.forEach((submarket, index) => {
+        const outcomeName = submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '');
+        const outcomeId = `${market.id}-${outcomeName}`;
+        currentOdds[outcomeId] = toAmericanOdds(submarket.probability);
+      });
+    } else if (market.outcomes && market.outcomes.length > 0) {
+      market.outcomes.forEach((outcome) => {
+        const outcomeId = `${market.id}-${outcome.name}`;
+        currentOdds[outcomeId] = toAmericanOdds(outcome.probability);
+      });
+    }
+    
+    // Check which odds have changed
+    const newFlashingOdds: Record<string, boolean> = {};
+    Object.keys(currentOdds).forEach((outcomeId) => {
+      if (previousOddsRef.current[outcomeId] && 
+          previousOddsRef.current[outcomeId] !== currentOdds[outcomeId]) {
+        newFlashingOdds[outcomeId] = true;
+      }
+    });
+    
+    // If any odds changed, update state and set timeout to remove animation
+    if (Object.keys(newFlashingOdds).length > 0) {
+      setFlashingOdds(newFlashingOdds);
+      
+      // Clear animation after it completes
+      const timer = setTimeout(() => {
+        setFlashingOdds({});
+      }, 1000); // Animation duration
+      
+      return () => clearTimeout(timer);
+    }
+    
+    // Store current odds for next comparison
+    previousOddsRef.current = currentOdds;
+  }, [market]);
 
   const handleBetClick = (outcome: { name: string; probability: number }) => {
     // For submarkets, we need to use the groupItemTitle or cleaned question as the name
@@ -114,13 +160,14 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                   const outcomeName = submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '');
                   const outcomeId = `${market.id}-${outcomeName}`;
                   const isSelected = isBetInSlip(outcomeId);
+                  const isFlashing = flashingOdds[outcomeId];
                   return (
                     <Button 
                       key={index} 
                       variant={isSelected ? "outline" : "outline"}
                       className={`pointer-events-auto w-full justify-between py-2 h-12 mb-1 hover:bg-gray-50 dark:hover:bg-gray-800 group ${
                         isSelected ? 'bg-primary/10 border-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30' : ''
-                      }`}
+                      } ${isFlashing ? 'odds-changed' : ''}`}
                       onClick={(e) => {
                         e.preventDefault();
                         handleBetClick({
@@ -137,7 +184,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                         submarket.probability > 0.5 ? "text-green-700 dark:text-green-400 group-hover:text-green-800 dark:group-hover:text-green-300" : 
                         submarket.probability > 0.2 ? "text-yellow-700 dark:text-yellow-400 group-hover:text-yellow-800 dark:group-hover:text-yellow-300" : 
                         "text-red-700 dark:text-red-400 group-hover:text-red-800 dark:group-hover:text-red-300"
-                      }`}>
+                      } ${isFlashing ? 'odds-changed-text' : ''}`}>
                         {toAmericanOdds(submarket.probability)}
                       </span>
                     </Button>
@@ -152,6 +199,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                       {market.outcomes.slice(0, 2).map((outcome, index) => {
                         const outcomeId = `${market.id}-${outcome.name}`;
                         const isSelected = isBetInSlip(outcomeId);
+                        const isFlashing = flashingOdds[outcomeId];
                         return (
                           <div key={index} className="flex justify-between items-center">
                             <span className="text-sm font-medium">{outcome.name}</span>
@@ -162,13 +210,15 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                                 outcome.name.toLowerCase() === 'yes' 
                                   ? 'border-green-500 text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-400 dark:hover:bg-green-900/20' 
                                   : 'border-red-500 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-900/20'
-                              }`}
+                              } ${isFlashing ? 'odds-changed' : ''}`}
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleBetClick(outcome);
                               }}
                             >
-                              {toAmericanOdds(outcome.probability)}
+                              <span className={isFlashing ? 'odds-changed-text' : ''}>
+                                {toAmericanOdds(outcome.probability)}
+                              </span>
                             </Button>
                           </div>
                         );
@@ -203,6 +253,40 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
             </CardFooter>
           )}
         </div>
+        
+        <style jsx global>{`
+          @keyframes odds-flash {
+            0% { background-color: rgba(34, 197, 94, 0); }
+            50% { background-color: rgba(34, 197, 94, 0.3); }
+            100% { background-color: rgba(34, 197, 94, 0); }
+          }
+          
+          .odds-changed {
+            animation: odds-flash 1s ease-in-out;
+          }
+          
+          @keyframes text-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+          }
+          
+          .odds-changed-text {
+            animation: text-pulse 1s ease-in-out;
+            display: inline-block;
+          }
+          
+          /* Dark mode adjustments */
+          .dark .odds-changed {
+            animation-name: odds-flash-dark;
+          }
+          
+          @keyframes odds-flash-dark {
+            0% { background-color: rgba(34, 197, 94, 0); }
+            50% { background-color: rgba(34, 197, 94, 0.2); }
+            100% { background-color: rgba(34, 197, 94, 0); }
+          }
+        `}</style>
       </Card>
     </Link>
   );
