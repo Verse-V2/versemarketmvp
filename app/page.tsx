@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { MarketCard } from "@/components/ui/market-card";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
 import { firebaseService } from "@/lib/firebase-service";
+import { Trophy, ChevronRight } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -79,6 +81,22 @@ export default function Home() {
             </Button>
           ))}
         </div>
+
+        {/* LeagueSync Promotional Header */}
+        <Link href="/leagueSyncHome" className="block mb-8 group">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg flex items-center justify-between transition-all duration-300 ease-in-out hover:from-green-600 hover:to-green-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 relative overflow-hidden">
+            {/* Subtle Background Pattern (Optional - using pseudo-elements) */}
+            <div className="absolute inset-0 bg-[url('/path/to/your/subtle-pattern.svg')] opacity-10 mix-blend-multiply pointer-events-none"></div>
+
+            <div className="flex items-center space-x-3">
+              <div className="bg-white/20 rounded-full p-2">
+                <Trophy className="h-6 w-6 text-white" />
+              </div>
+              <span className="font-semibold text-lg">Play League Sync</span>
+            </div>
+            <ChevronRight className="h-6 w-6 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </Link>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
