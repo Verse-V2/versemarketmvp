@@ -28,6 +28,11 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
   const [bets, setBets] = useState<Bet[]>([]);
 
   const addBet = useCallback((bet: Bet) => {
+    console.log('Adding bet to slip:', {
+      marketQuestion: bet.marketQuestion,
+      outcomeName: bet.outcomeName,
+      odds: bet.odds
+    });
     setBets(prev => {
       // Check if bet already exists
       const exists = prev.some(b => b.outcomeId === bet.outcomeId);

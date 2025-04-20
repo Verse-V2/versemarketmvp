@@ -74,15 +74,22 @@ interface RawEvent {
 export interface PlaceEntryRequest {
   userId: string;
   amount: number;
+  decimalOdds: number;
+  moneylineOdds: string | null;
+  isCash: boolean;
+  entryType: 'single' | 'parlay';
   picks: Array<{
+    id: string;
     marketId: string;
     eventId: string;
-    question: string;
-    selectedOutcome: string;
-    outcomePrices: string;
-    outcomes: string[];
+    eventTitle: string;
+    marketTitle: string;
+    outcome: string;
+    decimalOdds: string;
+    moneylineOdds: string;
+    timestamp: Date;
+    status: string;
   }>;
-  isCash: boolean;
 }
 
 class PolymarketService {

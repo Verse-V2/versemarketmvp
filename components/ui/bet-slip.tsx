@@ -168,15 +168,43 @@ export function BetSlip() {
         userId: userData.id,
         amount: entry,
         isCash: currency === 'cash',
-        picks: bets.map(bet => ({
-          marketId: bet.marketId,
-          eventId: bet.marketId, // Using marketId as eventId for now
-          question: bet.marketQuestion,
-          selectedOutcome: bet.outcomeName,
-          outcomePrices: JSON.stringify([bet.probability, 1 - bet.probability]),
-          outcomes: [bet.outcomeName, bet.outcomeName === 'Yes' ? 'No' : 'Yes']
-        }))
+        entryType: bets.length === 1 ? ('single' as const) : ('parlay' as const),
+        decimalOdds: bets.reduce((acc, bet) => acc * americanToDecimal(bet.odds), 1.0),
+        moneylineOdds: bets.length === 1 ? bets[0].odds : null,
+        picks: bets.map(bet => {
+          console.log('Processing bet for entry:', {
+            marketQuestion: bet.marketQuestion,
+            outcomeName: bet.outcomeName,
+            outcomeNameLower: bet.outcomeName.toLowerCase(),
+            outcome: bet.outcomeName.toLowerCase() === 'yes' ? 'yes' : 'no'
+          });
+          return {
+            id: crypto.randomUUID(),
+            marketId: bet.marketId,
+            eventId: bet.marketId, // Using marketId as eventId for now
+            eventTitle: bet.marketQuestion,
+            marketTitle: bet.outcomeName,
+            outcome: bet.outcomeName.toLowerCase() === 'yes' || bet.outcomeName.toLowerCase() === 'no' 
+              ? bet.outcomeName.toLowerCase() 
+              : 'yes', // For non-binary markets like team selections, the selection is always "yes"
+            decimalOdds: americanToDecimal(bet.odds).toString(),
+            moneylineOdds: bet.odds,
+            timestamp: new Date(),
+            status: "submitted"
+          };
+        })
       };
+
+      console.log('Final request:', {
+        amount: request.amount,
+        isCash: request.isCash,
+        entryType: request.entryType,
+        picks: request.picks.map(pick => ({
+          eventTitle: pick.eventTitle,
+          marketTitle: pick.marketTitle,
+          outcome: pick.outcome
+        }))
+      });
 
       const result = await polymarketService.placeEntry(request);
 

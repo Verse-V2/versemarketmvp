@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { collection, query, where, orderBy, onSnapshot, getFirestore, Timestamp, doc, getDoc, addDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
+import { useCurrency } from '@/lib/currency-context';
 
 export interface PolymarketPick {
   eventId: string;
@@ -8,8 +9,13 @@ export interface PolymarketPick {
   marketId: string;
   outcomePrices: string;
   outcomes: string[];
-  question: string;
-  selectedOutcome: string;
+  question?: string;
+  selectedOutcome?: string;
+  eventTitle?: string;
+  marketTitle?: string;
+  outcome?: string;
+  decimalOdds?: string;
+  moneylineOdds?: string;
   status: string;
   timestamp: Timestamp;
 }
@@ -23,42 +29,11 @@ export interface PolymarketEntry {
   transactionId: string;
   userId: string;
   wager: number;
+  moneylineOdds: string | null;
+  decimalOdds: number;
+  isCash: boolean;
 }
 
-// Temporary function to create a test entry
-export async function createTestEntry(userId: string) {
-  const db = getFirestore();
-  try {
-    const testEntry = {
-      createdAt: Timestamp.now(),
-      userId: userId,
-      picks: [
-        {
-          eventId: "test-event-1",
-          id: "test-pick-1",
-          marketId: "test-market-1",
-          outcomePrices: "+150",
-          outcomes: ["Yes", "No"],
-          question: "Will this test entry work?",
-          selectedOutcome: "Yes",
-          status: "pending",
-          timestamp: Timestamp.now()
-        }
-      ],
-      status: "pending",
-      totalPayout: 150,
-      transactionId: "test-transaction-1",
-      wager: 100
-    };
-
-    const docRef = await addDoc(collection(db, 'polymarketEntry'), testEntry);
-    console.log('Test entry created with ID:', docRef.id);
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating test entry:', error);
-    throw error;
-  }
-}
 
 export function usePolymarketEntries() {
   const [entries, setEntries] = useState<PolymarketEntry[]>([]);
@@ -66,6 +41,7 @@ export function usePolymarketEntries() {
   const [error, setError] = useState<Error | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const user = useAuth();
+  const { currency } = useCurrency();
 
   // First effect to fetch the user's ID from their document
   useEffect(() => {
@@ -124,6 +100,7 @@ export function usePolymarketEntries() {
     const userEntriesQuery = query(
       entriesRef,
       where('userId', '==', userId),
+      where('isCash', '==', currency === 'cash'),
       orderBy('createdAt', 'desc')
     );
 
@@ -132,6 +109,7 @@ export function usePolymarketEntries() {
       collection: entriesRef.path,
       conditions: {
         userId: userId,
+        isCash: currency === 'cash',
         orderBy: 'createdAt desc'
       }
     });
@@ -186,7 +164,7 @@ export function usePolymarketEntries() {
     );
 
     return () => unsubscribe();
-  }, [userId]);
+  }, [userId, currency]);
 
   return { entries, isLoading, error };
 } 

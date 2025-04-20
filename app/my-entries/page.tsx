@@ -62,12 +62,12 @@ function formatDate(timestamp: Timestamp) {
 function EntryCard({ entry }: { entry: PolymarketEntry }) {
   const [showLegs, setShowLegs] = useState(true);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const odds = entry.picks.length > 1 ? calculateCombinedOdds(entry.picks) : entry.picks[0]?.outcomePrices;
+  const odds = entry.picks.length > 1 ? entry.moneylineOdds : entry.picks[0]?.moneylineOdds;
 
   // Get entry title based on picks
   const entryTitle = entry.picks.length > 1 
     ? `${entry.picks.length} Pick Parlay` 
-    : entry.picks[0]?.question || 'Prediction';
+    : (entry.picks[0]?.eventTitle || entry.picks[0]?.question || 'Prediction');
 
   return (
     <Card className="bg-[#131415] text-white overflow-hidden p-0 rounded-lg flex flex-col">
@@ -79,9 +79,9 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
         entryTitle={entryTitle}
         selections={entry.picks.map(pick => ({
           id: pick.id,
-          marketQuestion: pick.question,
-          outcomeName: pick.selectedOutcome,
-          odds: pick.outcomePrices,
+          marketQuestion: pick.eventTitle || pick.question || '',
+          outcomeName: pick.outcome || pick.selectedOutcome || '',
+          odds: pick.moneylineOdds || pick.outcomePrices,
           imageUrl: '' // TODO: Add image URL if available
         }))}
         entry={{
@@ -102,7 +102,7 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
                 </h3>
               ) : (
                 <h3 className="text-lg font-semibold m-0">
-                  {entry.picks[0]?.selectedOutcome}
+                  {entry.picks[0]?.outcome || entry.picks[0]?.selectedOutcome || ''}
                 </h3>
               )}
               <span className="text-lg text-[#0BC700]">{odds}</span>
@@ -156,19 +156,19 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
                   <div className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full border-2 border-gray-600 shrink-0" />
                     <h4 className="text-lg font-semibold">
-                      {pick.selectedOutcome}
+                      {pick.outcome || pick.selectedOutcome || ''}
                     </h4>
                   </div>
                   <p className="text-sm text-gray-400 ml-8">
-                    {pick.question.split(' - ')[0]}
+                    {pick.eventTitle || (pick.question ? pick.question.split(' - ')[0] : '')}
                   </p>
                   <div className="flex items-center gap-3 ml-8">
                     <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2D]" />
-                    <span>{pick.selectedOutcome}</span>
+                    <span>{pick.marketTitle || pick.selectedOutcome || ''}</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <span className="text-lg">{pick.outcomePrices}</span>
+                  <span className="text-lg">{pick.moneylineOdds || pick.outcomePrices}</span>
                 </div>
               </div>
             </div>
