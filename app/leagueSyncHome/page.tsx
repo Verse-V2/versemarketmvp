@@ -33,6 +33,9 @@ interface Config {
   currentNFLWeek: string;
   currentSeason: string;
   seasonStatus: string;
+  lastUpdated?: {
+    __time__: number;
+  };
 }
 
 interface FantasyTeamMatchup {

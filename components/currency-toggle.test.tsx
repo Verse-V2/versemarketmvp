@@ -4,6 +4,15 @@ import '@testing-library/jest-dom';
 import { CurrencyToggle } from './currency-toggle';
 import { useCurrency } from '@/lib/currency-context';
 import { useUserBalance } from '@/lib/user-balance-context';
+import { ImageProps } from 'next/image';
+import type { Mock } from 'vitest';
+
+// Define types for the mocked components
+interface MockImageProps extends Omit<ImageProps, 'src' | 'alt' | 'className'> {
+  src: string;
+  alt: string;
+  className?: string;
+}
 
 // Mock the hooks
 vi.mock('@/lib/currency-context', () => ({
@@ -16,7 +25,7 @@ vi.mock('@/lib/user-balance-context', () => ({
 
 // Mock the Next.js Image component
 vi.mock('next/image', () => ({
-  default: ({ src, alt, className }: any) => (
+  default: ({ src, alt, className }: MockImageProps) => (
     <img src={src} alt={alt} className={className} data-testid="mock-image" />
   ),
 }));
@@ -27,12 +36,12 @@ describe('CurrencyToggle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default mock return values
-    (useCurrency as any).mockReturnValue({
+    (useCurrency as Mock).mockReturnValue({
       currency: 'cash',
       setCurrency: mockSetCurrency,
     });
     
-    (useUserBalance as any).mockReturnValue({
+    (useUserBalance as Mock).mockReturnValue({
       coinBalance: 1000,
       cashBalance: 50.75,
       isLoading: false,
@@ -56,7 +65,7 @@ describe('CurrencyToggle', () => {
 
   it('renders coins button as active when currency is coins', () => {
     // Override the mock to return coins as currency
-    (useCurrency as any).mockReturnValue({
+    (useCurrency as Mock).mockReturnValue({
       currency: 'coins',
       setCurrency: mockSetCurrency,
     });
@@ -77,7 +86,7 @@ describe('CurrencyToggle', () => {
 
   it('calls setCurrency with "cash" when cash button is clicked', () => {
     // Set initial currency to coins
-    (useCurrency as any).mockReturnValue({
+    (useCurrency as Mock).mockReturnValue({
       currency: 'coins',
       setCurrency: mockSetCurrency,
     });
@@ -103,7 +112,7 @@ describe('CurrencyToggle', () => {
 
   it('shows loading state when isLoading is true', () => {
     // Override the mock to set isLoading to true
-    (useUserBalance as any).mockReturnValue({
+    (useUserBalance as Mock).mockReturnValue({
       coinBalance: 0,
       cashBalance: 0,
       isLoading: true,

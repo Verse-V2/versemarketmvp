@@ -3,6 +3,20 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MarketCard } from './market-card';
 import { useBetSlip } from '@/lib/bet-slip-context';
 import { useCurrency } from '@/lib/currency-context';
+import type { Mock } from 'vitest';
+import { ImageProps } from 'next/image';
+import { LinkProps } from 'next/link';
+
+// Define types for the mocked components
+interface MockImageProps extends Omit<ImageProps, 'src' | 'alt'> {
+  src: string;
+  alt: string;
+}
+
+interface MockLinkProps extends Omit<LinkProps, 'href'> {
+  href: string;
+  children: React.ReactNode;
+}
 
 // Mock the hooks
 vi.mock('@/lib/bet-slip-context', () => ({
@@ -20,11 +34,11 @@ vi.mock('date-fns', () => ({
 
 // Mock Next.js components
 vi.mock('next/image', () => ({
-  default: ({ src, alt }: any) => <img src={src} alt={alt} data-testid="mock-image" />,
+  default: ({ src, alt }: MockImageProps) => <img src={src} alt={alt} data-testid="mock-image" />,
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ href, children }: any) => <a href={href}>{children}</a>,
+  default: ({ href, children }: MockLinkProps) => <a href={href}>{children}</a>,
 }));
 
 describe('MarketCard', () => {
@@ -42,7 +56,8 @@ describe('MarketCard', () => {
       { name: 'No', probability: 0.65 }
     ],
     topSubmarkets: undefined,
-    marketsCount: 1
+    marketsCount: 1,
+    status: 'open'
   };
 
   // Mock bet slip functions
@@ -54,13 +69,13 @@ describe('MarketCard', () => {
     vi.clearAllMocks();
     
     // Default mock implementation
-    (useBetSlip as any).mockReturnValue({
+    (useBetSlip as Mock).mockReturnValue({
       addBet: mockAddBet,
       removeBet: mockRemoveBet,
       isBetInSlip: mockIsBetInSlip.mockReturnValue(false),
     });
     
-    (useCurrency as any).mockReturnValue({
+    (useCurrency as Mock).mockReturnValue({
       currency: 'cash',
     });
   });
@@ -159,16 +174,19 @@ describe('MarketCard', () => {
       marketsCount: 3,
       topSubmarkets: [
         { 
+          id: 'team-a',
           groupItemTitle: 'Team A', 
           question: 'Will Team A win?', 
           probability: 0.25 
         },
         { 
+          id: 'team-b',
           groupItemTitle: 'Team B', 
           question: 'Will Team B win?', 
           probability: 0.35 
         },
         { 
+          id: 'team-c',
           groupItemTitle: 'Team C', 
           question: 'Will Team C win?', 
           probability: 0.40 
