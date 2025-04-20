@@ -3,7 +3,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useEntries } from "@/lib/entries-context";
 import { ChevronUp, ChevronDown, Send } from "lucide-react";
 import { useState } from "react";
 import { ShareDialog } from "@/components/ui/share-dialog";
@@ -12,6 +11,12 @@ import { useCurrency } from "@/lib/currency-context";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { usePolymarketEntries, type PolymarketEntry, type PolymarketPick } from "@/lib/hooks/use-polymarket-entries";
+import { Timestamp } from 'firebase/firestore';
+
+interface LegacyTimestamp {
+  __time__: string;
+}
 
 function americanToDecimal(odds: string): number {
   const value = parseInt(odds.replace(/[+\-,]/g, ''));
@@ -32,11 +37,11 @@ function decimalToAmerican(decimal: number): string {
   }
 }
 
-function calculateCombinedOdds(selections: Array<{ odds: string }>): string {
-  if (selections.length <= 1) return '';
+function calculateCombinedOdds(picks: PolymarketPick[]): string {
+  if (picks.length <= 1) return '';
   
-  const combinedDecimal = selections.reduce((acc, selection) => {
-    const decimal = americanToDecimal(selection.odds);
+  const combinedDecimal = picks.reduce((acc, pick) => {
+    const decimal = americanToDecimal(pick.outcomePrices);
     return acc * decimal;
   }, 1);
 
@@ -44,8 +49,8 @@ function calculateCombinedOdds(selections: Array<{ odds: string }>): string {
   return american.startsWith('+') ? american : `+${american}`;
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString('en-US', {
+function formatDate(timestamp: Timestamp) {
+  return timestamp.toDate().toLocaleDateString('en-US', {
     month: 'numeric',
     day: 'numeric',
     year: 'numeric',
@@ -54,15 +59,15 @@ function formatDate(dateString: string) {
   });
 }
 
-function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["entries"][0] }) {
+function EntryCard({ entry }: { entry: PolymarketEntry }) {
   const [showLegs, setShowLegs] = useState(true);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const odds = entry.selections.length > 1 ? calculateCombinedOdds(entry.selections) : entry.selections[0]?.odds;
+  const odds = entry.picks.length > 1 ? calculateCombinedOdds(entry.picks) : entry.picks[0]?.outcomePrices;
 
-  // Get entry title based on selections
-  const entryTitle = entry.selections.length > 1 
-    ? `${entry.selections.length} Pick Parlay` 
-    : entry.selections[0]?.marketQuestion || 'Prediction';
+  // Get entry title based on picks
+  const entryTitle = entry.picks.length > 1 
+    ? `${entry.picks.length} Pick Parlay` 
+    : entry.picks[0]?.question || 'Prediction';
 
   return (
     <Card className="bg-[#131415] text-white overflow-hidden p-0 rounded-lg flex flex-col">
@@ -72,11 +77,17 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
         onClose={() => setShowShareDialog(false)}
         entryId={entry.id}
         entryTitle={entryTitle}
-        selections={entry.selections}
+        selections={entry.picks.map(pick => ({
+          id: pick.id,
+          marketQuestion: pick.question,
+          outcomeName: pick.selectedOutcome,
+          odds: pick.outcomePrices,
+          imageUrl: '' // TODO: Add image URL if available
+        }))}
         entry={{
-          entry: entry.entry,
-          prize: entry.prize,
-          date: entry.date
+          entry: entry.wager,
+          prize: entry.totalPayout,
+          date: entry.createdAt.toDate().toISOString()
         }}
       />
       
@@ -85,16 +96,16 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
         <div className="flex items-center justify-between mb-1">
           <div>
             <div className="flex items-center gap-2">
-              {entry.selections.length > 1 ? (
+              {entry.picks.length > 1 ? (
                 <h3 className="text-lg font-semibold m-0">
-                  {entry.selections.length} Pick Parlay
+                  {entry.picks.length} Pick Parlay
                 </h3>
               ) : (
                 <h3 className="text-lg font-semibold m-0">
-                  {entry.selections[0]?.outcomeName.toLowerCase().includes('no') ? 'No' : 'Yes'}
+                  {entry.picks[0]?.selectedOutcome}
                 </h3>
               )}
-              <span className={`text-lg ${entry.currency === 'cash' ? 'text-[#0BC700]' : 'text-[#FFCC00]'}`}>{odds}</span>
+              <span className="text-lg text-[#0BC700]">{odds}</span>
             </div>
             <p className="text-sm text-gray-400 uppercase">PREDICTION</p>
           </div>
@@ -105,36 +116,36 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
 
         <div className="flex items-center gap-3">
           <Image
-            src={entry.currency === 'cash' ? "/cash-icon.png" : "/verse-coin.png"}
-            alt={entry.currency === 'cash' ? "Verse Cash" : "Verse Coin"}
+            src="/cash-icon.png"
+            alt="Verse Cash"
             width={24}
             height={24}
             className="object-contain"
           />
           <div className="flex items-center gap-2 text-gray-400">
             <span>WAGER</span>
-            <span className={`text-white ${entry.currency === 'cash' ? 'text-[#0BC700]' : 'text-[#FFCC00]'}`}>
-              {entry.currency === 'cash' ? '$' : '₡'}{entry.entry.toFixed(2)}
+            <span className="text-white text-[#0BC700]">
+              ${entry.wager.toFixed(2)}
             </span>
             <span>•</span>
             <span>TO PAY</span>
-            <span className={`text-white ${entry.currency === 'cash' ? 'text-[#0BC700]' : 'text-[#FFCC00]'}`}>
-              {entry.currency === 'cash' ? '$' : '₡'}{entry.prize.toFixed(2)}
+            <span className="text-white text-[#0BC700]">
+              ${entry.totalPayout.toFixed(2)}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Selections */}
+      {/* Picks */}
       {showLegs && (
         <div className="border-t border-[#2A2A2D]">
-          {entry.selections.map((selection, index) => (
+          {entry.picks.map((pick, index) => (
             <div 
-              key={selection.id}
+              key={pick.id}
               className="px-4 py-3 border-b border-[#2A2A2D] last:border-b-0 relative"
             >
               {/* Dotted line */}
-              {index < entry.selections.length - 1 && (
+              {index < entry.picks.length - 1 && (
                 <div 
                   className="absolute left-[1.45rem] top-[2.25rem] bottom-0 w-[2px] border-l-2 border-dotted border-gray-600"
                   style={{ height: 'calc(100% - 1rem)' }}
@@ -145,29 +156,19 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
                   <div className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full border-2 border-gray-600 shrink-0" />
                     <h4 className="text-lg font-semibold">
-                      {selection.outcomeName.toLowerCase().includes('no') ? 'No' : 'Yes'}
+                      {pick.selectedOutcome}
                     </h4>
                   </div>
                   <p className="text-sm text-gray-400 ml-8">
-                    {selection.marketQuestion.split(' - ')[0]}
+                    {pick.question.split(' - ')[0]}
                   </p>
                   <div className="flex items-center gap-3 ml-8">
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2D]">
-                      {selection.imageUrl && (
-                        <Image
-                          src={selection.imageUrl}
-                          alt={selection.marketQuestion}
-                          fill
-                          sizes="32px"
-                          className="object-cover"
-                        />
-                      )}
-                    </div>
-                    <span>{selection.outcomeName}</span>
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2D]" />
+                    <span>{pick.selectedOutcome}</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <span className="text-lg">{selection.odds}</span>
+                  <span className="text-lg">{pick.outcomePrices}</span>
                 </div>
               </div>
             </div>
@@ -188,7 +189,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
             <ChevronDown className="ml-2 h-4 w-4" />
           )}
         </button>
-        <span className="text-xs text-gray-400">{entry.selections.length} selections</span>
+        <span className="text-xs text-gray-400">{entry.picks.length} selections</span>
       </div>
 
       {/* Footer */}
@@ -197,7 +198,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
           <div className="text-sm text-gray-400">
             <span>Bet ID: {entry.id}</span>
             <span className="mx-2">•</span>
-            <span>{formatDate(entry.date)}</span>
+            <span>{formatDate(entry.createdAt)}</span>
           </div>
           <Button
             variant="ghost"
@@ -214,8 +215,7 @@ function EntryCard({ entry }: { entry: ReturnType<typeof useEntries>["state"]["e
 }
 
 export default function EntriesPage() {
-  const { state } = useEntries();
-  const { currency } = useCurrency();
+  const { entries, isLoading, error } = usePolymarketEntries();
   const user = useAuth();
   const router = useRouter();
 
@@ -230,9 +230,6 @@ export default function EntriesPage() {
     return null;
   }
 
-  // Filter entries based on current currency
-  const filteredEntries = state.entries.filter(entry => entry.currency === currency);
-
   return (
     <main className="min-h-screen bg-background">
       <Header />
@@ -245,12 +242,20 @@ export default function EntriesPage() {
         </div>
 
         <div className="space-y-4">
-          {filteredEntries.length === 0 ? (
+          {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">
-              No {currency} entries yet. Place your first bet to get started!
+              Loading entries...
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 text-red-500">
+              Error loading entries: {error.message}
+            </div>
+          ) : entries.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              No entries yet. Place your first bet to get started!
             </div>
           ) : (
-            filteredEntries.map((entry) => (
+            entries.map((entry) => (
               <EntryCard key={entry.id} entry={entry} />
             ))
           )}
