@@ -79,7 +79,10 @@ interface Config {
   currentNFLWeek: string;
   currentSeason: string;
   seasonStatus: string;
-  [key: string]: any;
+  lastUpdated?: {
+    __time__: number;
+  };
+  [key: string]: string | { __time__: number } | undefined;
 }
 
 // Updated to match the actual structure from Firestore

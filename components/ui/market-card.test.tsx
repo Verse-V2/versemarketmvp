@@ -34,7 +34,11 @@ vi.mock('date-fns', () => ({
 
 // Mock Next.js components
 vi.mock('next/image', () => ({
-  default: ({ src, alt }: MockImageProps) => <img src={src} alt={alt} data-testid="mock-image" />,
+  __esModule: true,
+  default: function MockImage({ src, alt, ...props }: MockImageProps) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt} {...props} data-testid="mock-image" />;
+  },
 }));
 
 vi.mock('next/link', () => ({

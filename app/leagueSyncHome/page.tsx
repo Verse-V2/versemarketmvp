@@ -128,7 +128,7 @@ export default function LeagueSyncHome() {
             
             // Calculate how long ago the league was synced
             const lastSyncTime = leagueDetails?.lastUpdated 
-              ? new Date((leagueDetails.lastUpdated as any).__time__).getTime()
+              ? new Date(leagueDetails.lastUpdated.__time__).getTime()
               : Date.now();
             const minutesAgo = Math.floor((Date.now() - lastSyncTime) / 60000);
             const syncedTimeText = minutesAgo < 60 

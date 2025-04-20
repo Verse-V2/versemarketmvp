@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { polymarketService, Market, Event } from './polymarket-service';
+import { polymarketService } from './polymarket-service';
 
 // Mock the fetch function
 const mockFetch = vi.fn();

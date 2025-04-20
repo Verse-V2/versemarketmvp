@@ -25,9 +25,11 @@ vi.mock('@/lib/user-balance-context', () => ({
 
 // Mock the Next.js Image component
 vi.mock('next/image', () => ({
-  default: ({ src, alt, className }: MockImageProps) => (
-    <img src={src} alt={alt} className={className} data-testid="mock-image" />
-  ),
+  __esModule: true,
+  default: function MockImage({ src, alt, className, ...props }: MockImageProps) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt} className={className} {...props} data-testid="mock-image" />;
+  },
 }));
 
 describe('CurrencyToggle', () => {
