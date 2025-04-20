@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, onSnapshot, getFirestore, Timestamp, doc, getDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, getFirestore, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { useCurrency } from '@/lib/currency-context';
 

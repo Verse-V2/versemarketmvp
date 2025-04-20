@@ -37,17 +37,18 @@ function decimalToAmerican(decimal: number): string {
   }
 }
 
-function calculateCombinedOdds(picks: PolymarketPick[]): string {
-  if (picks.length <= 1) return '';
+// Keeping this function commented out as it might be needed later
+// function calculateCombinedOdds(picks: PolymarketPick[]): string {
+//   if (picks.length <= 1) return '';
   
-  const combinedDecimal = picks.reduce((acc, pick) => {
-    const decimal = americanToDecimal(pick.outcomePrices);
-    return acc * decimal;
-  }, 1);
+//   const combinedDecimal = picks.reduce((acc, pick) => {
+//     const decimal = americanToDecimal(pick.outcomePrices);
+//     return acc * decimal;
+//   }, 1);
 
-  const american = decimalToAmerican(combinedDecimal);
-  return american.startsWith('+') ? american : `+${american}`;
-}
+//   const american = decimalToAmerican(combinedDecimal);
+//   return american.startsWith('+') ? american : `+${american}`;
+// }
 
 function formatDate(timestamp: Timestamp) {
   return timestamp.toDate().toLocaleDateString('en-US', {
