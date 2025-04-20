@@ -46,6 +46,72 @@ interface FirebaseEvent extends DocumentData {
   commentCount?: number;
 }
 
+// User and Fantasy League interfaces
+interface SyncedLeague {
+  leagueId: string;
+  leagueName: string;
+  leagueType: 'sleeper' | 'espn' | 'yahoo';
+}
+
+interface UserData extends DocumentData {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  userName?: string;
+  phoneNumber?: string;
+  syncedLeagues?: SyncedLeague[];
+  cashBalance?: number;
+  coinBalance?: number;
+}
+
+interface FantasyLeague extends DocumentData {
+  id: string;
+  name?: string;
+  type?: string;
+  sport?: string;
+  season?: string;
+  status?: string;
+  teams?: Record<string, { name: string; logoUrl: string; teamId: string }>;
+}
+
+interface Config {
+  currentNFLWeek: string;
+  currentSeason: string;
+  seasonStatus: string;
+  [key: string]: any;
+}
+
+// Updated to match the actual structure from Firestore
+interface FantasyTeamMatchup {
+  id: string;
+  leagueId: string;
+  season: string;
+  seasonWeek: string;
+  teamId: string;
+  teamName: string;
+  logoUrl: string;
+  projectedFantasyPoints: number;
+  fantasyPoints: number;
+  moneylineOdds: number;
+  spreadFantasyPoints: number;
+  matchupTotalFantasyPoints: number;
+  winProbability: number;
+  decimalOdds: number;
+  serviceProvider: string;
+}
+
+// A paired matchup with both teams
+interface FantasyMatchup {
+  id: string;
+  teamA: FantasyTeamMatchup;
+  teamB: FantasyTeamMatchup;
+  leagueId: string;
+  season: string;
+  week: string;
+  total: number;
+}
+
 class FirebaseService {
   // Get a single event by ID
   async getEventById(id: string): Promise<Event | null> {
@@ -172,6 +238,138 @@ class FirebaseService {
     });
 
     return unsubscribe;
+  }
+
+  // Get user data by UID
+  async getUserData(uid: string): Promise<UserData | null> {
+    try {
+      const docRef = doc(db, 'users', uid);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        return null;
+      }
+      
+      return docSnap.data() as UserData;
+    } catch (error) {
+      console.error("Error fetching user data from Firebase:", error);
+      return null;
+    }
+  }
+
+  // Get fantasy league by ID
+  async getFantasyLeagueById(leagueId: string): Promise<FantasyLeague | null> {
+    try {
+      const docRef = doc(db, 'fantasyLeague', leagueId);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        return null;
+      }
+      
+      return docSnap.data() as FantasyLeague;
+    } catch (error) {
+      console.error("Error fetching fantasy league from Firebase:", error);
+      return null;
+    }
+  }
+
+  // Get all fantasy leagues for a user
+  async getUserFantasyLeagues(uid: string): Promise<FantasyLeague[]> {
+    try {
+      // First get the user data to get the synced league IDs
+      const userData = await this.getUserData(uid);
+      
+      if (!userData?.syncedLeagues?.length) {
+        return [];
+      }
+      
+      // Get all the league IDs
+      const leagueIds = userData.syncedLeagues.map(league => league.leagueId);
+      
+      // Fetch each league document
+      const leaguePromises = leagueIds.map(id => this.getFantasyLeagueById(id));
+      const leaguesWithNulls = await Promise.all(leaguePromises);
+      
+      // Filter out null values
+      return leaguesWithNulls.filter((league): league is FantasyLeague => league !== null);
+    } catch (error) {
+      console.error("Error fetching user fantasy leagues from Firebase:", error);
+      return [];
+    }
+  }
+
+  // Get config data
+  async getConfig(): Promise<Config | null> {
+    try {
+      const configsRef = collection(db, 'configs');
+      const querySnapshot = await getDocs(configsRef);
+      
+      if (querySnapshot.empty) {
+        return null;
+      }
+      
+      // Just get the first config document - there should only be one
+      return querySnapshot.docs[0].data() as Config;
+    } catch (error) {
+      console.error("Error fetching config from Firebase:", error);
+      return null;
+    }
+  }
+
+  // Get fantasy matchups for a specific league, season, and week
+  async getFantasyMatchups(leagueId: string, season: string, week: string): Promise<FantasyMatchup[]> {
+    try {
+      // Get all team matchups for this league, season, and week
+      const q = query(
+        collection(db, 'fantasyMatchup'),
+        where('leagueId', '==', leagueId),
+        where('season', '==', season),
+        where('seasonWeek', '==', week)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const teamMatchups = querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      })) as FantasyTeamMatchup[];
+      
+      // Group team matchups by the matchupTotalFantasyPoints which connects the two teams
+      const matchupGroups = new Map<number, FantasyTeamMatchup[]>();
+      
+      teamMatchups.forEach(team => {
+        if (!matchupGroups.has(team.matchupTotalFantasyPoints)) {
+          matchupGroups.set(team.matchupTotalFantasyPoints, []);
+        }
+        matchupGroups.get(team.matchupTotalFantasyPoints)?.push(team);
+      });
+      
+      // Create paired matchups
+      const pairedMatchups: FantasyMatchup[] = [];
+      
+      matchupGroups.forEach((teams, totalPoints) => {
+        // Skip if we don't have exactly 2 teams (which would be unusual but possible)
+        if (teams.length !== 2) return;
+        
+        // Sort teams by probability - higher probability is the favorite
+        const sortedTeams = [...teams].sort((a, b) => b.winProbability - a.winProbability);
+        
+        pairedMatchups.push({
+          id: `${leagueId}-${week}-${sortedTeams[0].teamId}-${sortedTeams[1].teamId}`,
+          teamA: sortedTeams[0],
+          teamB: sortedTeams[1],
+          leagueId,
+          season,
+          week,
+          total: totalPoints
+        });
+      });
+      
+      return pairedMatchups;
+    } catch (error) {
+      console.error(`Error fetching fantasy matchups for league ${leagueId}:`, error);
+      return [];
+    }
   }
 
   // Helper function to transform event data to Market format
