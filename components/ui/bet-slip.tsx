@@ -206,18 +206,7 @@ export function BetSlip() {
         }))
       });
 
-      const entry = await polymarketService.createEntry({
-        wager: Number(entryAmount),
-        isCash: request.isCash,
-        entryType: request.entryType,
-        picks: request.picks.map(pick => ({
-          eventTitle: pick.eventTitle,
-          marketTitle: pick.marketTitle,
-          outcome: pick.outcome
-        }))
-      });
-
-      // Place entry without storing result
+      // Create and place entry
       await polymarketService.placeEntry(request);
 
       addEntry({

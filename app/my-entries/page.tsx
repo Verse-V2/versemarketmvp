@@ -7,35 +7,31 @@ import { ChevronUp, ChevronDown, Send } from "lucide-react";
 import { useState } from "react";
 import { ShareDialog } from "@/components/ui/share-dialog";
 import { Header } from "@/components/ui/header";
-import { useCurrency } from "@/lib/currency-context";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { usePolymarketEntries, type PolymarketEntry, type PolymarketPick } from "@/lib/hooks/use-polymarket-entries";
+import { usePolymarketEntries, type PolymarketEntry } from "@/lib/hooks/use-polymarket-entries";
 import { Timestamp } from 'firebase/firestore';
 
-interface LegacyTimestamp {
-  __time__: string;
-}
+// Keeping these functions commented out as they might be needed later
+// function americanToDecimal(odds: string): number {
+//   const value = parseInt(odds.replace(/[+\-,]/g, ''));
+//   if (odds.startsWith('+')) {
+//     return (value / 100) + 1;
+//   } else {
+//     return 1 + (100 / value);
+//   }
+// }
 
-function americanToDecimal(odds: string): number {
-  const value = parseInt(odds.replace(/[+\-,]/g, ''));
-  if (odds.startsWith('+')) {
-    return (value / 100) + 1;
-  } else {
-    return 1 + (100 / value);
-  }
-}
-
-function decimalToAmerican(decimal: number): string {
-  if (decimal <= 2) {
-    const americanOdds = Math.round(-100 / (decimal - 1));
-    return americanOdds.toString();
-  } else {
-    const americanOdds = Math.round((decimal - 1) * 100);
-    return `+${americanOdds}`;
-  }
-}
+// function decimalToAmerican(decimal: number): string {
+//   if (decimal <= 2) {
+//     const americanOdds = Math.round(-100 / (decimal - 1));
+//     return americanOdds.toString();
+//   } else {
+//     const americanOdds = Math.round((decimal - 1) * 100);
+//     return `+${americanOdds}`;
+//   }
+// }
 
 // Keeping this function commented out as it might be needed later
 // function calculateCombinedOdds(picks: PolymarketPick[]): string {
