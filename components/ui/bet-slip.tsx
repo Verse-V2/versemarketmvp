@@ -170,7 +170,7 @@ export function BetSlip() {
         isCash: currency === 'cash',
         entryType: bets.length === 1 ? ('single' as const) : ('parlay' as const),
         decimalOdds: bets.reduce((acc, bet) => acc * americanToDecimal(bet.odds), 1.0),
-        moneylineOdds: bets.length === 1 ? bets[0].odds : null,
+        moneylineOdds: bets.length === 1 ? bets[0].odds : calculateCombinedOdds(bets) || '+0',
         picks: bets.map(bet => {
           console.log('Processing bet for entry:', {
             marketQuestion: bet.marketQuestion,
