@@ -10,6 +10,11 @@ import { Input } from "@/components/ui/input";
 import { useCurrency } from "@/lib/currency-context";
 import { useEntries } from "@/lib/entries-context";
 import { useRouter } from "next/navigation";
+import { polymarketService } from "@/lib/polymarket-service";
+import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
+import { useUserBalance } from "@/lib/user-balance-context";
+import { getDoc, doc, getFirestore } from "firebase/firestore";
 
 function americanToDecimal(odds: string): number {
   // Remove commas before parsing the number
@@ -76,9 +81,12 @@ export function BetSlip() {
   const { bets, removeBet, clearBets, hasConflictingBets, getConflictingMarkets } = useBetSlip();
   const { currency } = useCurrency();
   const { addEntry } = useEntries();
+  const currentUser = useAuth();
+  const { isLoading: isLoadingBalance } = useUserBalance();
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [entryAmount, setEntryAmount] = useState('');
+  const [isPlacingEntry, setIsPlacingEntry] = useState(false);
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -129,30 +137,72 @@ export function BetSlip() {
     }
   };
 
-  const handlePlaceBets = () => {
+  const handlePlaceBets = async () => {
     if (!entryAmount || Number(entryAmount) <= 0 || bets.length === 0) {
+      return;
+    }
+
+    if (!currentUser?.uid) {
+      toast.error('Please sign in to place an entry');
       return;
     }
 
     const entry = Number(entryAmount);
     const prize = Number(calculatePrize());
 
-    addEntry({
-      entry,
-      prize,
-      currency,
-      selections: bets.map(bet => ({
-        id: bet.outcomeId,
-        marketQuestion: bet.marketQuestion,
-        outcomeName: bet.outcomeName,
-        odds: bet.odds,
-        imageUrl: bet.imageUrl
-      }))
-    });
+    setIsPlacingEntry(true);
 
-    clearBets();
-    setEntryAmount('');
-    router.push('/my-entries');
+    try {
+      // Get the user document to get the correct ID
+      const userDoc = await getDoc(doc(getFirestore(), 'users', currentUser.uid));
+      if (!userDoc.exists()) {
+        throw new Error('User document not found');
+      }
+
+      const userData = userDoc.data();
+      if (!userData.id) {
+        throw new Error('User ID not found');
+      }
+
+      const request = {
+        userId: userData.id,
+        amount: entry,
+        isCash: currency === 'cash',
+        picks: bets.map(bet => ({
+          marketId: bet.marketId,
+          eventId: bet.marketId, // Using marketId as eventId for now
+          question: bet.marketQuestion,
+          selectedOutcome: bet.outcomeName,
+          outcomePrices: JSON.stringify([bet.probability, 1 - bet.probability]),
+          outcomes: [bet.outcomeName, bet.outcomeName === 'Yes' ? 'No' : 'Yes']
+        }))
+      };
+
+      const result = await polymarketService.placeEntry(request);
+
+      addEntry({
+        entry,
+        prize,
+        currency,
+        selections: bets.map(bet => ({
+          id: bet.outcomeId,
+          marketQuestion: bet.marketQuestion,
+          outcomeName: bet.outcomeName,
+          odds: bet.odds,
+          imageUrl: bet.imageUrl
+        }))
+      });
+
+      clearBets();
+      setEntryAmount('');
+      router.push('/my-entries');
+      toast.success('Entry placed successfully');
+    } catch (error) {
+      console.error('Failed to place entry:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to place entry');
+    } finally {
+      setIsPlacingEntry(false);
+    }
   };
 
   const ConflictWarning = () => (
@@ -308,10 +358,10 @@ export function BetSlip() {
                 </div>
                 <Button 
                   className="w-full" 
-                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist}
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance}
                   onClick={handlePlaceBets}
                 >
-                  Place Entry
+                  {isPlacingEntry ? 'Placing Entry...' : 'Place Entry'}
                 </Button>
               </div>
             )}
@@ -425,10 +475,10 @@ export function BetSlip() {
                 </div>
                 <Button 
                   className="w-full" 
-                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist}
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance}
                   onClick={handlePlaceBets}
                 >
-                  Place Entry
+                  {isPlacingEntry ? 'Placing Entry...' : 'Place Entry'}
                 </Button>
               </div>
             )}

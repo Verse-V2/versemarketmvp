@@ -71,6 +71,20 @@ interface RawEvent {
   [key: string]: unknown;
 }
 
+export interface PlaceEntryRequest {
+  userId: string;
+  amount: number;
+  picks: Array<{
+    marketId: string;
+    eventId: string;
+    question: string;
+    selectedOutcome: string;
+    outcomePrices: string;
+    outcomes: string[];
+  }>;
+  isCash: boolean;
+}
+
 class PolymarketService {
   private baseUrl: string;
 
@@ -204,6 +218,32 @@ class PolymarketService {
     } catch (error) {
       console.error("Failed to fetch events by tags:", error);
       return mockRelatedEvents;
+    }
+  }
+
+  async placeEntry(request: PlaceEntryRequest): Promise<{ transactionId: string; entryId: string }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/polymarket/place-entry`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to place entry');
+      }
+
+      const data = await response.json();
+      return {
+        transactionId: data.data.transactionId,
+        entryId: data.data.entryId,
+      };
+    } catch (error) {
+      console.error('Failed to place entry:', error);
+      throw error;
     }
   }
 }
