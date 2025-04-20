@@ -3,9 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/ui/header";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
-import { Trophy, Plus, ChevronRight, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { firebaseService } from "@/lib/firebase-service";
 import Image from "next/image";
 import { useCurrency } from "@/lib/currency-context";
@@ -77,7 +76,6 @@ export default function LeagueSyncHome() {
   const [matchups, setMatchups] = useState<FantasyMatchup[]>([]);
   const [config, setConfig] = useState<Config | null>(null);
   const [isMatchupsLoading, setIsMatchupsLoading] = useState(false);
-  const [isCashMode, setIsCashMode] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
