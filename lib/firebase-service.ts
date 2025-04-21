@@ -144,26 +144,48 @@ class FirebaseService {
         where('active', '==', true),
         where('closed', '==', false),
         orderBy('volume', 'desc'),
-        limit(eventLimit)
+        limit(Math.max(eventLimit * 4, 100)) 
       );
 
+      // Always fetch first, then filter in memory
+      const querySnapshot = await getDocs(q);
+      let events = querySnapshot.docs.map(doc => doc.data() as FirebaseEvent);
+      
+      console.log(`[DEBUG] Total events fetched before filtering: ${events.length}`);
+
+      // Filter events in memory if a tag filter is provided
       if (tagFilter && tagFilter.toLowerCase() !== 'all') {
-        // Adjust the query to filter by tag
-        q = query(
-          collection(db, 'predictionEvents'),
-          where('active', '==', true),
-          where('closed', '==', false),
-          where('tags', 'array-contains', { label: tagFilter }),
-          orderBy('volume', 'desc'),
-          limit(eventLimit)
-        );
+        const tagFilterLower = tagFilter.toLowerCase();
+        console.log(`[DEBUG] Filtering by tag: "${tagFilterLower}"`);
+        
+        events = events.filter(event => {
+          // Check tags array if it exists
+          if (event.tags && Array.isArray(event.tags)) {
+            const hasMatchingTag = event.tags.some(tag => 
+              (tag.label && tag.label.toLowerCase().includes(tagFilterLower)) ||
+              (tag.slug && tag.slug.toLowerCase().includes(tagFilterLower))
+            );
+            if (hasMatchingTag) return true;
+          }
+          
+          // Check slug as fallback
+          return event.slug && event.slug.toLowerCase().includes(tagFilterLower);
+        });
+        
+        console.log(`[DEBUG] Events after filtering: ${events.length}`);
+        
+        // If we still have no results, log the filter details
+        if (events.length === 0) {
+          console.log('[DEBUG] No events found after filtering. Tag filter:', tagFilterLower);
+        }
       }
 
-      const querySnapshot = await getDocs(q);
-      const events = querySnapshot.docs.map(doc => doc.data() as FirebaseEvent);
+      // Apply the final limit after filtering
+      const limitedEvents = events.slice(0, eventLimit);
+      console.log(`[DEBUG] Final events after limiting: ${limitedEvents.length}`);
 
       // Transform events to Market interface
-      return events.map(event => this.transformEventToMarket(event));
+      return limitedEvents.map(event => this.transformEventToMarket(event));
     } catch (error) {
       console.error("Error fetching events from Firebase:", error);
       return [];
@@ -226,7 +248,7 @@ class FirebaseService {
       where('active', '==', true),
       where('closed', '==', false),
       orderBy('volume', 'desc'),
-      limit(eventLimit)
+      limit(eventLimit * 4) 
     );
 
     if (lastDoc) {
@@ -236,29 +258,48 @@ class FirebaseService {
         where('closed', '==', false),
         orderBy('volume', 'desc'),
         startAfter(lastDoc),
-        limit(eventLimit)
-      );
-    }
-
-    if (tagFilter && tagFilter.toLowerCase() !== 'all') {
-      q = query(
-        collection(db, 'predictionEvents'),
-        where('active', '==', true),
-        where('closed', '==', false),
-        where('tags', 'array-contains', { label: tagFilter }),
-        orderBy('volume', 'desc'),
-        ...(lastDoc ? [startAfter(lastDoc)] : []),
-        limit(eventLimit)
+        limit(eventLimit * 4)
       );
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const events = snapshot.docs.map(doc => doc.data() as FirebaseEvent);
-      const markets = events.map(event => this.transformEventToMarket(event));
+      const allFetchedEvents = snapshot.docs.map(doc => doc.data() as FirebaseEvent);
+      console.log(`[DEBUG] Total events fetched in onEventsUpdate: ${allFetchedEvents.length}`);
+      
+      let filteredEvents = allFetchedEvents;
+      
+      if (tagFilter && tagFilter.toLowerCase() !== 'all') {
+        const tagFilterLower = tagFilter.toLowerCase();
+        console.log(`[DEBUG] Filtering by tag in onEventsUpdate: "${tagFilterLower}"`);
+        
+        filteredEvents = allFetchedEvents.filter(event => {
+          // Check tags array if it exists
+          if (event.tags && Array.isArray(event.tags)) {
+            const hasMatchingTag = event.tags.some(tag => 
+              (tag.label && tag.label.toLowerCase().includes(tagFilterLower)) ||
+              (tag.slug && tag.slug.toLowerCase().includes(tagFilterLower))
+            );
+            if (hasMatchingTag) return true;
+          }
+          
+          // Check slug as fallback
+          return event.slug && event.slug.toLowerCase().includes(tagFilterLower);
+        });
+        
+        console.log(`[DEBUG] Events after filtering in onEventsUpdate: ${filteredEvents.length}`);
+      }
+      
+      // Apply the limit *after* filtering
+      const finalEvents = filteredEvents.slice(0, eventLimit);
+      console.log(`[DEBUG] Final events after limiting in onEventsUpdate: ${finalEvents.length}`);
+
+      const transformedMarkets = finalEvents.map(event => this.transformEventToMarket(event));
       const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
-      callback(markets, lastVisible);
+      
+      callback(transformedMarkets, lastVisible);
     }, (error) => {
       console.error("Error in events listener:", error);
+      callback([], null); 
     });
 
     return unsubscribe;
