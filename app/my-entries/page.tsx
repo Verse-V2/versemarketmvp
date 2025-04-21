@@ -92,7 +92,7 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
           marketQuestion: pick.eventTitle || pick.question || '',
           outcomeName: pick.outcome || pick.selectedOutcome || '',
           odds: pick.moneylineOdds || pick.outcomePrices,
-          imageUrl: '' // TODO: Add image URL if available
+          imageUrl: pick.imageUrl || '' // Use the fetched image URL
         }))}
         entry={{
           entry: entry.wager,
@@ -173,7 +173,16 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
                     {pick.eventTitle || (pick.question ? pick.question.split(' - ')[0] : '')}
                   </p>
                   <div className="flex items-center gap-3 ml-8">
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2D]" />
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2D]">
+                      {pick.imageUrl && (
+                        <Image
+                          src={pick.imageUrl}
+                          alt={pick.eventTitle || "Event"}
+                          fill
+                          className="object-cover"
+                        />
+                      )}
+                    </div>
                     <span>{capitalizeOutcome(pick.marketTitle || pick.selectedOutcome)}</span>
                   </div>
                 </div>

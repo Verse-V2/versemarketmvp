@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, orderBy, onSnapshot, getFirestore, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { useCurrency } from '@/lib/currency-context';
+import { firebaseService } from '@/lib/firebase-service';
 
 export interface PolymarketPick {
   eventId: string;
@@ -18,6 +19,7 @@ export interface PolymarketPick {
   moneylineOdds?: string;
   status: string;
   timestamp: Timestamp;
+  imageUrl?: string;
 }
 
 export interface PolymarketEntry {
@@ -116,7 +118,7 @@ export function usePolymarketEntries() {
 
     const unsubscribe = onSnapshot(
       userEntriesQuery,
-      (snapshot) => {
+      async (snapshot) => {
         // Log raw snapshot data
         console.log('Raw snapshot data:', snapshot.docs.map(doc => ({
           id: doc.id,
@@ -143,17 +145,45 @@ export function usePolymarketEntries() {
           id: doc.id,
         })) as PolymarketEntry[];
         
-        console.log('Processed entries:', {
-          count: entriesData.length,
-          entries: entriesData.map(entry => ({
+        // Fetch event images for each pick in each entry
+        const enhancedEntries = await Promise.all(entriesData.map(async (entry) => {
+          const enhancedPicks = await Promise.all(entry.picks.map(async (pick) => {
+            // Only fetch if we have an eventId and don't already have an imageUrl
+            if (pick.eventId && !pick.imageUrl) {
+              try {
+                // Use the firebaseService to fetch the event by ID
+                const event = await firebaseService.getEventById(pick.eventId);
+                if (event && event.image) {
+                  return {
+                    ...pick,
+                    imageUrl: event.image
+                  };
+                }
+              } catch (error) {
+                console.error(`Error fetching image for event ${pick.eventId}:`, error);
+              }
+            }
+            return pick;
+          }));
+          
+          return {
+            ...entry,
+            picks: enhancedPicks
+          };
+        }));
+        
+        console.log('Processed entries with images:', {
+          count: enhancedEntries.length,
+          entries: enhancedEntries.map(entry => ({
             id: entry.id,
             userId: entry.userId,
             createdAt: entry.createdAt,
-            picksCount: entry.picks.length
+            picksCount: entry.picks.length,
+            picksWithImages: entry.picks.filter(p => p.imageUrl).length
           }))
         });
         
-        setEntries(entriesData);
+        setEntries(enhancedEntries);
         setIsLoading(false);
       },
       (err) => {
