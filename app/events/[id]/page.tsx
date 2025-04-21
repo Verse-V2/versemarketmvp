@@ -11,7 +11,7 @@ import { Market } from '@/lib/polymarket-api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { firebaseService } from '@/lib/firebase-service';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Convert probability to American odds - same as in market-card.tsx
 const toAmericanOdds = (prob: number) => {
