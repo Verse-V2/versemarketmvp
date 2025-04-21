@@ -58,7 +58,6 @@ function EventDetails() {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [topMarketPriceHistories, setTopMarketPriceHistories] = useState<MarketPriceHistory[]>([]);
   const [loadingPriceHistory, setLoadingPriceHistory] = useState(false);
-  const [topMarketName, setTopMarketName] = useState<string>('');
 
   // Function to fetch price history for a market
   const fetchPriceHistory = async (conditionId: string, marketName: string, marketIndex: number) => {
@@ -208,9 +207,6 @@ function EventDetails() {
           
           if (sortedMarkets.length > 0) {
             topSortedMarket = sortedMarkets[0].market;
-            
-            // Store the top market name for display
-            setTopMarketName(topSortedMarket?.question || data.title);
             
             // Fetch price histories for top markets
             await fetchTopMarketsPriceHistories(sortedMarkets);
