@@ -115,6 +115,9 @@ interface FantasyMatchup {
   total: number;
 }
 
+// Add a type for Firestore documents
+type FirestoreDocumentReference = DocumentData;
+
 class FirebaseService {
   // Get a single event by ID
   async getEventById(id: string): Promise<Event | null> {
@@ -215,8 +218,8 @@ class FirebaseService {
   onEventsUpdate(
     tagFilter: string | undefined, 
     eventLimit: number,
-    lastDoc: any | null,
-    callback: (markets: Market[], lastVisible: any | null) => void
+    lastDoc: FirestoreDocumentReference | null,
+    callback: (markets: Market[], lastVisible: FirestoreDocumentReference | null) => void
   ): () => void {
     let q = query(
       collection(db, 'predictionEvents'),

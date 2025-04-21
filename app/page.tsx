@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MarketCard } from "@/components/ui/market-card";
@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
 import { firebaseService } from "@/lib/firebase-service";
 import { Trophy, ChevronRight } from "lucide-react";
+import { DocumentData } from "firebase/firestore";
 
 export default function Home() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeTag, setActiveTag] = useState('All');
-  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -34,6 +35,22 @@ export default function Home() {
     "All", "NBA", "NFL", "Sports", "Politics", "Crypto", 
     "Tech", "Culture", "World", "Trump", "Economy"
   ];
+
+  // Load more markets when user scrolls to bottom
+  const loadMoreMarkets = useCallback(() => {
+    if (!lastVisible || !hasMore || loadingMore) return;
+
+    setLoadingMore(true);
+    const tagFilter = activeTag !== 'All' ? activeTag : undefined;
+
+    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 12, lastVisible, (newMarkets, lastDoc) => {
+      setMarkets(prev => [...prev, ...newMarkets]);
+      setLastVisible(lastDoc);
+      setLoadingMore(false);
+      setHasMore(newMarkets.length === 12);
+      unsubscribe(); // Unsubscribe immediately since we don't need real-time updates for older content
+    });
+  }, [lastVisible, hasMore, loadingMore, activeTag]);
 
   useEffect(() => {
     if (!user) return;
@@ -73,31 +90,18 @@ export default function Home() {
       { threshold: 0.1 }
     );
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+    const currentObserverTarget = observerTarget.current;
+    
+    if (currentObserverTarget) {
+      observer.observe(currentObserverTarget);
     }
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+      if (currentObserverTarget) {
+        observer.unobserve(currentObserverTarget);
       }
     };
-  }, [user, loading, hasMore, loadingMore, lastVisible]);
-
-  const loadMoreMarkets = () => {
-    if (!lastVisible || !hasMore || loadingMore) return;
-
-    setLoadingMore(true);
-    const tagFilter = activeTag !== 'All' ? activeTag : undefined;
-
-    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 12, lastVisible, (newMarkets, lastDoc) => {
-      setMarkets(prev => [...prev, ...newMarkets]);
-      setLastVisible(lastDoc);
-      setLoadingMore(false);
-      setHasMore(newMarkets.length === 12);
-      unsubscribe(); // Unsubscribe immediately since we don't need real-time updates for older content
-    });
-  };
+  }, [user, loading, hasMore, loadingMore, lastVisible, loadMoreMarkets]);
 
   // Show loading state while checking auth
   if (user === null) {
