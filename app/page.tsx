@@ -68,14 +68,14 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-wrap gap-2 mb-8">
+      <main className="container mx-auto px-4 pt-4 pb-6">
+        <div className="flex overflow-x-auto pb-1 -mx-4 px-4 mb-4 no-scrollbar">
           {categories.map((tag) => (
             <Button
               key={tag}
               variant={activeTag === tag ? "default" : "outline"}
               onClick={() => handleTagClick(tag)}
-              className="text-sm"
+              className="text-sm whitespace-nowrap flex-shrink-0 mr-2"
             >
               {tag}
             </Button>
@@ -83,15 +83,15 @@ export default function Home() {
         </div>
 
         {/* LeagueSync Promotional Header */}
-        <Link href="/leagueSyncHome" className="block mb-8 group">
-          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg flex items-center justify-between transition-all duration-300 ease-in-out hover:from-green-600 hover:to-green-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 relative overflow-hidden">
-            <div className="flex items-center space-x-3">
-              <div className="bg-white/20 rounded-full p-2">
-                <Trophy className="h-6 w-6 text-white" />
+        <Link href="/leagueSyncHome" className="block mb-6 group">
+          <div className="bg-[#0BC700] text-white p-3 rounded-lg flex items-center justify-between transition-all duration-300 ease-in-out hover:opacity-90 shadow-sm hover:shadow transform hover:-translate-y-0.5 relative overflow-hidden">
+            <div className="flex items-center space-x-2">
+              <div className="bg-white/20 rounded-full p-1.5">
+                <Trophy className="h-5 w-5 text-white" />
               </div>
-              <span className="font-semibold text-lg">Play League Sync</span>
+              <span className="font-semibold text-base">Play League Sync</span>
             </div>
-            <ChevronRight className="h-6 w-6 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
+            <ChevronRight className="h-5 w-5 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
           </div>
         </Link>
 
