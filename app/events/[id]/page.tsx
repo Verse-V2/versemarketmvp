@@ -30,6 +30,27 @@ const toAmericanOdds = (prob: number) => {
   }
 };
 
+// Interface for polymarket token
+interface Token {
+  token_id: string;
+  outcome: string;
+  symbol?: string;
+  decimals?: number;
+  address?: string;
+}
+
+// Firebase market interface
+interface FirebaseMarket {
+  id: string;
+  question?: string;
+  outcomes?: string;
+  outcomePrices?: string;
+  active?: boolean;
+  groupItemTitle?: string;
+  description?: string;
+  conditionId?: string;
+}
+
 // New interface for related events
 interface RelatedEvent {
   id: string;
@@ -67,7 +88,7 @@ function EventDetails() {
       const marketInfo = await marketResponse.json();
       
       // Find the "Yes" outcome token ID
-      const yesToken = marketInfo.tokens.find((token: any) => token.outcome === "Yes");
+      const yesToken = marketInfo.tokens.find((token: Token) => token.outcome === "Yes");
       
       if (yesToken && yesToken.token_id) {
         // Now fetch price history using the token ID
@@ -95,7 +116,7 @@ function EventDetails() {
   };
 
   // Function to fetch price histories for top markets
-  const fetchTopMarketsPriceHistories = async (markets: any[]) => {
+  const fetchTopMarketsPriceHistories = async (markets: Array<{market: FirebaseMarket; probability: number}>) => {
     setLoadingPriceHistory(true);
     
     try {
@@ -106,7 +127,7 @@ function EventDetails() {
       setTopMarketPriceHistories(
         topMarkets.map(market => ({
           id: market.market.id,
-          name: market.market.question?.replace(/Will the |win the 2025 NBA Finals\?/g, ''),
+          name: market.market.question?.replace(/Will the |win the 2025 NBA Finals\?/g, '') || `Market ${markets.indexOf(market) + 1}`,
           data: []
         }))
       );
