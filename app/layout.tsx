@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased pb-16`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased pb-16 md:overflow-auto overflow-auto md:scrollbar no-scrollbar`}
       >
         <ThemeProvider
           attribute="class"
