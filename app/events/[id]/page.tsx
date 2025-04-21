@@ -9,15 +9,9 @@ import Link from 'next/link';
 import { Header } from '@/components/ui/header';
 import { Market } from '@/lib/polymarket-api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { firebaseService } from '@/lib/firebase-service';
-
-// Dynamically import the client-side chart component
-const SimplePriceChart = dynamic(() => import('@/components/simple-price-chart'), {
-  ssr: false,
-  loading: () => <div className="h-[300px] w-full bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg"></div>
-});
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 // Convert probability to American odds - same as in market-card.tsx
 const toAmericanOdds = (prob: number) => {
@@ -47,6 +41,13 @@ interface RelatedEvent {
   volume?: string;
 }
 
+// Interface for market price history
+interface MarketPriceHistory {
+  id: string;
+  name: string;
+  data: {t: number, p: number}[];
+}
+
 function EventDetails() {
   const params = useParams();
   const [event, setEvent] = useState<Event | null>(null);
@@ -55,6 +56,82 @@ function EventDetails() {
   const [marketData, setMarketData] = useState<Market | null>(null);
   const [relatedEvents, setRelatedEvents] = useState<RelatedEvent[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
+  const [topMarketPriceHistories, setTopMarketPriceHistories] = useState<MarketPriceHistory[]>([]);
+  const [loadingPriceHistory, setLoadingPriceHistory] = useState(false);
+  const [topMarketName, setTopMarketName] = useState<string>('');
+
+  // Function to fetch price history for a market
+  const fetchPriceHistory = async (conditionId: string, marketName: string, marketIndex: number) => {
+    try {
+      // First, get market data to extract token ID
+      const marketResponse = await fetch(`https://clob.polymarket.com/markets/${conditionId}`);
+      const marketInfo = await marketResponse.json();
+      
+      // Find the "Yes" outcome token ID
+      const yesToken = marketInfo.tokens.find((token: any) => token.outcome === "Yes");
+      
+      if (yesToken && yesToken.token_id) {
+        // Now fetch price history using the token ID
+        const historyResponse = await fetch(
+          `https://clob.polymarket.com/prices-history?market=${yesToken.token_id}&interval=1w&fidelity=60`
+        );
+        const historyData = await historyResponse.json();
+        
+        if (historyData && historyData.history) {
+          // Update the price histories array
+          setTopMarketPriceHistories(prev => {
+            const newHistories = [...prev];
+            newHistories[marketIndex] = {
+              id: conditionId,
+              name: marketName,
+              data: historyData.history
+            };
+            return newHistories;
+          });
+        }
+      }
+    } catch (err) {
+      console.error(`Error fetching price history for market ${marketName}:`, err);
+    }
+  };
+
+  // Function to fetch price histories for top markets
+  const fetchTopMarketsPriceHistories = async (markets: any[]) => {
+    setLoadingPriceHistory(true);
+    
+    try {
+      // Get the top 4 markets or fewer if not available
+      const topMarkets = markets.slice(0, 4);
+      
+      // Initialize the price histories array with empty data
+      setTopMarketPriceHistories(
+        topMarkets.map(market => ({
+          id: market.market.id,
+          name: market.market.question?.replace(/Will the |win the 2025 NBA Finals\?/g, ''),
+          data: []
+        }))
+      );
+      
+      // Fetch price history for each market in parallel
+      const fetchPromises = topMarkets.map((market, index) => {
+        const marketObj = market.market;
+        if (marketObj.conditionId) {
+          return fetchPriceHistory(
+            marketObj.conditionId, 
+            marketObj.question?.replace(/Will the |win the 2025 NBA Finals\?/g, '') || `Market ${index + 1}`,
+            index
+          );
+        }
+        return Promise.resolve();
+      });
+      
+      await Promise.all(fetchPromises);
+    } catch (err) {
+      console.error('Error fetching top markets price histories:', err);
+    } finally {
+      setLoadingPriceHistory(false);
+    }
+  };
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -103,9 +180,9 @@ function EventDetails() {
           }
         }
         
-        // Find the top sorted market (highest probability market)
+        // Find the top sorted markets (highest probability markets)
         let topSortedMarket = mainMarket;
-        if (data.markets.length > 1) {
+        if (data.markets && data.markets.length > 0) {
           const marketsWithProbability = data.markets
             .filter(m => m.outcomePrices)
             .map(m => {
@@ -131,6 +208,12 @@ function EventDetails() {
           
           if (sortedMarkets.length > 0) {
             topSortedMarket = sortedMarkets[0].market;
+            
+            // Store the top market name for display
+            setTopMarketName(topSortedMarket?.question || data.title);
+            
+            // Fetch price histories for top markets
+            await fetchTopMarketsPriceHistories(sortedMarkets);
           }
         }
         
@@ -316,7 +399,126 @@ function EventDetails() {
               <CardTitle>Price History</CardTitle>
             </CardHeader>
             <CardContent>
-              <SimplePriceChart />
+              {loadingPriceHistory ? (
+                <div className="h-[300px] w-full bg-gray-900 dark:bg-gray-950 animate-pulse rounded-lg"></div>
+              ) : topMarketPriceHistories.length > 0 ? (
+                <div className="h-[300px] w-full bg-gray-900 dark:bg-gray-950 rounded-lg p-4 relative">
+                  {/* Add legend at the top with better styling */}
+                  <div className="mb-6 pt-2 flex flex-wrap gap-x-4 gap-y-2 justify-center text-xs">
+                    {topMarketPriceHistories.map((market, idx) => (
+                      <div key={market.id} className="flex items-center">
+                        <div 
+                          className="w-3 h-3 mr-1 rounded-full" 
+                          style={{ 
+                            backgroundColor: [
+                              "#10b981", // green for main market
+                              "#3b82f6", // blue
+                              "#f59e0b", // amber
+                              "#ef4444"  // red
+                            ][idx] 
+                          }}
+                        />
+                        <span className="text-gray-200">{market.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <ResponsiveContainer width="100%" height="85%">
+                    <LineChart
+                      data={
+                        // Create a merged dataset with all market prices
+                        topMarketPriceHistories[0].data.map((point, idx) => {
+                          // Use a record type to allow dynamic property names
+                          const timePoint: Record<string, number> = { time: point.t * 1000 };
+                          
+                          // Add each market's price at this timestamp
+                          topMarketPriceHistories.forEach((market, marketIdx) => {
+                            const marketData = market.data[idx];
+                            if (marketData) {
+                              timePoint[`market${marketIdx}`] = marketData.p * 100;
+                            }
+                          });
+                          
+                          return timePoint;
+                        })
+                      }
+                      margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.5} />
+                      <XAxis 
+                        dataKey="time" 
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return date.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
+                        }}
+                        stroke="#9ca3af"
+                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                      />
+                      <YAxis 
+                        domain={['auto', 'auto']}
+                        tickFormatter={(value) => `${value}%`}
+                        stroke="#9ca3af"
+                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip 
+                        formatter={(value: number) => [`${value.toFixed(2)}%`, 'Price']}
+                        labelFormatter={(label) => new Date(label).toLocaleString()}
+                        contentStyle={{ 
+                          backgroundColor: '#111827', 
+                          borderColor: '#374151',
+                          color: '#f9fafb',
+                          fontSize: '12px',
+                          borderRadius: '4px'
+                        }}
+                        itemStyle={{ color: '#f9fafb' }}
+                      />
+                      
+                      {/* Lines for each market with improved styling */}
+                      <Line 
+                        type="monotone" 
+                        dataKey="market0" 
+                        name="market0"
+                        stroke="#10b981" 
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{ r: 6, fill: "#10b981", stroke: "#064e3b" }}
+                        isAnimationActive={true}
+                      />
+                      
+                      {/* Lines for the other markets */}
+                      {topMarketPriceHistories.slice(1).map((market, index) => {
+                        const colors = [
+                          "#3b82f6", // blue
+                          "#f59e0b", // amber
+                          "#ef4444"  // red
+                        ];
+                        const strokeColor = colors[index];
+                        const dotFillColor = colors[index];
+                        
+                        return (
+                          <Line 
+                            key={market.id}
+                            type="monotone" 
+                            dataKey={`market${index + 1}`}
+                            name={`market${index + 1}`}
+                            stroke={strokeColor}
+                            strokeWidth={1.8}
+                            dot={false}
+                            activeDot={{ r: 4, fill: dotFillColor }}
+                            isAnimationActive={true}
+                          />
+                        );
+                      })}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[300px] w-full bg-gray-900 dark:bg-gray-950 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-400">No price history available</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
