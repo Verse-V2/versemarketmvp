@@ -56,6 +56,16 @@ function formatDate(timestamp: Timestamp) {
   });
 }
 
+// Helper function to capitalize Yes/No outcomes
+function capitalizeOutcome(outcome: string | undefined | null): string {
+  if (!outcome) return '';
+  const lowerOutcome = outcome.toLowerCase();
+  if (lowerOutcome === 'yes' || lowerOutcome === 'no') {
+    return lowerOutcome.charAt(0).toUpperCase() + lowerOutcome.slice(1);
+  }
+  return outcome;
+}
+
 function EntryCard({ entry }: { entry: PolymarketEntry }) {
   const [showLegs, setShowLegs] = useState(true);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -65,6 +75,9 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
   const entryTitle = entry.picks.length > 1 
     ? `${entry.picks.length} Pick Parlay` 
     : (entry.picks[0]?.eventTitle || entry.picks[0]?.question || 'Prediction');
+
+  // Define the odds color class based on isCash
+  const oddsColorClass = entry.isCash ? "text-[#0BC700]" : "text-[#FFCC00]";
 
   return (
     <Card className="bg-[#131415] text-white overflow-hidden p-0 rounded-lg flex flex-col">
@@ -99,10 +112,10 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
                 </h3>
               ) : (
                 <h3 className="text-lg font-semibold m-0">
-                  {entry.picks[0]?.outcome || entry.picks[0]?.selectedOutcome || ''}
+                  {capitalizeOutcome(entry.picks[0]?.outcome || entry.picks[0]?.selectedOutcome)}
                 </h3>
               )}
-              <span className="text-lg text-[#0BC700]">{odds}</span>
+              <span className={`text-lg ${oddsColorClass}`}>{odds}</span>
             </div>
             <p className="text-sm text-gray-400 uppercase">PREDICTION</p>
           </div>
@@ -121,12 +134,12 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
           />
           <div className="flex items-center gap-2 text-gray-400">
             <span>WAGER</span>
-            <span className="text-white text-[#0BC700]">
+            <span className={oddsColorClass}>
               ${entry.wager.toFixed(2)}
             </span>
             <span>•</span>
             <span>TO PAY</span>
-            <span className="text-white text-[#0BC700]">
+            <span className={oddsColorClass}>
               ${entry.totalPayout.toFixed(2)}
             </span>
           </div>
@@ -153,7 +166,7 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
                   <div className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full border-2 border-gray-600 shrink-0" />
                     <h4 className="text-lg font-semibold">
-                      {pick.outcome || pick.selectedOutcome || ''}
+                      {capitalizeOutcome(pick.outcome || pick.selectedOutcome)}
                     </h4>
                   </div>
                   <p className="text-sm text-gray-400 ml-8">
@@ -161,11 +174,11 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
                   </p>
                   <div className="flex items-center gap-3 ml-8">
                     <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2D]" />
-                    <span>{pick.marketTitle || pick.selectedOutcome || ''}</span>
+                    <span>{capitalizeOutcome(pick.marketTitle || pick.selectedOutcome)}</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <span className="text-lg">{pick.moneylineOdds || pick.outcomePrices}</span>
+                  <span className={`text-lg ${oddsColorClass}`}>{pick.moneylineOdds || pick.outcomePrices}</span>
                 </div>
               </div>
             </div>
@@ -200,7 +213,7 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
           <Button
             variant="ghost"
             size="icon"
-            className="text-[#0BC700] hover:text-[#0FE800] h-7 w-7"
+            className={`${oddsColorClass} hover:text-opacity-80 h-7 w-7`}
             onClick={() => setShowShareDialog(true)}
           >
             <Send className="h-4 w-4" />
