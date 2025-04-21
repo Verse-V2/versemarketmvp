@@ -85,9 +85,6 @@ export default function Home() {
         {/* LeagueSync Promotional Header */}
         <Link href="/leagueSyncHome" className="block mb-8 group">
           <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg flex items-center justify-between transition-all duration-300 ease-in-out hover:from-green-600 hover:to-green-700 shadow-md hover:shadow-lg transform hover:-translate-y-1 relative overflow-hidden">
-            {/* Subtle Background Pattern (Optional - using pseudo-elements) */}
-            <div className="absolute inset-0 bg-[url('/path/to/your/subtle-pattern.svg')] opacity-10 mix-blend-multiply pointer-events-none"></div>
-
             <div className="flex items-center space-x-3">
               <div className="bg-white/20 rounded-full p-2">
                 <Trophy className="h-6 w-6 text-white" />
