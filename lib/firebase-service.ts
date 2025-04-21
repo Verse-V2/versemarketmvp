@@ -139,7 +139,7 @@ class FirebaseService {
   // Get events with optional tag filter and limit
   async getEvents(tagFilter?: string, eventLimit: number = 300): Promise<Market[]> {
     try {
-      let q = query(
+      const q = query(
         collection(db, 'predictionEvents'),
         where('active', '==', true),
         where('closed', '==', false),
