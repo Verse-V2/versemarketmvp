@@ -463,7 +463,14 @@ function EventDetails() {
                         tickLine={false}
                       />
                       <Tooltip 
-                        formatter={(value: number) => [`${value.toFixed(2)}%`, 'Price']}
+                        formatter={(value: number, name: string) => {
+                          // Extract market index from the dataKey (e.g., "market0" -> 0)
+                          const marketIndex = parseInt(name.replace('market', ''));
+                          // Get the market name from our data
+                          const marketName = topMarketPriceHistories[marketIndex]?.name || 'Unknown';
+                          // Return formatted value and name
+                          return [`${value.toFixed(2)}%`, marketName];
+                        }}
                         labelFormatter={(label) => new Date(label).toLocaleString()}
                         contentStyle={{ 
                           backgroundColor: '#111827', 
