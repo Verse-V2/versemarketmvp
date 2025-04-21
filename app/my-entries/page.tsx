@@ -102,43 +102,43 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
       />
       
       {/* Header */}
-      <div className="px-3 py-2">
+      <div className="px-3 pt-2">
         <div className="flex items-center justify-between mb-1">
           <div>
             <div className="flex items-center gap-2">
               {entry.picks.length > 1 ? (
-                <h3 className="text-lg font-semibold m-0">
+                <h3 className="text-base font-semibold m-0">
                   {entry.picks.length} Pick Parlay
                 </h3>
               ) : (
-                <h3 className="text-lg font-semibold m-0">
+                <h3 className="text-base font-semibold m-0">
                   {capitalizeOutcome(entry.picks[0]?.outcome || entry.picks[0]?.selectedOutcome)}
                 </h3>
               )}
-              <span className={`text-lg ${oddsColorClass}`}>{odds}</span>
+              <span className={`text-base ${oddsColorClass}`}>{odds}</span>
             </div>
-            <p className="text-sm text-gray-400 uppercase">PREDICTION</p>
+            <p className="text-xs text-gray-400 uppercase">PREDICTION</p>
           </div>
           <Button variant="outline" className="bg-[#FFCC00] text-black hover:bg-[#FFDD33] border-0 dark:bg-[#FFCC00] dark:text-black dark:hover:bg-[#FFDD33]">
             Open
           </Button>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 -mb-1">
           <Image
             src="/cash-icon.png"
             alt="Verse Cash"
-            width={24}
-            height={24}
+            width={20}
+            height={20}
             className="object-contain"
           />
           <div className="flex items-center gap-2 text-gray-400">
-            <span>WAGER</span>
+            <span className="text-xs">WAGER</span>
             <span className={oddsColorClass}>
               ${entry.wager.toFixed(2)}
             </span>
-            <span>•</span>
-            <span>TO PAY</span>
+            <span className="text-xs">•</span>
+            <span className="text-xs">TO PAY</span>
             <span className={oddsColorClass}>
               ${entry.totalPayout.toFixed(2)}
             </span>
@@ -152,7 +152,7 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
           {entry.picks.map((pick, index) => (
             <div 
               key={pick.id}
-              className="px-4 py-3 border-b border-[#2A2A2D] last:border-b-0 relative"
+              className="px-4 py-2 border-b border-[#2A2A2D] last:border-b-0 relative"
             >
               {/* Dotted line */}
               {index < entry.picks.length - 1 && (
@@ -164,16 +164,16 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full border-2 border-gray-600 shrink-0" />
-                    <h4 className="text-lg font-semibold">
+                    <div className="w-4 h-4 rounded-full border-2 border-gray-600 shrink-0" />
+                    <h4 className="text-base font-semibold">
                       {capitalizeOutcome(pick.outcome || pick.selectedOutcome)}
                     </h4>
                   </div>
-                  <p className="text-sm text-gray-400 ml-8">
+                  <p className="text-xs text-gray-400 ml-7">
                     {pick.eventTitle || (pick.question ? pick.question.split(' - ')[0] : '')}
                   </p>
-                  <div className="flex items-center gap-3 ml-8">
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#2A2A2D]">
+                  <div className="flex items-center gap-3 ml-7">
+                    <div className="relative w-6 h-6 rounded-full overflow-hidden bg-[#2A2A2D]">
                       {pick.imageUrl && (
                         <Image
                           src={pick.imageUrl}
@@ -183,11 +183,11 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
                         />
                       )}
                     </div>
-                    <span>{capitalizeOutcome(pick.marketTitle || pick.selectedOutcome)}</span>
+                    <span className="text-sm">{capitalizeOutcome(pick.marketTitle || pick.selectedOutcome)}</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <span className={`text-lg ${oddsColorClass}`}>{pick.moneylineOdds || pick.outcomePrices}</span>
+                  <span className={`text-base ${oddsColorClass}`}>{pick.moneylineOdds || pick.outcomePrices}</span>
                 </div>
               </div>
             </div>
@@ -196,16 +196,16 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
       )}
 
       {/* Legs Toggle Section */}
-      <div className="flex items-center justify-between px-4 py-1 border-t border-[#2A2A2D] h-8">
+      <div className="flex items-center justify-between px-4 h-7 border-t border-[#2A2A2D]">
         <button 
           onClick={() => setShowLegs(!showLegs)}
-          className="flex items-center text-gray-400 hover:text-white text-sm focus:outline-none"
+          className="flex items-center text-gray-400 hover:text-white text-xs focus:outline-none"
         >
           {showLegs ? "Hide Legs" : "Show Legs"}
           {showLegs ? (
-            <ChevronUp className="ml-2 h-4 w-4" />
+            <ChevronUp className="ml-1 h-3.5 w-3.5" />
           ) : (
-            <ChevronDown className="ml-2 h-4 w-4" />
+            <ChevronDown className="ml-1 h-3.5 w-3.5" />
           )}
         </button>
         <span className="text-xs text-gray-400">{entry.picks.length} selections</span>
@@ -215,9 +215,9 @@ function EntryCard({ entry }: { entry: PolymarketEntry }) {
       <div className="bg-[#1C1D1E]">
         <div className="px-4 py-2 border-t border-[#2A2A2D] flex items-center justify-between">
           <div className="text-sm text-gray-400">
-            <span>Bet ID: {entry.id}</span>
+            <span className="text-xs">Bet ID: {entry.id}</span>
             <span className="mx-2">•</span>
-            <span>{formatDate(entry.createdAt)}</span>
+            <span className="text-xs">{formatDate(entry.createdAt)}</span>
           </div>
           <Button
             variant="ghost"
