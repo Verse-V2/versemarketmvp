@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, doc, getDoc, getDocs, query, where, limit, orderBy, onSnapshot, DocumentData } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDoc, getDocs, query, where, limit, orderBy, onSnapshot, DocumentData, startAfter } from 'firebase/firestore';
 import type { Market } from './polymarket-api';
 import type { Event } from './polymarket-service';
 
@@ -212,7 +212,12 @@ class FirebaseService {
   }
 
   // Set up a real-time listener for the events list
-  onEventsUpdate(tagFilter: string | undefined, eventLimit: number, callback: (markets: Market[]) => void): () => void {
+  onEventsUpdate(
+    tagFilter: string | undefined, 
+    eventLimit: number,
+    lastDoc: any | null,
+    callback: (markets: Market[], lastVisible: any | null) => void
+  ): () => void {
     let q = query(
       collection(db, 'predictionEvents'),
       where('active', '==', true),
@@ -221,6 +226,17 @@ class FirebaseService {
       limit(eventLimit)
     );
 
+    if (lastDoc) {
+      q = query(
+        collection(db, 'predictionEvents'),
+        where('active', '==', true),
+        where('closed', '==', false),
+        orderBy('volume', 'desc'),
+        startAfter(lastDoc),
+        limit(eventLimit)
+      );
+    }
+
     if (tagFilter && tagFilter.toLowerCase() !== 'all') {
       q = query(
         collection(db, 'predictionEvents'),
@@ -228,6 +244,7 @@ class FirebaseService {
         where('closed', '==', false),
         where('tags', 'array-contains', { label: tagFilter }),
         orderBy('volume', 'desc'),
+        ...(lastDoc ? [startAfter(lastDoc)] : []),
         limit(eventLimit)
       );
     }
@@ -235,7 +252,8 @@ class FirebaseService {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const events = snapshot.docs.map(doc => doc.data() as FirebaseEvent);
       const markets = events.map(event => this.transformEventToMarket(event));
-      callback(markets);
+      const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+      callback(markets, lastVisible);
     }, (error) => {
       console.error("Error in events listener:", error);
     });

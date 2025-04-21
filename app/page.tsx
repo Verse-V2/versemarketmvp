@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MarketCard } from "@/components/ui/market-card";
@@ -16,7 +16,11 @@ export default function Home() {
   const user = useAuth();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [activeTag, setActiveTag] = useState('All');
+  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // Redirect to auth page if not logged in
   useEffect(() => {
@@ -35,14 +39,19 @@ export default function Home() {
     if (!user) return;
 
     setLoading(true);
+    setMarkets([]);
+    setLastVisible(null);
+    setHasMore(true);
     
     // Use tag filter if not "All"
     const tagFilter = activeTag !== 'All' ? activeTag : undefined;
     
     // Set up real-time listener for market updates
-    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 300, (updatedMarkets) => {
+    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 12, null, (updatedMarkets, lastDoc) => {
       setMarkets(updatedMarkets);
+      setLastVisible(lastDoc);
       setLoading(false);
+      setHasMore(updatedMarkets.length === 12);
     });
 
     // Cleanup listener when component unmounts or filter changes
@@ -50,6 +59,45 @@ export default function Home() {
       unsubscribe();
     };
   }, [activeTag, user]);
+
+  // Intersection Observer for infinite scrolling
+  useEffect(() => {
+    if (!user || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMoreMarkets();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [user, loading, hasMore, loadingMore, lastVisible]);
+
+  const loadMoreMarkets = () => {
+    if (!lastVisible || !hasMore || loadingMore) return;
+
+    setLoadingMore(true);
+    const tagFilter = activeTag !== 'All' ? activeTag : undefined;
+
+    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 12, lastVisible, (newMarkets, lastDoc) => {
+      setMarkets(prev => [...prev, ...newMarkets]);
+      setLastVisible(lastDoc);
+      setLoadingMore(false);
+      setHasMore(newMarkets.length === 12);
+      unsubscribe(); // Unsubscribe immediately since we don't need real-time updates for older content
+    });
+  };
 
   // Show loading state while checking auth
   if (user === null) {
@@ -105,11 +153,30 @@ export default function Home() {
             ))}
           </div>
         ) : markets.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {markets.map((market) => (
-              <MarketCard key={market.id} market={market} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {markets.map((market) => (
+                <MarketCard key={market.id} market={market} />
+              ))}
+            </div>
+            
+            {/* Loading more indicator */}
+            {loadingMore && (
+              <div className="mt-6 flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+              </div>
+            )}
+            
+            {/* Intersection observer target */}
+            <div ref={observerTarget} className="h-4 mt-4" />
+            
+            {/* No more content indicator */}
+            {!hasMore && markets.length > 0 && (
+              <div className="text-center mt-6 text-gray-500 dark:text-gray-400">
+                No more markets to load
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400">
