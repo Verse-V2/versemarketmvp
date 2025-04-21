@@ -1,4 +1,3 @@
-import { ThemeToggle } from "@/components/theme-toggle";
 import { CurrencyToggle } from "@/components/currency-toggle";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
@@ -15,9 +14,6 @@ export function Header() {
           </Link>
           <div className="flex items-center justify-end space-x-4">
             <CurrencyToggle />
-            <div className="hidden md:block">
-              <ThemeToggle />
-            </div>
           </div>
         </div>
       </div>
