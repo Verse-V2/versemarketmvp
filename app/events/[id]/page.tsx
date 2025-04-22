@@ -82,6 +82,7 @@ function EventDetails() {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [topMarketPriceHistories, setTopMarketPriceHistories] = useState<MarketPriceHistory[]>([]);
   const [loadingPriceHistory, setLoadingPriceHistory] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -94,6 +95,13 @@ function EventDetails() {
     try {
       // First, get market data to extract token ID
       const marketResponse = await fetch(`https://clob.polymarket.com/markets/${conditionId}`);
+      if (!marketResponse.ok) {
+        if (marketResponse.status === 429) {
+          setIsRateLimited(true);
+          throw new Error('Rate limited by CLOB API');
+        }
+        throw new Error(`HTTP error! status: ${marketResponse.status}`);
+      }
       const marketInfo = await marketResponse.json();
       
       // Find the "Yes" outcome token ID
@@ -104,6 +112,13 @@ function EventDetails() {
         const historyResponse = await fetch(
           `https://clob.polymarket.com/prices-history?market=${yesToken.token_id}&interval=1w&fidelity=60`
         );
+        if (!historyResponse.ok) {
+          if (historyResponse.status === 429) {
+            setIsRateLimited(true);
+            throw new Error('Rate limited by CLOB API');
+          }
+          throw new Error(`HTTP error! status: ${historyResponse.status}`);
+        }
         const historyData = await historyResponse.json();
         
         if (historyData && historyData.history) {
@@ -121,12 +136,21 @@ function EventDetails() {
       }
     } catch (err) {
       console.error(`Error fetching price history for market ${marketName}:`, err);
+      // Handle both explicit rate limiting and network failures
+      if (err instanceof Error && (
+        err.message.includes('Rate limited') || 
+        err.message.includes('Failed to fetch') ||
+        err.message.includes('NetworkError')
+      )) {
+        setIsRateLimited(true);
+      }
     }
   };
 
   // Function to fetch price histories for top markets
   const fetchTopMarketsPriceHistories = async (markets: Array<{market: FirebaseMarket; probability: number}>) => {
     setLoadingPriceHistory(true);
+    setIsRateLimited(false); // Reset rate limited state on new fetch attempt
     
     try {
       // Get the top 4 markets or fewer if not available
@@ -427,6 +451,13 @@ function EventDetails() {
             <CardContent>
               {loadingPriceHistory ? (
                 <div className="h-[300px] w-full bg-gray-900 dark:bg-gray-950 animate-pulse rounded-lg"></div>
+              ) : isRateLimited ? (
+                <div className="h-[300px] w-full bg-gray-900 dark:bg-gray-950 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-gray-400 mb-2">Rate limit exceeded</p>
+                    <p className="text-sm text-gray-500">Please try again in a few minutes</p>
+                  </div>
+                </div>
               ) : topMarketPriceHistories.length > 0 ? (
                 <div className="h-[300px] w-full bg-gray-900 dark:bg-gray-950 rounded-lg p-4 relative">
                   {/* Add legend at the top with better styling */}
