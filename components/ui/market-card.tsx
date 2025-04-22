@@ -10,6 +10,8 @@ import { MessageSquare, ArrowRight } from "lucide-react";
 import { useBetSlip } from "@/lib/bet-slip-context";
 import { useEffect, useRef, useState } from "react";
 import { useCurrency } from "@/lib/currency-context";
+import { firebaseService } from '@/lib/firebase-service';
+import { Config } from '@/lib/firebase-service';
 
 interface MarketCardProps {
   market: Market;
@@ -22,6 +24,18 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
   const previousOddsRef = useRef<Record<string, string>>({});
   const [flashingOdds, setFlashingOdds] = useState<Record<string, boolean>>({});
   const { currency } = useCurrency();
+  const [maxOdds, setMaxOdds] = useState<number | undefined>(undefined);
+  const [minOdds, setMinOdds] = useState<number | undefined>(undefined);
+
+  // Load odds limits from config
+  useEffect(() => {
+    const loadOddsLimits = async () => {
+      const config = await firebaseService.getConfig() as Config | null;
+      setMaxOdds(config?.safeguards?.maxPredictionOdds);
+      setMinOdds(config?.safeguards?.minPredictionOdds);
+    };
+    loadOddsLimits();
+  }, []);
 
   // Format the end date
   const formattedEndDate = market.endDate
@@ -69,7 +83,11 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
       odds = Math.round(100 / prob - 100);
     }
     
-    return odds > 3000 || odds < -3000;
+    // Use config values if available, otherwise use default limits
+    const effectiveMaxOdds = typeof maxOdds === 'number' ? maxOdds : 3000;
+    const effectiveMinOdds = typeof minOdds === 'number' ? minOdds : -3000;
+    
+    return odds > effectiveMaxOdds || odds < effectiveMinOdds;
   };
 
   const handleBetClick = (outcome: { name: string; probability: number }) => {

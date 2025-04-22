@@ -10,6 +10,8 @@ interface FirebaseConfig {
   seasonStatus: string;
   predictionFilters?: string[];
   feePercentage?: number;
+  maxPredictionOdds?: number;
+  minPredictionOdds?: number;
   safeguards?: {
     maxParlayLegs: number;
     maxRiskAmount: number;

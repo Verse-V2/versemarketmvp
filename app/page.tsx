@@ -48,11 +48,11 @@ export default function Home() {
     setLoadingMore(true);
     const tagFilter = activeTag !== 'All' ? activeTag : undefined;
 
-    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 12, lastVisible, (newMarkets, lastDoc) => {
+    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 50, lastVisible, (newMarkets, lastDoc) => {
       setMarkets(prev => [...prev, ...newMarkets]);
       setLastVisible(lastDoc);
       setLoadingMore(false);
-      setHasMore(newMarkets.length === 12);
+      setHasMore(newMarkets.length > 0); // If we got any markets, there might be more
       unsubscribe(); // Unsubscribe immediately since we don't need real-time updates for older content
     });
   }, [lastVisible, hasMore, loadingMore, activeTag]);
@@ -69,11 +69,11 @@ export default function Home() {
     const tagFilter = activeTag !== 'All' ? activeTag : undefined;
     
     // Set up real-time listener for market updates
-    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 12, null, (updatedMarkets, lastDoc) => {
+    const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 50, null, (updatedMarkets, lastDoc) => {
       setMarkets(updatedMarkets);
       setLastVisible(lastDoc);
       setLoading(false);
-      setHasMore(updatedMarkets.length === 12);
+      setHasMore(updatedMarkets.length > 0); // If we got any markets, there might be more
     });
 
     // Cleanup listener when component unmounts or filter changes

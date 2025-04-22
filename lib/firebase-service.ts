@@ -75,14 +75,41 @@ interface FantasyLeague extends DocumentData {
   teams?: Record<string, { name: string; logoUrl: string; teamId: string }>;
 }
 
-interface Config {
+export interface Config {
   currentNFLWeek: string;
   currentSeason: string;
   seasonStatus: string;
+  feePercentage?: number;
+  predictionFilters?: string[];
+  safeguards?: {
+    maxParlayLegs: number;
+    maxPredictionOdds: number;
+    maxRiskAmount: number;
+    maxTotalOdds: number;
+    minPredictionOdds: number;
+    minTotalOdds: number;
+  };
+  stateList?: Array<{
+    name: string;
+    stateCode: string;
+    valid: boolean;
+  }>;
+  validStatesURL?: string;
   lastUpdated?: {
     __time__: number;
   };
-  [key: string]: string | { __time__: number } | undefined;
+  [key: string]: string | number | { __time__: number } | string[] | undefined | {
+    maxParlayLegs: number;
+    maxPredictionOdds: number;
+    maxRiskAmount: number;
+    maxTotalOdds: number;
+    minPredictionOdds: number;
+    minTotalOdds: number;
+  } | Array<{
+    name: string;
+    stateCode: string;
+    valid: boolean;
+  }>;
 }
 
 // Updated to match the actual structure from Firestore
@@ -139,6 +166,10 @@ class FirebaseService {
   // Get events with optional tag filter and limit
   async getEvents(tagFilter?: string, eventLimit: number = 300): Promise<Market[]> {
     try {
+      const config = await this.getConfig();
+      const maxOdds = config?.safeguards?.maxPredictionOdds;
+      const minOdds = config?.safeguards?.minPredictionOdds;
+
       const q = query(
         collection(db, 'predictionEvents'),
         where('active', '==', true),
@@ -151,13 +182,14 @@ class FirebaseService {
       const querySnapshot = await getDocs(q);
       let events = querySnapshot.docs.map(doc => doc.data() as FirebaseEvent);
       
-      console.log(`[DEBUG] Total events fetched before filtering: ${events.length}`);
+      console.log(`[DEBUG] Initial events count: ${events.length}`);
 
       // Filter events in memory if a tag filter is provided
       if (tagFilter && tagFilter.toLowerCase() !== 'all') {
         const tagFilterLower = tagFilter.toLowerCase();
         console.log(`[DEBUG] Filtering by tag: "${tagFilterLower}"`);
         
+        const beforeTagFilter = events.length;
         events = events.filter(event => {
           // Check tags array if it exists
           if (event.tags && Array.isArray(event.tags)) {
@@ -171,23 +203,64 @@ class FirebaseService {
           // Check slug as fallback
           return event.slug && event.slug.toLowerCase().includes(tagFilterLower);
         });
-        
-        console.log(`[DEBUG] Events after filtering: ${events.length}`);
-        
-        // If we still have no results, log the filter details
-        if (events.length === 0) {
-          console.log('[DEBUG] No events found after filtering. Tag filter:', tagFilterLower);
-        }
+        console.log(`[DEBUG] After tag filter: ${events.length} (removed ${beforeTagFilter - events.length})`);
+      }
+
+      // Filter events by odds limits if configured
+      if (maxOdds !== undefined || minOdds !== undefined) {
+        console.log(`[DEBUG] Filtering by odds limits: min=${minOdds}, max=${maxOdds}`);
+        const beforeOddsFilter = events.length;
+        events = events.filter(event => {
+          const market = event.markets?.find(m => m.active !== false && m.outcomePrices);
+          if (!market?.outcomePrices) {
+            console.log(`[DEBUG] Event ${event.id} skipped: No valid market or outcome prices`);
+            return false;
+          }
+
+          try {
+            const outcomePrices = JSON.parse(market.outcomePrices);
+            const probabilities = outcomePrices.map((price: string) => parseFloat(price));
+            
+            // Check if any outcome's odds are within the limits
+            const hasValidOdds = probabilities.some((prob: number) => {
+              if (prob <= 0 || prob >= 1) return false;
+              
+              let odds: number;
+              if (prob > 0.5) {
+                odds = Math.round(-100 / (prob - 1));
+              } else {
+                odds = Math.round(100 / prob - 100);
+              }
+              
+              const passesMinOdds = minOdds === undefined || (typeof minOdds === 'number' && odds >= minOdds);
+              const passesMaxOdds = maxOdds === undefined || (typeof maxOdds === 'number' && odds <= maxOdds);
+              
+              if (!passesMinOdds || !passesMaxOdds) {
+                console.log(`[DEBUG] Event ${event.id} odds ${odds} outside limits`);
+              }
+              
+              return passesMinOdds && passesMaxOdds;
+            });
+
+            if (!hasValidOdds) {
+              console.log(`[DEBUG] Event ${event.id} has no valid odds within limits`);
+            }
+            return hasValidOdds;
+          } catch (error) {
+            console.error(`[DEBUG] Error parsing outcome prices for event ${event.id}:`, error);
+            return false;
+          }
+        });
+        console.log(`[DEBUG] After odds filter: ${events.length} (removed ${beforeOddsFilter - events.length})`);
       }
 
       // Apply the final limit after filtering
       const limitedEvents = events.slice(0, eventLimit);
-      console.log(`[DEBUG] Final events after limiting: ${limitedEvents.length}`);
+      console.log(`[DEBUG] Final events after limiting to ${eventLimit}: ${limitedEvents.length} (removed ${events.length - limitedEvents.length})`);
 
-      // Transform events to Market interface
       return limitedEvents.map(event => this.transformEventToMarket(event));
     } catch (error) {
-      console.error("Error fetching events from Firebase:", error);
+      console.error("Failed to fetch events from Firebase:", error);
       return [];
     }
   }
@@ -243,37 +316,36 @@ class FirebaseService {
     lastDoc: FirestoreDocumentReference | null,
     callback: (markets: Market[], lastVisible: FirestoreDocumentReference | null) => void
   ): () => void {
+    // Base query without limit
     let q = query(
       collection(db, 'predictionEvents'),
       where('active', '==', true),
       where('closed', '==', false),
-      orderBy('volume', 'desc'),
-      limit(eventLimit * 4) 
+      orderBy('volume', 'desc')
     );
 
+    // If we have a last document, start after it for pagination
     if (lastDoc) {
       q = query(
         collection(db, 'predictionEvents'),
         where('active', '==', true),
         where('closed', '==', false),
         orderBy('volume', 'desc'),
-        startAfter(lastDoc),
-        limit(eventLimit * 4)
+        startAfter(lastDoc)
       );
     }
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allFetchedEvents = snapshot.docs.map(doc => doc.data() as FirebaseEvent);
-      console.log(`[DEBUG] Total events fetched in onEventsUpdate: ${allFetchedEvents.length}`);
+    // Add a reasonable batch size for each query
+    q = query(q, limit(50));
+
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      let allFetchedEvents = snapshot.docs.map(doc => doc.data() as FirebaseEvent);
+      console.log(`[DEBUG] Loading batch of ${allFetchedEvents.length} events`);
       
-      let filteredEvents = allFetchedEvents;
-      
+      // Filter events by tag if provided
       if (tagFilter && tagFilter.toLowerCase() !== 'all') {
         const tagFilterLower = tagFilter.toLowerCase();
-        console.log(`[DEBUG] Filtering by tag in onEventsUpdate: "${tagFilterLower}"`);
-        
-        filteredEvents = allFetchedEvents.filter(event => {
-          // Check tags array if it exists
+        allFetchedEvents = allFetchedEvents.filter(event => {
           if (event.tags && Array.isArray(event.tags)) {
             const hasMatchingTag = event.tags.some(tag => 
               (tag.label && tag.label.toLowerCase().includes(tagFilterLower)) ||
@@ -281,25 +353,15 @@ class FirebaseService {
             );
             if (hasMatchingTag) return true;
           }
-          
-          // Check slug as fallback
           return event.slug && event.slug.toLowerCase().includes(tagFilterLower);
         });
-        
-        console.log(`[DEBUG] Events after filtering in onEventsUpdate: ${filteredEvents.length}`);
       }
-      
-      // Apply the limit *after* filtering
-      const finalEvents = filteredEvents.slice(0, eventLimit);
-      console.log(`[DEBUG] Final events after limiting in onEventsUpdate: ${finalEvents.length}`);
 
-      const transformedMarkets = finalEvents.map(event => this.transformEventToMarket(event));
-      const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+      // Transform to Market format and send to callback
+      const markets = allFetchedEvents.map(event => this.transformEventToMarket(event));
       
-      callback(transformedMarkets, lastVisible);
-    }, (error) => {
-      console.error("Error in events listener:", error);
-      callback([], null); 
+      // Pass the last document for pagination
+      callback(markets, snapshot.docs[snapshot.docs.length - 1]);
     });
 
     return unsubscribe;
