@@ -9,6 +9,7 @@ import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
 import { firebaseService } from "@/lib/firebase-service";
+import { getPredictionsFilters } from "@/lib/predictions-config";
 import { Trophy, ChevronRight } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
 
@@ -21,6 +22,7 @@ export default function Home() {
   const [activeTag, setActiveTag] = useState('All');
   const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [predictionFilters, setPredictionFilters] = useState<string[]>([]);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Redirect to auth page if not logged in
@@ -30,11 +32,14 @@ export default function Home() {
     }
   }, [user, router]);
 
-  // All possible tag options
-  const categories = [
-    "All", "NBA", "NFL", "Sports", "Politics", "Crypto", 
-    "Tech", "Culture", "World", "Trump", "Economy"
-  ];
+  // Load categories from config
+  useEffect(() => {
+    const loadCategories = async () => {
+      const filters = await getPredictionsFilters();
+      setPredictionFilters(filters);
+    };
+    loadCategories();
+  }, []);
 
   // Load more markets when user scrolls to bottom
   const loadMoreMarkets = useCallback(() => {
@@ -122,14 +127,14 @@ export default function Home() {
       
       <main className="container mx-auto px-4 pt-4 pb-6">
         <div className="flex overflow-x-auto pb-1 -mx-4 px-4 mb-4 no-scrollbar">
-          {categories.map((tag) => (
+          {predictionFilters.map((filter) => (
             <Button
-              key={tag}
-              variant={activeTag === tag ? "default" : "outline"}
-              onClick={() => handleTagClick(tag)}
+              key={filter}
+              variant={activeTag === filter ? "default" : "outline"}
+              onClick={() => handleTagClick(filter)}
               className="text-sm whitespace-nowrap flex-shrink-0 mr-2"
             >
-              {tag}
+              {filter}
             </Button>
           ))}
         </div>
