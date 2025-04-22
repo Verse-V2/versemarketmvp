@@ -89,11 +89,6 @@ function EventDetails() {
     }
   }, [user, router]);
 
-  // If not authenticated, show nothing while redirecting
-  if (!user) {
-    return null;
-  }
-
   // Function to fetch price history for a market
   const fetchPriceHistory = async (conditionId: string, marketName: string, marketIndex: number) => {
     try {
