@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Event } from '@/lib/polymarket-service';
 import { MarketCard } from '@/components/ui/market-card';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { firebaseService } from '@/lib/firebase-service';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useAuth } from '@/lib/auth-context';
 
 // Convert probability to American odds - same as in market-card.tsx
 const toAmericanOdds = (prob: number) => {
@@ -71,6 +72,8 @@ interface MarketPriceHistory {
 
 function EventDetails() {
   const params = useParams();
+  const router = useRouter();
+  const user = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +82,17 @@ function EventDetails() {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [topMarketPriceHistories, setTopMarketPriceHistories] = useState<MarketPriceHistory[]>([]);
   const [loadingPriceHistory, setLoadingPriceHistory] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth');
+    }
+  }, [user, router]);
+
+  // If not authenticated, show nothing while redirecting
+  if (!user) {
+    return null;
+  }
 
   // Function to fetch price history for a market
   const fetchPriceHistory = async (conditionId: string, marketName: string, marketIndex: number) => {
