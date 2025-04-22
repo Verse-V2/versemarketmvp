@@ -39,7 +39,22 @@ A persistent bottom navigation bar providing access to the main sections of the 
 *   **Placing Bets:** Functionality for users to place bets on market outcomes (`components/ui/bet-slip.tsx` exists).
 *   **Market Resolution:** (Backend/Logic) Mechanism for settling markets once the outcome is known.
 
-### 4.3. User Interface & Experience
+### 4.3. Rewards System
+
+*   **Daily Challenges:**
+    * Display a progress indicator showing completion status of daily challenges
+    * Show list of 3 daily challenges (e.g., "Place a prediction market entry with Verse Coins")
+    * Award $0.10 Verse Cash upon completion of all daily challenges
+    * Reset challenges every 24 hours
+*   **Free Verse Coins:**
+    * Allow users to claim 1,000 Verse Coins every 24 hours
+    * Display countdown timer showing time until next claim is available
+*   **UI Components:**
+    * Daily challenge progress indicator
+    * List of daily challenges with completion status
+    * Verse Coin claim button with 24-hour countdown timer
+
+### 4.4. User Interface & Experience
 
 *   **Header (`components/ui/header.tsx`):** Consistent header across pages.
 *   **Currency Toggle (`components/currency-toggle.tsx`):** Allow users to switch currency views if applicable.
@@ -73,7 +88,9 @@ A persistent bottom navigation bar providing access to the main sections of the 
 ## 8. Open Questions / Future Considerations
 
 *   Specific logic for odds calculation and manipulation.
-*   Detailed requirements for the Rewards section.
 *   Data source and update frequency for prediction market events.
 *   Payment processing integration for the Store (if real money is involved).
-*   User onboarding flow. 
+*   User onboarding flow.
+*   Persistence and tracking mechanism for daily challenge completion.
+*   Backend implementation for the 24-hour cooldown timers.
+*   Future expansion of daily challenge types and reward amounts. 
