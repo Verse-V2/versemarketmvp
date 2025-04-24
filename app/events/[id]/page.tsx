@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Event } from '@/lib/polymarket-service';
-import { MarketCard } from '@/components/ui/market-card';
+import { EventMarketCard } from '@/components/ui/event-market-card';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { Header } from '@/components/ui/header';
@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { firebaseService } from '@/lib/firebase-service';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/lib/auth-context';
+import { EventHeader } from "@/components/ui/event-header";
 
 // Convert probability to American odds - same as in market-card.tsx
 const toAmericanOdds = (prob: number) => {
@@ -155,6 +156,11 @@ function EventDetails() {
     try {
       // Get the top 4 markets or fewer if not available
       const topMarkets = markets.slice(0, 4);
+      console.log('Fetching price history for markets:', {
+        totalMarkets: markets.length,
+        topMarketsLength: topMarkets.length,
+        topMarketIds: topMarkets.map(m => m.market.id)
+      });
       
       // Initialize the price histories array with empty data
       setTopMarketPriceHistories(
@@ -283,6 +289,8 @@ function EventDetails() {
           description: topSortedMarket?.description || 'No description available for this market.',
           topSubmarkets: data.markets.length > 1 ? 
             (() => {
+              console.log('Total markets from data:', data.markets.length);
+              
               const unsortedSubmarkets = data.markets.map(m => {
                 let probability = 0;
                 if (m.outcomePrices) {
@@ -301,12 +309,15 @@ function EventDetails() {
                 };
               });
               
+              console.log('Unsorted submarkets:', unsortedSubmarkets.length);
+              
               const sortedSubmarkets = [...unsortedSubmarkets].sort((a, b) => {
                 // Sort by highest probability first (lowest American odds)
                 return b.probability - a.probability;
               });
               
-              return sortedSubmarkets.slice(0, 4);
+              console.log('Sorted submarkets before return:', sortedSubmarkets.length);
+              return sortedSubmarkets;
             })() : undefined
         };
         
@@ -441,7 +452,7 @@ function EventDetails() {
         </div>
 
         <div className="space-y-6">
-          <MarketCard market={marketData} hideViewDetails />
+          <EventHeader market={marketData} />
           
           {/* Price Chart */}
           <Card>
@@ -585,6 +596,8 @@ function EventDetails() {
               )}
             </CardContent>
           </Card>
+
+          <EventMarketCard market={marketData} hideViewDetails />
 
           {/* Rules Card */}
           <Card>

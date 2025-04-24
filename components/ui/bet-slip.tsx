@@ -178,15 +178,21 @@ export function BetSlip() {
             outcomeNameLower: bet.outcomeName.toLowerCase(),
             outcome: bet.outcomeName.toLowerCase() === 'yes' ? 'yes' : 'no'
           });
+
+          // Extract the base name and outcome from outcomeName (e.g. "Barcelona - Yes" -> "Barcelona" and "yes")
+          const [baseName, outcome] = bet.outcomeName.split(' - ');
+          const isYesNo = outcome?.toLowerCase() === 'yes' || outcome?.toLowerCase() === 'no';
+          
+          // For single market events, there won't be a " - " in the outcomeName
+          const isSingleMarketEvent = !bet.outcomeName.includes(' - ');
+          
           return {
             id: crypto.randomUUID(),
             marketId: bet.marketId,
             eventId: bet.marketId, // Using marketId as eventId for now
             eventTitle: bet.marketQuestion,
-            marketTitle: bet.outcomeName,
-            outcome: bet.outcomeName.toLowerCase() === 'yes' || bet.outcomeName.toLowerCase() === 'no' 
-              ? bet.outcomeName.toLowerCase() 
-              : 'yes', // For non-binary markets like team selections, the selection is always "yes"
+            marketTitle: isSingleMarketEvent ? bet.outcomeName : (baseName || bet.outcomeName), // For single market events, use outcomeName as marketTitle
+            outcome: isSingleMarketEvent ? bet.outcomeName.toLowerCase() : (isYesNo ? outcome.toLowerCase() : 'yes'), // For single market events, match outcome to marketTitle
             decimalOdds: americanToDecimal(bet.odds).toString(),
             moneylineOdds: bet.odds,
             timestamp: new Date(),

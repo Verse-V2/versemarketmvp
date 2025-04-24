@@ -217,7 +217,7 @@ class FirebaseService {
         console.log(`[DEBUG] After tag filter: ${events.length} (removed ${beforeTagFilter - events.length})`);
       }
       
-      return events.map(event => this.transformEventToMarket(event));
+      return events.map(event => this.transformEventToMarket(event, true));
     } catch (error) {
       console.error("Failed to fetch events from Firebase:", error);
       return [];
@@ -258,7 +258,7 @@ class FirebaseService {
     const unsubscribe = onSnapshot(docRef, (doc) => {
       if (doc.exists()) {
         const event = doc.data() as FirebaseEvent;
-        const market = this.transformEventToMarket(event);
+        const market = this.transformEventToMarket(event, false);
         callback(market);
       }
     }, (error) => {
@@ -328,8 +328,7 @@ class FirebaseService {
         console.log(`[DEBUG] After tag filter: ${events.length} (removed ${beforeTagFilter - events.length})`);
       }
       
-      const markets = events.map(event => this.transformEventToMarket(event));
-      // Only pass lastDoc for "all" view
+      const markets = events.map(event => this.transformEventToMarket(event, true));
       callback(markets, (!tagFilter || tagFilter.toLowerCase() === 'all') ? snapshot.docs[snapshot.docs.length - 1] : null);
     });
 
@@ -469,7 +468,7 @@ class FirebaseService {
   }
 
   // Helper function to transform event data to Market format
-  private transformEventToMarket(event: FirebaseEvent): Market {
+  private transformEventToMarket(event: FirebaseEvent, limitSubmarkets: boolean = true): Market {
     let outcomes: { name: string; probability: number }[] = [];
     let topSubmarkets: { id: string; question: string; probability: number; groupItemTitle?: string }[] = [];
 
@@ -510,10 +509,9 @@ class FirebaseService {
             }
           })
           .filter((m): m is NonNullable<typeof m> => m !== null)
-          .sort((a, b) => b.probability - a.probability)
-          .slice(0, 4);
+          .sort((a, b) => b.probability - a.probability);
 
-        topSubmarkets = processedSubmarkets;
+        topSubmarkets = limitSubmarkets ? processedSubmarkets.slice(0, 4) : processedSubmarkets;
       }
     }
 
