@@ -49,7 +49,12 @@ export default function Home() {
     const tagFilter = activeTag !== 'All' ? activeTag : undefined;
 
     const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 50, lastVisible, (newMarkets, lastDoc) => {
-      setMarkets(prev => [...prev, ...newMarkets]);
+      // Append only markets that are not already in the list to avoid duplicate keys
+      setMarkets(prev => {
+        const existingIds = new Set(prev.map(m => m.id));
+        const uniqueToAdd = newMarkets.filter(m => !existingIds.has(m.id));
+        return [...prev, ...uniqueToAdd];
+      });
       setLastVisible(lastDoc);
       setLoadingMore(false);
       setHasMore(newMarkets.length > 0); // If we got any markets, there might be more
