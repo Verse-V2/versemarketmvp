@@ -3,6 +3,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
+import { getFirestore } from "firebase/firestore";
 
 // Firebase configuration values are read from environment variables so that
 // no sensitive values are committed to the repository. Remember to populate
@@ -36,3 +37,6 @@ if (typeof window !== 'undefined') {
 export const analytics = typeof window !== 'undefined' 
   ? isSupported().then(yes => yes ? getAnalytics(app) : null) 
   : null; 
+
+// Initialize Firestore
+export const db = getFirestore(app); 
