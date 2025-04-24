@@ -80,9 +80,6 @@ export default function EntryCard({ entry }: { entry: PolymarketEntry }) {
             </div>
             <p className="text-xs text-gray-400 uppercase">PREDICTION</p>
           </div>
-          <Button variant="outline" className="bg-[#FFCC00] text-black hover:bg-[#FFDD33] border-0 dark:bg-[#FFCC00] dark:text-black dark:hover:bg-[#FFDD33]">
-            Open
-          </Button>
         </div>
 
         <div className="flex items-center gap-3 -mb-1">
