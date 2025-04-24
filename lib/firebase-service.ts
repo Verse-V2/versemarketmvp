@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, doc, getDoc, getDocs, query, where, limit, orderBy, onSnapshot, DocumentData, startAfter } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDoc, getDocs, query, where, limit, orderBy, onSnapshot, DocumentData, startAfter, QueryFieldFilterConstraint, QueryOrderByConstraint } from 'firebase/firestore';
 import type { Market } from './polymarket-api';
 import type { Event } from './polymarket-service';
 
@@ -166,99 +166,58 @@ class FirebaseService {
   // Get events with optional tag filter and limit
   async getEvents(tagFilter?: string, eventLimit: number = 300): Promise<Market[]> {
     try {
-      const config = await this.getConfig();
-      const maxOdds = config?.safeguards?.maxPredictionOdds;
-      const minOdds = config?.safeguards?.minPredictionOdds;
-
-      const q = query(
-        collection(db, 'predictionEvents'),
+      // Base query conditions
+      const conditions: (QueryFieldFilterConstraint | QueryOrderByConstraint)[] = [
         where('active', '==', true),
         where('closed', '==', false),
-        orderBy('volume', 'desc'),
-        limit(Math.max(eventLimit * 4, 100)) 
-      );
+        orderBy('volume', 'desc')
+      ];
 
-      // Always fetch first, then filter in memory
+      // Create the base query
+      let q = query(collection(db, 'predictionEvents'), ...conditions);
+
+      // Only apply limit for "all" view
+      if (!tagFilter || tagFilter.toLowerCase() === 'all') {
+        q = query(q, limit(eventLimit));
+      }
+
+      // Execute query
       const querySnapshot = await getDocs(q);
       let events = querySnapshot.docs.map(doc => doc.data() as FirebaseEvent);
       
-      console.log(`[DEBUG] Initial events count: ${events.length}`);
-
-      // Filter events in memory if a tag filter is provided
+      // Filter events by tag if provided
       if (tagFilter && tagFilter.toLowerCase() !== 'all') {
         const tagFilterLower = tagFilter.toLowerCase();
         console.log(`[DEBUG] Filtering by tag: "${tagFilterLower}"`);
         
         const beforeTagFilter = events.length;
         events = events.filter(event => {
-          // Check tags array if it exists
-          if (event.tags && Array.isArray(event.tags)) {
-            const hasMatchingTag = event.tags.some(tag => 
-              (tag.label && tag.label.toLowerCase().includes(tagFilterLower)) ||
-              (tag.slug && tag.slug.toLowerCase().includes(tagFilterLower))
-            );
-            if (hasMatchingTag) return true;
+          if (!event.tags || !Array.isArray(event.tags)) {
+            console.log(`[DEBUG] Event ${event.id} has no tags array`);
+            return false;
           }
           
-          // Check slug as fallback
-          return event.slug && event.slug.toLowerCase().includes(tagFilterLower);
+          const hasMatch = event.tags.some(tag => {
+            const labelMatch = tag.label && tag.label.toLowerCase() === tagFilterLower;
+            const slugMatch = tag.slug && tag.slug.toLowerCase() === tagFilterLower;
+            
+            if (labelMatch || slugMatch) {
+              console.log(`[DEBUG] Event ${event.id} matched with tag:`, tag);
+              return true;
+            }
+            return false;
+          });
+          
+          if (!hasMatch) {
+            console.log(`[DEBUG] Event ${event.id} tags:`, event.tags);
+          }
+          
+          return hasMatch;
         });
         console.log(`[DEBUG] After tag filter: ${events.length} (removed ${beforeTagFilter - events.length})`);
       }
-
-      // Filter events by odds limits if configured
-      if (maxOdds !== undefined || minOdds !== undefined) {
-        console.log(`[DEBUG] Filtering by odds limits: min=${minOdds}, max=${maxOdds}`);
-        const beforeOddsFilter = events.length;
-        events = events.filter(event => {
-          const market = event.markets?.find(m => m.active !== false && m.outcomePrices);
-          if (!market?.outcomePrices) {
-            console.log(`[DEBUG] Event ${event.id} skipped: No valid market or outcome prices`);
-            return false;
-          }
-
-          try {
-            const outcomePrices = JSON.parse(market.outcomePrices);
-            const probabilities = outcomePrices.map((price: string) => parseFloat(price));
-            
-            // Check if any outcome's odds are within the limits
-            const hasValidOdds = probabilities.some((prob: number) => {
-              if (prob <= 0 || prob >= 1) return false;
-              
-              let odds: number;
-              if (prob > 0.5) {
-                odds = Math.round(-100 / (prob - 1));
-              } else {
-                odds = Math.round(100 / prob - 100);
-              }
-              
-              const passesMinOdds = minOdds === undefined || (typeof minOdds === 'number' && odds >= minOdds);
-              const passesMaxOdds = maxOdds === undefined || (typeof maxOdds === 'number' && odds <= maxOdds);
-              
-              if (!passesMinOdds || !passesMaxOdds) {
-                console.log(`[DEBUG] Event ${event.id} odds ${odds} outside limits`);
-              }
-              
-              return passesMinOdds && passesMaxOdds;
-            });
-
-            if (!hasValidOdds) {
-              console.log(`[DEBUG] Event ${event.id} has no valid odds within limits`);
-            }
-            return hasValidOdds;
-          } catch (error) {
-            console.error(`[DEBUG] Error parsing outcome prices for event ${event.id}:`, error);
-            return false;
-          }
-        });
-        console.log(`[DEBUG] After odds filter: ${events.length} (removed ${beforeOddsFilter - events.length})`);
-      }
-
-      // Apply the final limit after filtering
-      const limitedEvents = events.slice(0, eventLimit);
-      console.log(`[DEBUG] Final events after limiting to ${eventLimit}: ${limitedEvents.length} (removed ${events.length - limitedEvents.length})`);
-
-      return limitedEvents.map(event => this.transformEventToMarket(event));
+      
+      return events.map(event => this.transformEventToMarket(event));
     } catch (error) {
       console.error("Failed to fetch events from Firebase:", error);
       return [];
@@ -316,52 +275,62 @@ class FirebaseService {
     lastDoc: FirestoreDocumentReference | null,
     callback: (markets: Market[], lastVisible: FirestoreDocumentReference | null) => void
   ): () => void {
-    // Base query without limit
-    let q = query(
-      collection(db, 'predictionEvents'),
+    // Base query conditions
+    const conditions: (QueryFieldFilterConstraint | QueryOrderByConstraint)[] = [
       where('active', '==', true),
       where('closed', '==', false),
       orderBy('volume', 'desc')
-    );
+    ];
 
-    // If we have a last document, start after it for pagination
-    if (lastDoc) {
-      q = query(
-        collection(db, 'predictionEvents'),
-        where('active', '==', true),
-        where('closed', '==', false),
-        orderBy('volume', 'desc'),
-        startAfter(lastDoc)
-      );
+    // Create the base query
+    let q = query(collection(db, 'predictionEvents'), ...conditions);
+
+    // Only apply pagination and limit for "all" view
+    if (!tagFilter || tagFilter.toLowerCase() === 'all') {
+      if (lastDoc) {
+        q = query(q, startAfter(lastDoc));
+      }
+      q = query(q, limit(50));
     }
 
-    // Add a reasonable batch size for each query
-    q = query(q, limit(50));
-
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      let allFetchedEvents = snapshot.docs.map(doc => doc.data() as FirebaseEvent);
-      console.log(`[DEBUG] Loading batch of ${allFetchedEvents.length} events`);
+      let events = snapshot.docs.map(doc => doc.data() as FirebaseEvent);
       
       // Filter events by tag if provided
       if (tagFilter && tagFilter.toLowerCase() !== 'all') {
         const tagFilterLower = tagFilter.toLowerCase();
-        allFetchedEvents = allFetchedEvents.filter(event => {
-          if (event.tags && Array.isArray(event.tags)) {
-            const hasMatchingTag = event.tags.some(tag => 
-              (tag.label && tag.label.toLowerCase().includes(tagFilterLower)) ||
-              (tag.slug && tag.slug.toLowerCase().includes(tagFilterLower))
-            );
-            if (hasMatchingTag) return true;
+        console.log(`[DEBUG] Filtering by tag: "${tagFilterLower}"`);
+        
+        const beforeTagFilter = events.length;
+        events = events.filter(event => {
+          if (!event.tags || !Array.isArray(event.tags)) {
+            console.log(`[DEBUG] Event ${event.id} has no tags array`);
+            return false;
           }
-          return event.slug && event.slug.toLowerCase().includes(tagFilterLower);
+          
+          const hasMatch = event.tags.some(tag => {
+            const labelMatch = tag.label && tag.label.toLowerCase() === tagFilterLower;
+            const slugMatch = tag.slug && tag.slug.toLowerCase() === tagFilterLower;
+            
+            if (labelMatch || slugMatch) {
+              console.log(`[DEBUG] Event ${event.id} matched with tag:`, tag);
+              return true;
+            }
+            return false;
+          });
+          
+          if (!hasMatch) {
+            console.log(`[DEBUG] Event ${event.id} tags:`, event.tags);
+          }
+          
+          return hasMatch;
         });
+        console.log(`[DEBUG] After tag filter: ${events.length} (removed ${beforeTagFilter - events.length})`);
       }
-
-      // Transform to Market format and send to callback
-      const markets = allFetchedEvents.map(event => this.transformEventToMarket(event));
       
-      // Pass the last document for pagination
-      callback(markets, snapshot.docs[snapshot.docs.length - 1]);
+      const markets = events.map(event => this.transformEventToMarket(event));
+      // Only pass lastDoc for "all" view
+      callback(markets, (!tagFilter || tagFilter.toLowerCase() === 'all') ? snapshot.docs[snapshot.docs.length - 1] : null);
     });
 
     return unsubscribe;
