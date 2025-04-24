@@ -1,73 +1,13 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { ChevronUp, ChevronDown, Send } from "lucide-react";
-import { useState } from "react";
-import { ShareDialog } from "@/components/ui/share-dialog";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { usePolymarketEntries, type PolymarketEntry } from "@/lib/hooks/use-polymarket-entries";
-import { useFantasyMatchupEntries, type FantasyMatchupEntry } from "@/lib/hooks/use-fantasy-matchup-entries";
-import { Timestamp } from 'firebase/firestore';
+import { usePolymarketEntries } from "@/lib/hooks/use-polymarket-entries";
+import { useFantasyMatchupEntries } from "@/lib/hooks/use-fantasy-matchup-entries";
 import EntryCard from "@/components/ui/entry-card";
 import FantasyMatchupEntryCard from "@/components/ui/fantasy-matchup-entry-card";
-
-// Keeping these functions commented out as they might be needed later
-// function americanToDecimal(odds: string): number {
-//   const value = parseInt(odds.replace(/[+\-,]/g, ''));
-//   if (odds.startsWith('+')) {
-//     return (value / 100) + 1;
-//   } else {
-//     return 1 + (100 / value);
-//   }
-// }
-
-// function decimalToAmerican(decimal: number): string {
-//   if (decimal <= 2) {
-//     const americanOdds = Math.round(-100 / (decimal - 1));
-//     return americanOdds.toString();
-//   } else {
-//     const americanOdds = Math.round((decimal - 1) * 100);
-//     return `+${americanOdds}`;
-//   }
-// }
-
-// Keeping this function commented out as it might be needed later
-// function calculateCombinedOdds(picks: PolymarketPick[]): string {
-//   if (picks.length <= 1) return '';
-  
-//   const combinedDecimal = picks.reduce((acc, pick) => {
-//     const decimal = americanToDecimal(pick.outcomePrices);
-//     return acc * decimal;
-//   }, 1);
-
-//   const american = decimalToAmerican(combinedDecimal);
-//   return american.startsWith('+') ? american : `+${american}`;
-// }
-
-function formatDate(timestamp: Timestamp) {
-  return timestamp.toDate().toLocaleDateString('en-US', {
-    month: 'numeric',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric'
-  });
-}
-
-// Helper function to capitalize Yes/No outcomes
-function capitalizeOutcome(outcome: string | undefined | null): string {
-  if (!outcome) return '';
-  const lowerOutcome = outcome.toLowerCase();
-  if (lowerOutcome === 'yes' || lowerOutcome === 'no') {
-    return lowerOutcome.charAt(0).toUpperCase() + lowerOutcome.slice(1);
-  }
-  return outcome;
-}
 
 export default function EntriesPage() {
   const { entries: polymarketEntries, isLoading: isLoadingPolymarket, error: polymarketError } = usePolymarketEntries();
@@ -122,7 +62,7 @@ export default function EntriesPage() {
           ) : (
             allEntries.map((entry) => (
               entry.type === 'polymarket' ? (
-              <EntryCard key={entry.id} entry={entry} />
+                <EntryCard key={entry.id} entry={entry} />
               ) : (
                 <FantasyMatchupEntryCard key={entry.id} entry={entry} />
               )
