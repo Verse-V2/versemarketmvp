@@ -284,8 +284,8 @@ function FantasyMatchupEntryCard({ entry }: { entry: FantasyMatchupEntry }) {
       <div className="bg-[#1C1D1E]">
         <div className="px-4 py-2 border-t border-[#2A2A2D] flex items-center justify-between">
           <div className="text-sm text-gray-400">
-            <span className="text-xs">Bet ID: {entry.id}</span>
-            <span className="mx-2">•</span>
+            <span className="text-xs hidden md:inline">Bet ID: {entry.id}</span>
+            <span className="text-xs hidden md:inline mx-2">•</span>
             <span className="text-xs">{formatDate(entry.createdAt)}</span>
           </div>
           <Button
