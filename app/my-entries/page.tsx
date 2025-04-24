@@ -55,8 +55,8 @@ export default function EntriesPage() {
   return (
     <main className="min-h-screen bg-background">
       <Header />
-      <div className="container max-w-2xl mx-auto p-6 pb-24">
-        <div className="flex w-full border-b border-[#2A2A2D] mb-6">
+      <div className="container max-w-2xl mx-auto px-6 pt-2 pb-24">
+        <div className="flex w-full border-b border-[#2A2A2D] mb-4">
           <button 
             onClick={() => setActiveTab('all')}
             className={`flex-1 px-6 py-2 text-sm font-medium ${
