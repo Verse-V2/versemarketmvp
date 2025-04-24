@@ -6,25 +6,33 @@ import { PurchaseSheet } from "@/components/ui/purchase-sheet";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-
-const packages = [
-  { points: 5000, bonusCash: 5.00, price: 5.00 },
-  { points: 7500, bonusCash: 7.50, price: 7.50 },
-  { points: 10000, bonusCash: 10.00, price: 10.00 },
-  { points: 15000, bonusCash: 15.00, price: 15.00 },
-  { points: 20000, bonusCash: 20.00, price: 20.00 },
-  { points: 25000, bonusCash: 25.00, price: 25.00 },
-];
+import { CoinPurchasePackage, getActiveCoinPurchasePackages } from "@/lib/coin-purchase-service";
 
 export default function StorePage() {
-  const [selectedPackage, setSelectedPackage] = useState<typeof packages[0] | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<CoinPurchasePackage | null>(null);
+  const [packages, setPackages] = useState<CoinPurchasePackage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const user = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!user) {
       router.push('/auth');
+      return;
     }
+
+    const fetchPackages = async () => {
+      try {
+        const activePackages = await getActiveCoinPurchasePackages();
+        setPackages(activePackages);
+      } catch (error) {
+        console.error('Error fetching packages:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPackages();
   }, [user, router]);
 
   // If not authenticated, show nothing while redirecting
@@ -32,7 +40,7 @@ export default function StorePage() {
     return null;
   }
 
-  const handlePurchase = (pkg: typeof packages[0]) => {
+  const handlePurchase = (pkg: CoinPurchasePackage) => {
     setSelectedPackage(pkg);
   };
 
@@ -48,17 +56,25 @@ export default function StorePage() {
             </p>
           </div>
 
-          <div className="space-y-3">
-            {packages.map((pkg, index) => (
-              <PackageCard
-                key={index}
-                points={pkg.points}
-                bonusCash={pkg.bonusCash}
-                price={pkg.price}
-                onClick={() => handlePurchase(pkg)}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0BC700]"></div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {packages.map((pkg) => (
+                <PackageCard
+                  key={pkg.id}
+                  points={pkg.coinAmount}
+                  bonusCash={pkg.cashAmount}
+                  price={pkg.price}
+                  isDiscounted={pkg.isDiscounted}
+                  discountPercentage={pkg.discountPercentage}
+                  onClick={() => handlePurchase(pkg)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
@@ -66,8 +82,8 @@ export default function StorePage() {
         <PurchaseSheet
           isOpen={true}
           onClose={() => setSelectedPackage(null)}
-          points={selectedPackage.points}
-          bonusCash={selectedPackage.bonusCash}
+          points={selectedPackage.coinAmount}
+          bonusCash={selectedPackage.cashAmount}
           price={selectedPackage.price}
         />
       )}

@@ -7,11 +7,21 @@ interface PackageCardProps {
   points: number;
   bonusCash: number;
   price: number;
+  isDiscounted?: boolean;
+  discountPercentage?: number;
   onClick?: () => void;
 }
 
-export function PackageCard({ points, bonusCash, price, onClick }: PackageCardProps) {
+export function PackageCard({ 
+  points, 
+  bonusCash, 
+  price, 
+  isDiscounted = false,
+  discountPercentage = 0,
+  onClick 
+}: PackageCardProps) {
   const formattedPoints = points.toLocaleString();
+  const originalPrice = isDiscounted ? price / (1 - discountPercentage) : price;
   
   return (
     <Button
@@ -45,8 +55,15 @@ export function PackageCard({ points, bonusCash, price, onClick }: PackageCardPr
           </div>
         </div>
       </div>
-      <div className="text-lg font-bold text-[#0BC700] group-hover:scale-105 transition-transform duration-200 pl-4">
-        ${price.toFixed(2)}
+      <div className="flex flex-col items-end">
+        {isDiscounted && (
+          <div className="text-sm text-gray-400 line-through">
+            ${originalPrice.toFixed(2)}
+          </div>
+        )}
+        <div className="text-lg font-bold text-[#0BC700] group-hover:scale-105 transition-transform duration-200">
+          ${price.toFixed(2)}
+        </div>
       </div>
     </Button>
   );
