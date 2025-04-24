@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, Timestamp, doc, getDoc, getFirestore, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, Timestamp, doc, getDoc, getFirestore, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { useCurrency } from '@/lib/currency-context';
-import { User } from 'firebase/auth';
 
 export interface FantasyMatchupTeam {
   fantasyPoints: number;
