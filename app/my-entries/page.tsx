@@ -3,15 +3,18 @@
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePolymarketEntries } from "@/lib/hooks/use-polymarket-entries";
 import { useFantasyMatchupEntries } from "@/lib/hooks/use-fantasy-matchup-entries";
 import EntryCard from "@/components/ui/entry-card";
 import FantasyMatchupEntryCard from "@/components/ui/fantasy-matchup-entry-card";
 
+type EntryStatus = 'all' | 'open' | 'won' | 'lost';
+
 export default function EntriesPage() {
   const { entries: polymarketEntries, isLoading: isLoadingPolymarket, error: polymarketError } = usePolymarketEntries();
   const { entries: fantasyEntries, isLoading: isLoadingFantasy, error: fantasyError } = useFantasyMatchupEntries();
+  const [activeTab, setActiveTab] = useState<EntryStatus>('all');
   const user = useAuth();
   const router = useRouter();
 
@@ -35,15 +38,65 @@ export default function EntriesPage() {
     ...fantasyEntries.map(entry => ({ ...entry, type: 'fantasy' as const }))
   ].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
+  // Filter entries based on active tab
+  const filteredEntries = allEntries.filter(entry => {
+    switch (activeTab) {
+      case 'open':
+        return entry.status === 'submitted';
+      case 'won':
+        return entry.status === 'won';
+      case 'lost':
+        return entry.status === 'lost';
+      default:
+        return true;
+    }
+  });
+
   return (
     <main className="min-h-screen bg-background">
       <Header />
       <div className="container max-w-2xl mx-auto p-6 pb-24">
-        <div className="space-y-1.5 mb-6">
-          <h1 className="text-lg font-semibold">My Entries</h1>
-          <p className="text-sm text-muted-foreground">
-            View your active and settled entries
-          </p>
+        <div className="flex w-full border-b border-[#2A2A2D] mb-6">
+          <button 
+            onClick={() => setActiveTab('all')}
+            className={`flex-1 px-6 py-2 text-sm font-medium ${
+              activeTab === 'all' 
+                ? 'text-white border-b-2 border-white' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            All
+          </button>
+          <button 
+            onClick={() => setActiveTab('open')}
+            className={`flex-1 px-6 py-2 text-sm font-medium ${
+              activeTab === 'open' 
+                ? 'text-white border-b-2 border-white' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Open
+          </button>
+          <button 
+            onClick={() => setActiveTab('won')}
+            className={`flex-1 px-6 py-2 text-sm font-medium ${
+              activeTab === 'won' 
+                ? 'text-white border-b-2 border-white' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Won
+          </button>
+          <button 
+            onClick={() => setActiveTab('lost')}
+            className={`flex-1 px-6 py-2 text-sm font-medium ${
+              activeTab === 'lost' 
+                ? 'text-white border-b-2 border-white' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Lost
+          </button>
         </div>
 
         <div className="space-y-4">
@@ -55,12 +108,12 @@ export default function EntriesPage() {
             <div className="text-center py-12 text-red-500">
               Error loading entries: {error.message}
             </div>
-          ) : allEntries.length === 0 ? (
+          ) : filteredEntries.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              No entries yet. Place your first bet to get started!
+              No entries found for the selected filter.
             </div>
           ) : (
-            allEntries.map((entry) => (
+            filteredEntries.map((entry) => (
               entry.type === 'polymarket' ? (
                 <EntryCard key={entry.id} entry={entry} />
               ) : (
