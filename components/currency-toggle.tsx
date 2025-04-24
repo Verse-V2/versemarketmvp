@@ -45,15 +45,6 @@ export function CurrencyToggle() {
           <span className="text-sm">Coins</span>
         </Button>
       </div>
-      <div className="text-sm font-medium min-w-[60px]">
-        {isLoading ? (
-          <span className="text-muted-foreground">Loading...</span>
-        ) : currency === 'cash' ? (
-          <span>${cashBalance.toFixed(2)}</span>
-        ) : (
-          <span>₡{coinBalance.toLocaleString()}</span>
-        )}
-      </div>
     </div>
   );
 } 
