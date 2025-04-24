@@ -1,12 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Market } from "@/lib/polymarket-api";
-import { formatDistanceToNow } from "date-fns";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { useBetSlip } from "@/lib/bet-slip-context";
 import { useEffect, useRef, useState } from "react";
 import { useCurrency } from "@/lib/currency-context";
@@ -43,11 +41,6 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
     };
     loadOddsLimits();
   }, []);
-
-  // Format the end date
-  const formattedEndDate = market.endDate
-    ? `Ends ${formatDistanceToNow(new Date(market.endDate), { addSuffix: true })}`
-    : "No end date";
 
   // These formatted values will be used in future iterations of the component
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

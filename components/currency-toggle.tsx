@@ -1,13 +1,11 @@
 "use client";
 
 import { useCurrency } from "@/lib/currency-context";
-import { useUserBalance } from "@/lib/user-balance-context";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 export function CurrencyToggle() {
   const { currency, setCurrency } = useCurrency();
-  const { coinBalance, cashBalance, isLoading } = useUserBalance();
 
   return (
     <div className="flex items-center gap-2">
