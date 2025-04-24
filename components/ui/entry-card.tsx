@@ -84,8 +84,8 @@ export default function EntryCard({ entry }: { entry: PolymarketEntry }) {
 
         <div className="flex items-center gap-3 -mb-1">
           <Image
-            src="/cash-icon.png"
-            alt="Verse Cash"
+            src={entry.isCash ? "/cash-icon.png" : "/verse-coin.png"}
+            alt={entry.isCash ? "Verse Cash" : "Verse Coin"}
             width={20}
             height={20}
             className="object-contain"
