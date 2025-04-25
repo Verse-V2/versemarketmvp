@@ -113,7 +113,7 @@ export interface Config {
 }
 
 // Updated to match the actual structure from Firestore
-interface FantasyTeamMatchup {
+export interface FantasyTeamMatchup {
   id: string;
   leagueId: string;
   season: string;
@@ -129,10 +129,11 @@ interface FantasyTeamMatchup {
   winProbability: number;
   decimalOdds: number;
   serviceProvider: string;
+  starters: string[];
 }
 
 // A paired matchup with both teams
-interface FantasyMatchup {
+export interface FantasyMatchup {
   id: string;
   teamA: FantasyTeamMatchup;
   teamB: FantasyTeamMatchup;
@@ -464,6 +465,22 @@ class FirebaseService {
     } catch (error) {
       console.error(`Error fetching fantasy matchups for league ${leagueId}:`, error);
       return [];
+    }
+  }
+
+  async getPlayerById(playerId: string): Promise<any> {
+    try {
+      const docRef = doc(db, 'player', playerId);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        return null;
+      }
+      
+      return docSnap.data();
+    } catch (error) {
+      console.error("Error fetching player from Firebase:", error);
+      return null;
     }
   }
 

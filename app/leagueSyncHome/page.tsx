@@ -219,6 +219,10 @@ export default function LeagueSyncHome() {
 
   const oddsColor = currency === 'cash' ? 'text-green-500' : 'text-[#FFCC00]';
 
+  const handleMatchupClick = (matchupId: string, teamAId: string, teamBId: string) => {
+    router.push(`/matchupView?id=${matchupId}&teamA=${teamAId}&teamB=${teamBId}`);
+  };
+
   /*───────────────── RENDER ────────────────────────*/
   if (user === null) {
     return (
@@ -327,7 +331,11 @@ export default function LeagueSyncHome() {
               Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
             ) : matchups.length ? (
               matchups.map((m) => (
-                <div key={m.id} className="bg-zinc-900 rounded-lg mb-2 overflow-hidden">
+                <div 
+                  key={m.id} 
+                  className="bg-zinc-900 rounded-lg mb-2 overflow-hidden cursor-pointer hover:bg-zinc-800 transition-colors"
+                  onClick={() => handleMatchupClick(m.id, m.teamA.id, m.teamB.id)}
+                >
                   {/* team A */}
                   <div className="grid grid-cols-[3fr_0.7fr_1.4fr] items-center py-2.5 sm:py-3 px-2 sm:px-4 border-b-2 border-black/40">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0">
