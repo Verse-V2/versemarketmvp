@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef, useTransition, memo, useCallback } from "react";
+import { useState, useEffect, useRef, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
-import { Plus, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { firebaseService } from "@/lib/firebase-service";
 import Image from "next/image";
 import { useCurrency } from "@/lib/currency-context";
+import { Carousel } from "@/components/Carousel";
 
 /**──────────────────────────────────────────────────────────
  * REUSABLE HELPERS
@@ -162,8 +163,7 @@ export default function LeagueSyncHome() {
         console.error('synced leagues', e);
       }
     })();
-    // ❌ DO NOT depend on selectedLeague here – that was causing the flash
-  }, [user?.uid]);
+  }, [user?.uid, selectedLeague]);
 
   /*───────────────── Matchups fetch ────────────────*/
   const fetchMatchups = useCallback(
@@ -212,100 +212,6 @@ export default function LeagueSyncHome() {
     { name: 'Futures', label: 'Futures' },
     { name: 'Stats', label: 'Stats' },
   ] as const;
-
-  /**──────────────────────────────────────────────────────────
-   * CAROUSEL – memoised so it never re-renders
-   *─────────────────────────────────────────────────────────**/
-  interface CarouselProps {
-    leagues: LeagueDetails[];
-    currentId?: string;
-    onSelect: (l: LeagueDetails) => void;
-  }
-
-  const Carousel = memo(({ leagues, currentId, onSelect }: CarouselProps) => {
-    const ref = useRef<HTMLDivElement>(null);
-    const [drag, setDrag] = useState(false);
-    const [startX, setStartX] = useState(0);
-    const [scrollLeft, setScrollLeft] = useState(0);
-
-    const begin = (e: React.MouseEvent | React.TouchEvent) => {
-      setDrag(true);
-      if (!ref.current) return;
-      setScrollLeft(ref.current.scrollLeft);
-      setStartX('clientX' in e ? e.clientX : e.touches[0].clientX);
-      ref.current.style.cursor = 'grabbing';
-      ref.current.style.userSelect = 'none';
-    };
-
-    const move = (e: React.MouseEvent | React.TouchEvent) => {
-      if (!drag || !ref.current) return;
-      const x = 'clientX' in e ? e.clientX : e.touches[0].clientX;
-      ref.current.scrollLeft = scrollLeft - (x - startX);
-    };
-
-    const end = () => {
-      setDrag(false);
-      if (ref.current) {
-        ref.current.style.cursor = 'grab';
-        ref.current.style.removeProperty('user-select');
-      }
-    };
-
-    return (
-      <div className="px-2 sm:px-4 mb-4 overflow-hidden">
-        <div
-          ref={ref}
-          className="flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar cursor-grab"
-          onMouseDown={begin}
-          onMouseMove={move}
-          onMouseUp={end}
-          onMouseLeave={end}
-          onTouchStart={begin}
-          onTouchMove={move}
-          onTouchEnd={end}
-        >
-          {leagues.map((l) => (
-            <button
-              key={l.id}
-              onClick={() => onSelect(l)}
-              className={`min-w-56 sm:min-w-64 p-2 rounded-lg transition-colors ${
-                currentId === l.id
-                  ? 'bg-zinc-800 border-l-4 border-green-500'
-                  : 'bg-zinc-900 hover:bg-zinc-800'
-              }`}
-            >
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="relative size-8 sm:size-10 bg-black rounded-full overflow-hidden flex items-center justify-center">
-                  <Image
-                    src={safeImage(l.logoUrl)}
-                    alt={l.name}
-                    fill
-                    className="object-cover p-1"
-                    style={{ borderRadius: '50%' }}
-                  />
-                </div>
-                <div className="text-left">
-                  <p className="font-medium text-sm sm:text-base truncate max-w-32 sm:max-w-40">
-                    {l.name}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-gray-500 truncate max-w-32 sm:max-w-40">
-                    {l.syncedTeams}/{l.teamsCount} Teams • {l.type}
-                  </p>
-                </div>
-              </div>
-            </button>
-          ))}
-
-          {/* "Add" tile */}
-          <button className="min-w-36 sm:min-w-48 bg-zinc-900 hover:bg-zinc-800 p-2 rounded-lg flex items-center justify-center gap-1 sm:gap-2 text-green-500 border border-dashed border-zinc-700 text-sm sm:text-base">
-            <Plus size={16} className="sm:size-[18px]" />
-            <span>Add League</span>
-          </button>
-        </div>
-      </div>
-    );
-  });
-  Carousel.displayName = 'Carousel';
 
   /**──────────────────────────────────────────────────────────
    * SKELETON ROW (keeps layout stable)
@@ -369,7 +275,7 @@ export default function LeagueSyncHome() {
           {tabs.map((t) => (
             <button
               key={t.name}
-              onClick={() => setActiveTab(t.name as any)}
+              onClick={() => setActiveTab(t.name)}
               className={`px-3 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${
                 activeTab === t.name
                   ? 'text-white border-b-2 border-white'
