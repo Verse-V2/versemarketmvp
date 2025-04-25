@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { Header } from "@/components/ui/header";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { firebaseService, FantasyTeamMatchup, FantasyMatchup } from "@/lib/firebase-service";
+import { firebaseService, FantasyMatchup } from "@/lib/firebase-service";
 
 // Helper function to ensure image URLs are safe
 const safeImage = (url?: string | null) =>
@@ -41,10 +41,7 @@ interface TeamData {
 export default function MatchupView() {
   const searchParams = useSearchParams();
   const matchupId = searchParams.get('id');
-  const teamAId = searchParams.get('teamA');
-  const teamBId = searchParams.get('teamB');
 
-  const [matchupData, setMatchupData] = useState<FantasyMatchup | null>(null);
   const [teamA, setTeamA] = useState<TeamData | null>(null);
   const [teamB, setTeamB] = useState<TeamData | null>(null);
   const [playerMatchups, setPlayerMatchups] = useState<Array<{position: string, playerA: Player, playerB: Player}>>([]);
@@ -97,7 +94,6 @@ export default function MatchupView() {
         console.log("Matchup data:", matchup);
         console.log("Team A starters:", matchup.teamA.starters);
         console.log("Team B starters:", matchup.teamB.starters);
-        setMatchupData(matchup);
 
         // Set team data directly from the matchup data
         setTeamA({

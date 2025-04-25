@@ -146,6 +146,21 @@ export interface FantasyMatchup {
 // Add a type for Firestore documents
 type FirestoreDocumentReference = DocumentData;
 
+// Player interface
+export interface Player {
+  id: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  team: string;
+  position: string;
+  points: number;
+  projectedPoints: number;
+  status: 'Live' | 'Proj.';
+  lastGameStats?: string;
+  photoUrl?: string;
+}
+
 class FirebaseService {
   // Get a single event by ID
   async getEventById(id: string): Promise<Event | null> {
@@ -468,7 +483,7 @@ class FirebaseService {
     }
   }
 
-  async getPlayerById(playerId: string): Promise<any> {
+  async getPlayerById(playerId: string): Promise<Player | null> {
     try {
       const docRef = doc(db, 'player', playerId);
       const docSnap = await getDoc(docRef);
@@ -477,7 +492,7 @@ class FirebaseService {
         return null;
       }
       
-      return docSnap.data();
+      return docSnap.data() as Player;
     } catch (error) {
       console.error("Error fetching player from Firebase:", error);
       return null;
