@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { Header } from "@/components/ui/header";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { firebaseService, FantasyMatchup } from "@/lib/firebase-service";
+import { firebaseService } from "@/lib/firebase-service";
 
 // Helper function to ensure image URLs are safe
 const safeImage = (url?: string | null) =>
