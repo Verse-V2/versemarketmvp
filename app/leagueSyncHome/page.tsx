@@ -127,8 +127,30 @@ export default function LeagueSyncHome() {
           userData.syncedLeagues.map(async (l: SyncedLeague) => {
             try {
               const det = await firebaseService.getFantasyLeagueById(l.leagueId);
-              const last = det?.lastUpdated?.__time__ ?? Date.now();
+              const last = det?.lastUpdated ? det.lastUpdated.toMillis() : Date.now();
               const mins = Math.floor((Date.now() - last) / 60000);
+              const hours = Math.floor(mins / 60);
+              const days = Math.floor(hours / 24);
+              
+              let lastSynced = '';
+              if (days > 0) {
+                lastSynced = `${days} day${days > 1 ? 's' : ''} ago`;
+              } else if (hours > 0) {
+                lastSynced = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+              } else {
+                lastSynced = `${mins} min${mins !== 1 ? 's' : ''} ago`;
+              }
+
+              console.log('League sync debug:', {
+                leagueId: l.leagueId,
+                lastUpdated: det?.lastUpdated,
+                lastTimestamp: last,
+                currentTime: Date.now(),
+                minutesAgo: mins,
+                hoursAgo: hours,
+                daysAgo: days,
+                formattedTime: lastSynced
+              });
               return {
                 id: l.leagueId,
                 name: l.leagueName,
@@ -138,7 +160,7 @@ export default function LeagueSyncHome() {
                 description: l.leagueName,
                 teamsCount: det?.totalRosters ?? 0,
                 syncedTeams: det?.syncedUsers?.length ?? 0,
-                lastSynced: mins < 60 ? `${mins} mins ago` : `${Math.floor(mins / 60)} hours ago`,
+                lastSynced,
               } as LeagueDetails;
             } catch (err) {
               console.error('league fetch', err);
