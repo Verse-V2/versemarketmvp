@@ -12,12 +12,12 @@ const challenges = [
   },
   {
     id: 2,
-    title: "Visit 3 different prediction markets",
+    title: "Place a prediction market entry with Verse Coins",
     completed: true
   },
   {
     id: 3,
-    title: "Share a prediction market with friends",
+    title: "Place a prediction market entry with Verse Coins",
     completed: false
   }
 ]
