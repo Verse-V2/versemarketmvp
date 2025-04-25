@@ -427,10 +427,9 @@ export default function LeagueSyncHome() {
             {activeTab === 'Matchups' && selectedLeague && (
               <div className="px-2 sm:px-4 mt-4">
                 {/* Table Headers */}
-                <div className="grid grid-cols-[1.5fr_2fr_1fr_1fr] text-xs sm:text-sm text-gray-500 px-4 py-2">
-                  <div>Proj. Pts</div>
-                  <div>Teams</div>
-                  <div className="text-center">Moneyline</div>
+                <div className="grid grid-cols-[3fr_0.7fr_1.4fr] text-[10px] sm:text-sm text-gray-500 px-2 sm:px-4 py-2">
+                  <div>Proj. Pts / Team</div>
+                  <div className="text-center">Line</div>
                   <div className="grid grid-cols-2">
                     <div className="text-center">Spread</div>
                     <div className="text-center">Total</div>
@@ -446,70 +445,78 @@ export default function LeagueSyncHome() {
                   matchups.map((matchup) => (
                     <div key={matchup.id} className="bg-zinc-900 rounded-lg mb-2 overflow-hidden">
                       {/* Favorite Team (Team A) */}
-                      <div className="grid grid-cols-[1.5fr_2fr_1fr_1fr] items-center py-3 px-4 border-b-2 border-black/40">
-                        <div className="text-base sm:text-lg font-semibold text-green-500">
-                          {matchup.teamA.projectedFantasyPoints.toFixed(1)}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="relative size-6 sm:size-8 bg-zinc-800 rounded-full overflow-hidden flex items-center justify-center">
-                            <Image 
-                              src={getSafeImageUrl(matchup.teamA.logoUrl)} 
-                              alt={matchup.teamA.teamName} 
-                              fill 
-                              className="object-cover p-1"
+                      <div className="grid grid-cols-[3fr_0.7fr_1.4fr] items-center py-2.5 sm:py-3 px-2 sm:px-4 border-b-2 border-black/40">
+                        {/* Team Info + Proj Pts Column */}
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="text-sm sm:text-lg font-semibold text-green-500">
+                            {matchup.teamA.projectedFantasyPoints.toFixed(1)}
+                          </div>
+                          <div className="relative size-5 sm:size-8 bg-zinc-800 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center ml-1">
+                            <Image
+                              src={getSafeImageUrl(matchup.teamA.logoUrl)}
+                              alt={matchup.teamA.teamName}
+                              fill
+                              className="object-cover p-0.5 sm:p-1"
                               style={{ borderRadius: '50%' }}
                             />
                           </div>
-                          <span className="truncate text-xs sm:text-base">{matchup.teamA.teamName}</span>
+                          <div className="flex-1 min-w-0 ml-1">
+                            <span className="block truncate text-[11px] sm:text-base">{matchup.teamA.teamName}</span>
+                          </div>
                         </div>
-                        <div className={`text-center text-xs sm:text-base relative ${getOddsColorClass()}`}>
+
+                        <div className={`text-center text-[11px] sm:text-base relative ${getOddsColorClass()}`}>
                           <div className="absolute left-0 top-0 h-full w-[2px] bg-black/40"></div>
                           {formatMoneylineOdds(matchup.teamA.moneylineOdds)}
                         </div>
                         <div className="grid grid-cols-2 relative">
                           <div className="absolute left-0 top-0 h-full w-[2px] bg-black/40"></div>
-                          <div className={`text-center text-xs sm:text-base relative ${getOddsColorClass()}`}>
+                          <div className={`text-center text-[11px] sm:text-base relative ${getOddsColorClass()}`}>
                             {matchup.teamA.spreadFantasyPoints ? 
                               `-${matchup.teamA.spreadFantasyPoints.toFixed(1)}` : 
                               '–'}
                             <div className="absolute right-0 top-0 h-full w-[2px] bg-black/40"></div>
                           </div>
-                          <div className={`text-center text-xs sm:text-base ${getOddsColorClass()}`}>
+                          <div className={`text-center text-[11px] sm:text-base ${getOddsColorClass()}`}>
                             O {matchup.total.toFixed(1)}
                           </div>
                         </div>
                       </div>
 
                       {/* Underdog Team (Team B) */}
-                      <div className="grid grid-cols-[1.5fr_2fr_1fr_1fr] items-center py-3 px-4">
-                        <div className="text-base sm:text-lg font-semibold text-gray-400">
-                          {matchup.teamB.projectedFantasyPoints.toFixed(1)}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="relative size-6 sm:size-8 bg-zinc-800 rounded-full overflow-hidden flex items-center justify-center">
-                            <Image 
-                              src={getSafeImageUrl(matchup.teamB.logoUrl)} 
-                              alt={matchup.teamB.teamName} 
-                              fill 
-                              className="object-cover p-1"
+                      <div className="grid grid-cols-[3fr_0.7fr_1.4fr] items-center py-2.5 sm:py-3 px-2 sm:px-4">
+                        {/* Team Info + Proj Pts Column */}
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="text-sm sm:text-lg font-semibold text-gray-400">
+                            {matchup.teamB.projectedFantasyPoints.toFixed(1)}
+                          </div>
+                          <div className="relative size-5 sm:size-8 bg-zinc-800 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center ml-1">
+                            <Image
+                              src={getSafeImageUrl(matchup.teamB.logoUrl)}
+                              alt={matchup.teamB.teamName}
+                              fill
+                              className="object-cover p-0.5 sm:p-1"
                               style={{ borderRadius: '50%' }}
                             />
                           </div>
-                          <span className="truncate text-xs sm:text-base">{matchup.teamB.teamName}</span>
+                          <div className="flex-1 min-w-0 ml-1">
+                            <span className="block truncate text-[11px] sm:text-base">{matchup.teamB.teamName}</span>
+                          </div>
                         </div>
-                        <div className={`text-center text-xs sm:text-base relative ${getOddsColorClass()}`}>
+
+                        <div className={`text-center text-[11px] sm:text-base relative ${getOddsColorClass()}`}>
                           <div className="absolute left-0 top-0 h-full w-[2px] bg-black/40"></div>
                           {formatMoneylineOdds(matchup.teamB.moneylineOdds)}
                         </div>
                         <div className="grid grid-cols-2 relative">
                           <div className="absolute left-0 top-0 h-full w-[2px] bg-black/40"></div>
-                          <div className={`text-center text-xs sm:text-base relative ${getOddsColorClass()}`}>
+                          <div className={`text-center text-[11px] sm:text-base relative ${getOddsColorClass()}`}>
                             {matchup.teamB.spreadFantasyPoints ? 
                               `+${matchup.teamB.spreadFantasyPoints.toFixed(1)}` : 
                               '–'}
                             <div className="absolute right-0 top-0 h-full w-[2px] bg-black/40"></div>
                           </div>
-                          <div className={`text-center text-xs sm:text-base ${getOddsColorClass()}`}>
+                          <div className={`text-center text-[11px] sm:text-base ${getOddsColorClass()}`}>
                             U {matchup.total.toFixed(1)}
                           </div>
                         </div>
