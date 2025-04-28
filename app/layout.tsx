@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Verse Prediction Market MVP",
+  title: "Verse Gaming MVP",
   description: "A Sweepstakes Prediciton Market for the Verse Community",
 };
 
