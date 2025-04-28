@@ -104,7 +104,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
         marketId: market.id,
         marketQuestion: market.question,
         outcomeId,
-        outcomeName,
+        outcomeName: `${outcomeName} - ${outcome.name === 'No' ? 'No' : 'Yes'}`,
         odds: toAmericanOdds(outcome.probability),
         probability: outcome.probability,
         imageUrl: market.imageUrl,
