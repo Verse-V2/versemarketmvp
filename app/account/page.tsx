@@ -6,7 +6,6 @@ import { signOut } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 import { UserIcon } from "@heroicons/react/24/outline";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function AccountPage() {
   const user = useAuth();
@@ -51,16 +50,6 @@ export default function AccountPage() {
             <div className="border rounded-lg p-4">
               <h2 className="font-medium mb-2">Email</h2>
               <p className="text-sm text-muted-foreground">{user.email}</p>
-            </div>
-
-            <div className="border rounded-lg p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-medium">Theme</h2>
-                  <p className="text-sm text-muted-foreground">Customize your app appearance</p>
-                </div>
-                <ThemeToggle />
-              </div>
             </div>
 
             <Button
