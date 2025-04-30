@@ -19,12 +19,19 @@ import { getDoc, doc, getFirestore } from "firebase/firestore";
 function americanToDecimal(odds: string): number {
   // Remove commas before parsing the number
   const value = parseInt(odds.replace(/[+\-,]/g, ''));
+  
+  // Add debug log
+  console.log(`Converting odds: ${odds}, parsed value: ${value}`);
+  
   if (odds.startsWith('+')) {
-    return (value / 100) + 1;
+    const decimal = (value / 100) + 1;
+    console.log(`Positive odds: ${odds} -> decimal: ${decimal}`);
+    return decimal;
   } else {
     // For negative odds, we need to do: 1 + (100/abs(odds))
-    // Example: -2198 should become 1.0455 (not 51!)
-    return 1 + (100 / value);
+    const decimal = 1 + (100 / value);
+    console.log(`Negative odds: ${odds} -> decimal: ${decimal}`);
+    return decimal;
   }
 }
 
@@ -105,10 +112,13 @@ export function BetSlip() {
     }
 
     const entry = Number(entryAmount);
+    console.log(`Calculating prize for entry amount: ${entry}`);
     
     if (bets.length > 1) {
       // Use combined odds for multiple picks
       const combinedOdds = calculateCombinedOdds(bets);
+      console.log(`Multiple bets, combined odds: ${combinedOdds}`);
+      
       // Convert combined American odds to multiplier
       let multiplier = 1;
       if (combinedOdds.startsWith('+')) {
@@ -118,21 +128,21 @@ export function BetSlip() {
         const americanOdds = Math.abs(Number(combinedOdds));
         multiplier = (100 / americanOdds) + 1;
       }
+      
+      console.log(`Calculated multiplier: ${multiplier}`);
       const prize = entry * multiplier;
+      console.log(`Final prize: ${prize.toFixed(2)}`);
       return prize.toFixed(2);
     } else {
       // Single pick calculation
       const bet = bets[0];
-      let multiplier = 1;
-      const odds = bet.odds;
-      if (odds.startsWith('+')) {
-        const americanOdds = Number(odds.substring(1));
-        multiplier = (americanOdds / 100) + 1;
-      } else {
-        const americanOdds = Math.abs(Number(odds));
-        multiplier = (100 / americanOdds) + 1;
-      }
-      const prize = entry * multiplier;
+      console.log(`Single bet odds: ${bet.odds}`);
+      
+      // Use the americanToDecimal function directly for consistency
+      const decimal = americanToDecimal(bet.odds);
+      const prize = entry * decimal;
+      
+      console.log(`Decimal odds: ${decimal}, final prize: ${prize.toFixed(2)}`);
       return prize.toFixed(2);
     }
   };
