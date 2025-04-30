@@ -261,13 +261,6 @@ export function BetSlip() {
     }
   };
 
-  const getButtonDisabledReason = () => {
-    if (!entryAmount || Number(entryAmount) <= 0) return 'Enter amount';
-    if (conflictingBetsExist) return 'Remove conflicting bets';
-    if (hasInsufficientFunds()) return 'Insufficient funds';
-    return '';
-  };
-
   const ConflictWarning = () => (
     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-3">
       <div className="flex items-start gap-2">
