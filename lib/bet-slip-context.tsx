@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 
 interface Bet {
   marketId: string;
+  eventId: string;
   marketQuestion: string;
   outcomeId: string;
   outcomeName: string;
@@ -29,6 +30,8 @@ export function BetSlipProvider({ children }: { children: React.ReactNode }) {
 
   const addBet = useCallback((bet: Bet) => {
     console.log('Adding bet to slip:', {
+      marketId: bet.marketId,
+      eventId: bet.eventId,
       marketQuestion: bet.marketQuestion,
       outcomeName: bet.outcomeName,
       odds: bet.odds

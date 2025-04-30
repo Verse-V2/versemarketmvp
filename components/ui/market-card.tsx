@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Market } from "@/lib/polymarket-api";
+import { Event } from "@/lib/polymarket-service";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -90,7 +91,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
     return odds > effectiveMaxOdds || odds < effectiveMinOdds;
   };
 
-  const handleBetClick = (outcome: { name: string; probability: number }) => {
+  const handleBetClick = (outcome: { name: string; probability: number }, submarketId?: string) => {
     // For submarkets, we need to use the groupItemTitle or cleaned question as the name
     const outcomeName = outcome.name.includes('?') 
       ? outcome.name.replace(/Will the |win the 2025 NBA Finals\?/g, '')
@@ -101,7 +102,8 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
       removeBet(outcomeId);
     } else {
       addBet({
-        marketId: market.id,
+        marketId: submarketId || market.id, // Use submarket ID if available, otherwise use market ID
+        eventId: market.id, // The market ID is the event ID in our data structure
         marketQuestion: market.question,
         outcomeId,
         outcomeName: `${outcomeName} - ${outcome.name === 'No' ? 'No' : 'Yes'}`,
@@ -211,7 +213,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                           handleBetClick({
                             name: outcomeName,
                             probability: submarket.probability
-                          });
+                          }, submarket.id);
                         }
                       }}
                       disabled={isDisabled}

@@ -199,7 +199,7 @@ export function BetSlip() {
           return {
             id: crypto.randomUUID(),
             marketId: bet.marketId,
-            eventId: bet.marketId, // Using marketId as eventId for now
+            eventId: bet.eventId,
             eventTitle: bet.marketQuestion,
             marketTitle: isSingleMarketEvent ? bet.outcomeName : (baseName || bet.outcomeName), // For single market events, use outcomeName as marketTitle
             outcome: isSingleMarketEvent ? bet.outcomeName.toLowerCase() : (isYesNo ? outcome.toLowerCase() : 'yes'), // For single market events, match outcome to marketTitle

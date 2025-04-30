@@ -90,21 +90,30 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
     return odds > effectiveMaxOdds || odds < effectiveMinOdds;
   };
 
-  const handleBetClick = (outcome: { name: string; probability: number }) => {
+  const handleBetClick = (outcome: { name: string; probability: number }, submarketId?: string) => {
     // For submarkets, we need to use the groupItemTitle or cleaned question as the name
     const outcomeName = outcome.name.includes('?') 
       ? outcome.name.replace(/Will the |win the 2025 NBA Finals\?/g, '')
       : outcome.name;
     const outcomeId = `${market.id}-${outcomeName}`;
     
+    console.log('Adding bet to slip:', {
+      marketId: submarketId || market.id,
+      eventId: market.id,
+      marketQuestion: market.question,
+      outcomeName,
+      odds: toAmericanOdds(outcome.probability)
+    });
+    
     if (isBetInSlip(outcomeId)) {
       removeBet(outcomeId);
     } else {
       addBet({
-        marketId: market.id,
+        marketId: submarketId || market.id, // Use submarket ID if available, otherwise use market ID
+        eventId: market.id, // The market ID is the event ID in our data structure
         marketQuestion: market.question,
         outcomeId,
-        outcomeName,
+        outcomeName: `${outcomeName} - ${outcome.name === 'No' ? 'No' : 'Yes'}`,
         odds: toAmericanOdds(outcome.probability),
         probability: outcome.probability,
         imageUrl: market.imageUrl,
@@ -198,7 +207,7 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
                                 handleBetClick({
                                   name: `${outcomeName} - Yes`,
                                   probability: submarket.probability
-                                });
+                                }, submarket.id);
                               }
                             }}
                             disabled={isYesDisabled}
@@ -228,7 +237,7 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
                                 handleBetClick({
                                   name: `${outcomeName} - No`,
                                   probability: 1 - submarket.probability
-                                });
+                                }, submarket.id);
                               }
                             }}
                             disabled={isNoDisabled}
