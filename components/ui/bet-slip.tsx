@@ -82,7 +82,7 @@ export function BetSlip() {
   const { currency } = useCurrency();
   const { addEntry } = useEntries();
   const currentUser = useAuth();
-  const { isLoading: isLoadingBalance } = useUserBalance();
+  const { coinBalance, cashBalance, isLoading: isLoadingBalance } = useUserBalance();
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [entryAmount, setEntryAmount] = useState('');
@@ -240,6 +240,24 @@ export function BetSlip() {
     }
   };
 
+  const hasInsufficientFunds = () => {
+    if (!entryAmount || Number(entryAmount) <= 0) return false;
+    const amount = Number(entryAmount);
+    
+    if (currency === 'cash') {
+      return amount > cashBalance;
+    } else {
+      return amount > coinBalance;
+    }
+  };
+
+  const getButtonDisabledReason = () => {
+    if (!entryAmount || Number(entryAmount) <= 0) return 'Enter amount';
+    if (conflictingBetsExist) return 'Remove conflicting bets';
+    if (hasInsufficientFunds()) return 'Insufficient funds';
+    return '';
+  };
+
   const ConflictWarning = () => (
     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-3">
       <div className="flex items-start gap-2">
@@ -393,10 +411,10 @@ export function BetSlip() {
                 </div>
                 <Button 
                   className="w-full" 
-                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance}
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds()}
                   onClick={handlePlaceBets}
                 >
-                  {isPlacingEntry ? 'Placing Entry...' : 'Place Entry'}
+                  {isPlacingEntry ? 'Placing Entry...' : hasInsufficientFunds() ? 'Insufficient Funds' : 'Place Entry'}
                 </Button>
               </div>
             )}
@@ -510,10 +528,10 @@ export function BetSlip() {
                 </div>
                 <Button 
                   className="w-full" 
-                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance}
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds()}
                   onClick={handlePlaceBets}
                 >
-                  {isPlacingEntry ? 'Placing Entry...' : 'Place Entry'}
+                  {isPlacingEntry ? 'Placing Entry...' : hasInsufficientFunds() ? 'Insufficient Funds' : 'Place Entry'}
                 </Button>
               </div>
             )}
