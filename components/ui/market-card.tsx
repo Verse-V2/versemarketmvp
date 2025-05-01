@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Market } from "@/lib/polymarket-api";
-import { Event } from "@/lib/polymarket-service";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
