@@ -109,11 +109,11 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
       removeBet(outcomeId);
     } else {
       addBet({
-        marketId: submarketId || market.id, // Use submarket ID if available, otherwise use market ID
-        eventId: market.id, // The market ID is the event ID in our data structure
+        marketId: submarketId || market.id,
+        eventId: market.id,
         marketQuestion: market.question,
         outcomeId,
-        outcomeName: `${outcomeName} - ${outcome.name === 'No' ? 'No' : 'Yes'}`,
+        outcomeName: outcomeName,
         odds: toAmericanOdds(outcome.probability),
         probability: outcome.probability,
         imageUrl: market.imageUrl,
@@ -179,12 +179,11 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
                 <div className={`space-y-2 transition-all duration-300 ease-in-out ${isExpanded ? '' : 'relative'}`}>
                   {displayedMarkets!.map((submarket, index) => {
                     const outcomeName = submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '');
-                    const yesOutcomeId = `${market.id}-${outcomeName}-Yes`;
-                    const noOutcomeId = `${market.id}-${outcomeName}-No`;
-                    const isYesSelected = isBetInSlip(yesOutcomeId);
-                    const isNoSelected = isBetInSlip(noOutcomeId);
-                    const isYesFlashing = flashingOdds[yesOutcomeId];
-                    const isNoFlashing = flashingOdds[noOutcomeId];
+                    const outcomeId = `${market.id}-${outcomeName}`;
+                    const isYesSelected = isBetInSlip(outcomeId);
+                    const isNoSelected = isBetInSlip(outcomeId);
+                    const isYesFlashing = flashingOdds[outcomeId];
+                    const isNoFlashing = flashingOdds[outcomeId];
                     const isYesDisabled = isOddsExceedingLimit(submarket.probability);
                     const isNoDisabled = isOddsExceedingLimit(1 - submarket.probability);
 
