@@ -5,7 +5,7 @@ import { Header } from "@/components/ui/header";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { firebaseService } from "@/lib/firebase-service";
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from "@/lib/firebase";
 
 // Helper function to ensure image URLs are safe
@@ -26,6 +26,7 @@ interface Player {
   projectedPoints: number;
   status: 'Live' | 'Proj.';
   lastGameStats?: string;
+  gameStats?: string;
   imageUrl?: string;
   gameResult?: string;
 }
@@ -173,35 +174,93 @@ export default function MatchupView() {
           }
         };
 
+        // Helper function to get player game stats
+        const getPlayerGameStats = async (playerId: string) => {
+          try {
+            // Query playerGameScores collection for this player, season and week
+            const docRef = doc(db, 'playerGameScores', `${playerId}_${season}_1_${week}`);
+            const docSnap = await getDoc(docRef);
+            
+            if (!docSnap.exists()) return null;
+            
+            const stats = docSnap.data();
+            const relevantStats = [];
+            
+            // Add passing stats if they exist
+            if (stats.PassingYards > 0) {
+              relevantStats.push(`${stats.PassingYards} Pass Yds`);
+            }
+            if (stats.PassingTouchdowns > 0) {
+              relevantStats.push(`${stats.PassingTouchdowns} Pass TD`);
+            }
+            if (stats.PassingInterceptions > 0) {
+              relevantStats.push(`${stats.PassingInterceptions} INT`);
+            }
+            
+            // Add rushing stats if they exist
+            if (stats.RushingYards > 0) {
+              relevantStats.push(`${stats.RushingYards} Rush Yds`);
+            }
+            if (stats.RushingTouchdowns > 0) {
+              relevantStats.push(`${stats.RushingTouchdowns} Rush TD`);
+            }
+            
+            // Add receiving stats if they exist
+            if (stats.Receptions > 0) {
+              relevantStats.push(`${stats.Receptions} REC`);
+            }
+            if (stats.ReceivingYards > 0) {
+              relevantStats.push(`${stats.ReceivingYards} Rec Yds`);
+            }
+            if (stats.ReceivingTouchdowns > 0) {
+              relevantStats.push(`${stats.ReceivingTouchdowns} Rec TD`);
+            }
+            
+            // Return formatted stats string or null if no relevant stats
+            return relevantStats.length > 0 ? relevantStats.join(', ') : 'No stats available';
+          } catch (error) {
+            console.error('Error fetching player game stats:', playerId, error);
+            return null;
+          }
+        };
+
         // Fetch player data with game results
         const playerMatchups = await Promise.all([
           {
             position: "QB",
             playerA: await firebaseService.getPlayerById(matchup.teamA.starters[0]),
             playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[0]),
+            playerAGameStats: await getPlayerGameStats(matchup.teamA.starters[0]),
             playerB: await firebaseService.getPlayerById(matchup.teamB.starters[0]),
-            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[0])
+            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[0]),
+            playerBGameStats: await getPlayerGameStats(matchup.teamB.starters[0])
           },
           {
             position: "RB",
             playerA: await firebaseService.getPlayerById(matchup.teamA.starters[1]),
             playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[1]),
+            playerAGameStats: await getPlayerGameStats(matchup.teamA.starters[1]),
             playerB: await firebaseService.getPlayerById(matchup.teamB.starters[1]),
-            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[1])
+            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[1]),
+            playerBGameStats: await getPlayerGameStats(matchup.teamB.starters[1])
           },
           {
             position: "RB",
             playerA: await firebaseService.getPlayerById(matchup.teamA.starters[2]),
             playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[2]),
+            playerAGameStats: await getPlayerGameStats(matchup.teamA.starters[2]),
             playerB: await firebaseService.getPlayerById(matchup.teamB.starters[2]),
-            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[2])
+            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[2]),
+            playerBGameStats: await getPlayerGameStats(matchup.teamB.starters[2])
           },
           {
             position: "WR",
             playerA: await firebaseService.getPlayerById(matchup.teamA.starters[3]),
             playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[3]),
+            playerAGameStats: await getPlayerGameStats(matchup.teamA.starters[3]),
             playerB: await firebaseService.getPlayerById(matchup.teamB.starters[3]),
-            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[3])
+            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[3]),
+            playerBGameStats: await getPlayerGameStats(matchup.teamB.starters[3])
           }
         ]);
 
@@ -218,6 +277,7 @@ export default function MatchupView() {
             projectedPoints: 0,
             status: "Proj.",
             lastGameStats: matchup.playerAGameResult || "Game Details",
+            gameStats: matchup.playerAGameStats || "Player Stats",
             imageUrl: matchup.playerA?.photoUrl || "/player-images/default.png"
           },
           playerB: {
@@ -231,6 +291,7 @@ export default function MatchupView() {
             projectedPoints: 0,
             status: "Proj.",
             lastGameStats: matchup.playerBGameResult || "Game Details",
+            gameStats: matchup.playerBGameStats || "Player Stats",
             imageUrl: matchup.playerB?.photoUrl || "/player-images/default.png"
           }
         })));
@@ -396,7 +457,7 @@ export default function MatchupView() {
                   {matchup.playerA.lastGameStats?.split('\n').map((line, i) => (
                     <p key={i}>{line}</p>
                   ))}
-                  <p>Player Stats</p>
+                  <p>{matchup.playerA.gameStats}</p>
                 </div>
                 {/* Points */}
                 <div className="absolute top-4 right-4 text-xl font-bold text-green-500">
@@ -423,7 +484,7 @@ export default function MatchupView() {
                   {matchup.playerB.lastGameStats?.split('\n').map((line, i) => (
                     <p key={i}>{line}</p>
                   ))}
-                  <p>Player Stats</p>
+                  <p>{matchup.playerB.gameStats}</p>
                 </div>
                 {/* Points */}
                 <div className="absolute top-4 left-4 text-xl font-bold text-green-500">
