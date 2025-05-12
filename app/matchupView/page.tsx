@@ -24,7 +24,7 @@ interface Player {
   position: string;
   points: number;
   projectedPoints: number;
-  status: 'Live' | 'Proj.';
+  status: 'Live' | 'Proj.' | 'Final';
   lastGameStats?: string;
   gameStats?: string;
   imageUrl?: string;
@@ -47,6 +47,37 @@ interface PlayerMatchup {
   position: string;
   playerA: Player;
   playerB: Player | null;
+}
+
+// Update FantasyTeamMatchup to include startersPoints
+interface StarterPoint {
+  playerId: string;
+  statsBasedPoints: number;
+}
+
+interface FantasyTeamMatchup {
+  id: string;
+  leagueId: string;
+  season: string;
+  seasonWeek: string;
+  teamId: string;
+  teamName: string;
+  logoUrl: string;
+  projectedFantasyPoints: number;
+  fantasyPoints: number;
+  moneylineOdds: number;
+  spreadFantasyPoints: number;
+  matchupTotalFantasyPoints: number;
+  winProbability: number;
+  decimalOdds: number;
+  serviceProvider: string;
+  starters: string[];
+  startersPoints?: StarterPoint[];
+}
+
+// Add this type near your FantasyTeamMatchup interface
+interface MatchupTeam extends FantasyTeamMatchup {
+  startersPoints: StarterPoint[];
 }
 
 export default function MatchupView() {
@@ -231,6 +262,57 @@ export default function MatchupView() {
           }
         };
 
+        // Helper function to determine if a game is final based on event status
+        const isGameFinal = async (playerId: string) => {
+          const player = await firebaseService.getPlayerById(playerId);
+          if (!player || !player.team) return false;
+          
+          // Query events collection where the player's team is either homeTeam or awayTeam
+          const homeTeamQuery = query(
+            collection(db, 'events'),
+            where('season', '==', parseInt(season)),
+            where('week', '==', parseInt(week)),
+            where('homeTeam', '==', player.team)
+          );
+          
+          const awayTeamQuery = query(
+            collection(db, 'events'),
+            where('season', '==', parseInt(season)),
+            where('week', '==', parseInt(week)),
+            where('awayTeam', '==', player.team)
+          );
+          
+          // Check home team matches
+          let querySnapshot = await getDocs(homeTeamQuery);
+          
+          // If no matches as home team, check away team
+          if (querySnapshot.empty) {
+            querySnapshot = await getDocs(awayTeamQuery);
+            if (querySnapshot.empty) return false;
+          }
+          
+          // Get the first relevant event and check status
+          const eventDoc = querySnapshot.docs[0];
+          const event = eventDoc.data();
+          
+          return event.status === 'Final';
+        };
+
+        // Helper function to get player stats points
+        const getPlayerStatsBasedPoints = (playerId: string) => {
+          const teamA = matchup.teamA as unknown as MatchupTeam;
+          const teamB = matchup.teamB as unknown as MatchupTeam;
+          
+          if (teamA.starters.includes(playerId) && teamA.startersPoints) {
+            const starterPoints = teamA.startersPoints.find((p: StarterPoint) => p.playerId === playerId);
+            return starterPoints ? starterPoints.statsBasedPoints : 0;
+          } else if (teamB.starters.includes(playerId) && teamB.startersPoints) {
+            const starterPoints = teamB.startersPoints.find((p: StarterPoint) => p.playerId === playerId);
+            return starterPoints ? starterPoints.statsBasedPoints : 0;
+          }
+          return 0;
+        };
+
         // Fetch player data with game results
         // Build the player matchups dynamically from all starters
         const playerMatchups = await Promise.all(
@@ -242,20 +324,28 @@ export default function MatchupView() {
             const playerA = await firebaseService.getPlayerById(starterId);
             const playerAGameResult = await getPlayerGameResult(starterId);
             const playerAGameStats = await getPlayerGameStats(starterId);
+            const isPlayerAGameFinal = await isGameFinal(starterId);
+            const playerAPoints = isPlayerAGameFinal ? getPlayerStatsBasedPoints(starterId) : 0;
             
             // Fetch player B data (if exists)
             const playerB = teamBStarterId ? await firebaseService.getPlayerById(teamBStarterId) : null;
             const playerBGameResult = teamBStarterId ? await getPlayerGameResult(teamBStarterId) : null;
             const playerBGameStats = teamBStarterId ? await getPlayerGameStats(teamBStarterId) : null;
+            const isPlayerBGameFinal = teamBStarterId ? await isGameFinal(teamBStarterId) : false;
+            const playerBPoints = teamBStarterId && isPlayerBGameFinal ? getPlayerStatsBasedPoints(teamBStarterId) : 0;
             
             return {
               position: playerA?.position || "Unknown",
               playerA,
               playerAGameResult,
               playerAGameStats,
+              isPlayerAGameFinal,
+              playerAPoints,
               playerB,
               playerBGameResult,
-              playerBGameStats
+              playerBGameStats,
+              isPlayerBGameFinal,
+              playerBPoints
             };
           })
         );
@@ -269,9 +359,9 @@ export default function MatchupView() {
             lastName: matchup.playerA?.lastName || "",
             team: matchup.playerA?.team || "",
             position: matchup.playerA?.position || "",
-            points: 0,
+            points: matchup.playerAPoints,
             projectedPoints: 0,
-            status: "Proj.",
+            status: matchup.isPlayerAGameFinal ? "Final" : "Proj.",
             lastGameStats: matchup.playerAGameResult || "Game Details",
             gameStats: matchup.playerAGameStats || "Player Stats",
             imageUrl: matchup.playerA?.photoUrl || "/player-images/default.png"
@@ -283,9 +373,9 @@ export default function MatchupView() {
             lastName: matchup.playerB?.lastName || "",
             team: matchup.playerB?.team || "",
             position: matchup.playerB?.position || "",
-            points: 0,
+            points: matchup.playerBPoints,
             projectedPoints: 0,
-            status: "Proj.",
+            status: matchup.isPlayerBGameFinal ? "Final" : "Proj.",
             lastGameStats: matchup.playerBGameResult || "Game Details",
             gameStats: matchup.playerBGameStats || "Player Stats",
             imageUrl: matchup.playerB?.photoUrl || "/player-images/default.png"
