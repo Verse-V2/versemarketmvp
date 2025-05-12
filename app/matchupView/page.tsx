@@ -42,13 +42,20 @@ interface TeamData {
   moneylineOdds?: number;
 }
 
+// Add type for matchup with optional playerB
+interface PlayerMatchup {
+  position: string;
+  playerA: Player;
+  playerB: Player | null;
+}
+
 export default function MatchupView() {
   const searchParams = useSearchParams();
   const matchupId = searchParams.get('id');
 
   const [teamA, setTeamA] = useState<TeamData | null>(null);
   const [teamB, setTeamB] = useState<TeamData | null>(null);
-  const [playerMatchups, setPlayerMatchups] = useState<Array<{position: string, playerA: Player, playerB: Player}>>([]);
+  const [playerMatchups, setPlayerMatchups] = useState<PlayerMatchup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -225,44 +232,33 @@ export default function MatchupView() {
         };
 
         // Fetch player data with game results
-        const playerMatchups = await Promise.all([
-          {
-            position: "QB",
-            playerA: await firebaseService.getPlayerById(matchup.teamA.starters[0]),
-            playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[0]),
-            playerAGameStats: await getPlayerGameStats(matchup.teamA.starters[0]),
-            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[0]),
-            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[0]),
-            playerBGameStats: await getPlayerGameStats(matchup.teamB.starters[0])
-          },
-          {
-            position: "RB",
-            playerA: await firebaseService.getPlayerById(matchup.teamA.starters[1]),
-            playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[1]),
-            playerAGameStats: await getPlayerGameStats(matchup.teamA.starters[1]),
-            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[1]),
-            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[1]),
-            playerBGameStats: await getPlayerGameStats(matchup.teamB.starters[1])
-          },
-          {
-            position: "RB",
-            playerA: await firebaseService.getPlayerById(matchup.teamA.starters[2]),
-            playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[2]),
-            playerAGameStats: await getPlayerGameStats(matchup.teamA.starters[2]),
-            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[2]),
-            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[2]),
-            playerBGameStats: await getPlayerGameStats(matchup.teamB.starters[2])
-          },
-          {
-            position: "WR",
-            playerA: await firebaseService.getPlayerById(matchup.teamA.starters[3]),
-            playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[3]),
-            playerAGameStats: await getPlayerGameStats(matchup.teamA.starters[3]),
-            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[3]),
-            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[3]),
-            playerBGameStats: await getPlayerGameStats(matchup.teamB.starters[3])
-          }
-        ]);
+        // Build the player matchups dynamically from all starters
+        const playerMatchups = await Promise.all(
+          matchup.teamA.starters.map(async (starterId, index) => {
+            // Get the corresponding starter from team B (if exists)
+            const teamBStarterId = matchup.teamB.starters[index] || null;
+            
+            // Fetch player A data
+            const playerA = await firebaseService.getPlayerById(starterId);
+            const playerAGameResult = await getPlayerGameResult(starterId);
+            const playerAGameStats = await getPlayerGameStats(starterId);
+            
+            // Fetch player B data (if exists)
+            const playerB = teamBStarterId ? await firebaseService.getPlayerById(teamBStarterId) : null;
+            const playerBGameResult = teamBStarterId ? await getPlayerGameResult(teamBStarterId) : null;
+            const playerBGameStats = teamBStarterId ? await getPlayerGameStats(teamBStarterId) : null;
+            
+            return {
+              position: playerA?.position || "Unknown",
+              playerA,
+              playerAGameResult,
+              playerAGameStats,
+              playerB,
+              playerBGameResult,
+              playerBGameStats
+            };
+          })
+        );
 
         setPlayerMatchups(playerMatchups.map(matchup => ({
           position: matchup.position,
@@ -280,7 +276,7 @@ export default function MatchupView() {
             gameStats: matchup.playerAGameStats || "Player Stats",
             imageUrl: matchup.playerA?.photoUrl || "/player-images/default.png"
           },
-          playerB: {
+          playerB: matchup.playerB ? {
             id: matchup.playerB?.id || "",
             name: matchup.playerB?.name || "",
             firstName: matchup.playerB?.firstName || "",
@@ -293,7 +289,7 @@ export default function MatchupView() {
             lastGameStats: matchup.playerBGameResult || "Game Details",
             gameStats: matchup.playerBGameStats || "Player Stats",
             imageUrl: matchup.playerB?.photoUrl || "/player-images/default.png"
-          }
+          } : null
         })));
 
         setLoading(false);
@@ -467,31 +463,37 @@ export default function MatchupView() {
               </div>
 
               {/* Player B */}
-              <div className="p-4 relative">
-                <div className="flex flex-col items-end w-20 ml-auto">
-                  <div className="relative size-10 bg-zinc-800 rounded-full overflow-hidden">
-                    <Image
-                      src={matchup.playerB.imageUrl || "/player-images/default.png"}
-                      alt={matchup.playerB.name}
-                      fill
-                      className="object-cover"
-                    />
+              {matchup.playerB ? (
+                <div className="p-4 relative">
+                  <div className="flex flex-col items-end w-20 ml-auto">
+                    <div className="relative size-10 bg-zinc-800 rounded-full overflow-hidden">
+                      <Image
+                        src={matchup.playerB.imageUrl || "/player-images/default.png"}
+                        alt={matchup.playerB.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <h3 className="font-bold text-sm mt-1 truncate w-full text-right">{matchup.playerB.name}</h3>
+                    <p className="text-gray-400 text-xs truncate w-full text-right">{matchup.playerB.team}</p>
                   </div>
-                  <h3 className="font-bold text-sm mt-1 truncate w-full text-right">{matchup.playerB.name}</h3>
-                  <p className="text-gray-400 text-xs truncate w-full text-right">{matchup.playerB.team}</p>
+                  <div className="text-xs text-gray-400 mt-2 text-right">
+                    {matchup.playerB.lastGameStats?.split('\n').map((line, i) => (
+                      <p key={i}>{line}</p>
+                    ))}
+                    <p>{matchup.playerB.gameStats}</p>
+                  </div>
+                  {/* Points */}
+                  <div className="absolute top-4 left-4 text-xl font-bold text-green-500">
+                    {matchup.playerB.points.toFixed(1)}
+                    <div className="text-xs text-gray-400 text-center">{matchup.playerB.status}</div>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-400 mt-2 text-right">
-                  {matchup.playerB.lastGameStats?.split('\n').map((line, i) => (
-                    <p key={i}>{line}</p>
-                  ))}
-                  <p>{matchup.playerB.gameStats}</p>
+              ) : (
+                <div className="p-4 relative flex items-center justify-center">
+                  <p className="text-gray-500">No matched player</p>
                 </div>
-                {/* Points */}
-                <div className="absolute top-4 left-4 text-xl font-bold text-green-500">
-                  {matchup.playerB.points.toFixed(1)}
-                  <div className="text-xs text-gray-400 text-center">{matchup.playerB.status}</div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Position label */}
