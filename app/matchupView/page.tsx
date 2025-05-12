@@ -5,6 +5,8 @@ import { Header } from "@/components/ui/header";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { firebaseService } from "@/lib/firebase-service";
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from "@/lib/firebase";
 
 // Helper function to ensure image URLs are safe
 const safeImage = (url?: string | null) =>
@@ -25,6 +27,7 @@ interface Player {
   status: 'Live' | 'Proj.';
   lastGameStats?: string;
   imageUrl?: string;
+  gameResult?: string;
 }
 
 interface TeamData {
@@ -118,28 +121,87 @@ export default function MatchupView() {
           moneylineOdds: matchup.teamB.moneylineOdds
         });
 
-        // For now, we'll keep the sample player matchups
-        // In the next step, we'd fetch actual player matchups
+        // Helper function to get game details for a player
+        const getPlayerGameResult = async (playerId: string) => {
+          try {
+            const player = await firebaseService.getPlayerById(playerId);
+            if (!player || !player.team) return null;
+            
+            // Query events collection where the player's team is either homeTeam or awayTeam
+            const homeTeamQuery = query(
+              collection(db, 'events'),
+              where('season', '==', parseInt(season)),
+              where('week', '==', parseInt(week)),
+              where('homeTeam', '==', player.team)
+            );
+            
+            const awayTeamQuery = query(
+              collection(db, 'events'),
+              where('season', '==', parseInt(season)),
+              where('week', '==', parseInt(week)),
+              where('awayTeam', '==', player.team)
+            );
+            
+            // Check home team matches
+            let querySnapshot = await getDocs(homeTeamQuery);
+            
+            // If no matches as home team, check away team
+            if (querySnapshot.empty) {
+              querySnapshot = await getDocs(awayTeamQuery);
+              if (querySnapshot.empty) return null;
+            }
+            
+            // Get the first relevant event (should be only one per team per week)
+            const eventDoc = querySnapshot.docs[0];
+            const event = eventDoc.data();
+            
+            // Determine if player's team is home or away
+            const isHome = event.homeTeam === player.team;
+            const teamScore = isHome ? event.homeScore : event.awayScore;
+            const opposingScore = isHome ? event.awayScore : event.homeScore;
+            
+            // Check if the game is finished
+            if (event.status === 'Final') {
+              const result = teamScore > opposingScore ? 'W' : (teamScore < opposingScore ? 'L' : 'T');
+              return `${event.quarterDescription} ${result} ${teamScore}-${opposingScore}`;
+            } else {
+              return event.quarterDescription || event.status;
+            }
+          } catch (error) {
+            console.error('Error fetching game result for player:', playerId, error);
+            return null;
+          }
+        };
+
+        // Fetch player data with game results
         const playerMatchups = await Promise.all([
           {
             position: "QB",
             playerA: await firebaseService.getPlayerById(matchup.teamA.starters[0]),
-            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[0])
+            playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[0]),
+            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[0]),
+            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[0])
           },
           {
             position: "RB",
             playerA: await firebaseService.getPlayerById(matchup.teamA.starters[1]),
-            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[1])
+            playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[1]),
+            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[1]),
+            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[1])
           },
           {
             position: "RB",
             playerA: await firebaseService.getPlayerById(matchup.teamA.starters[2]),
-            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[2])
+            playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[2]),
+            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[2]),
+            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[2])
           },
           {
             position: "WR",
             playerA: await firebaseService.getPlayerById(matchup.teamA.starters[3]),
-            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[3])
+            playerAGameResult: await getPlayerGameResult(matchup.teamA.starters[3]),
+            playerB: await firebaseService.getPlayerById(matchup.teamB.starters[3]),
+            playerBGameResult: await getPlayerGameResult(matchup.teamB.starters[3])
           }
         ]);
 
@@ -155,7 +217,7 @@ export default function MatchupView() {
             points: 0,
             projectedPoints: 0,
             status: "Proj.",
-            lastGameStats: "Game Details\nPlayer Stats",
+            lastGameStats: matchup.playerAGameResult || "Game Details",
             imageUrl: matchup.playerA?.photoUrl || "/player-images/default.png"
           },
           playerB: {
@@ -168,7 +230,7 @@ export default function MatchupView() {
             points: 0,
             projectedPoints: 0,
             status: "Proj.",
-            lastGameStats: "Game Details\nPlayer Stats",
+            lastGameStats: matchup.playerBGameResult || "Game Details",
             imageUrl: matchup.playerB?.photoUrl || "/player-images/default.png"
           }
         })));
@@ -334,6 +396,7 @@ export default function MatchupView() {
                   {matchup.playerA.lastGameStats?.split('\n').map((line, i) => (
                     <p key={i}>{line}</p>
                   ))}
+                  <p>Player Stats</p>
                 </div>
                 {/* Points */}
                 <div className="absolute top-4 right-4 text-xl font-bold text-green-500">
@@ -360,6 +423,7 @@ export default function MatchupView() {
                   {matchup.playerB.lastGameStats?.split('\n').map((line, i) => (
                     <p key={i}>{line}</p>
                   ))}
+                  <p>Player Stats</p>
                 </div>
                 {/* Points */}
                 <div className="absolute top-4 left-4 text-xl font-bold text-green-500">
