@@ -24,7 +24,7 @@ interface Player {
   position: string;
   points: number;
   projectedPoints: number;
-  status: 'Live' | 'Proj.' | 'Final';
+  status: 'Scheduled' | 'InProgress' | 'Final';
   lastGameStats?: string;
   gameStats?: string;
   imageUrl?: string;
@@ -198,13 +198,47 @@ export default function MatchupView() {
             const isHome = event.homeTeam === player.team;
             const teamScore = isHome ? event.homeScore : event.awayScore;
             const opposingScore = isHome ? event.awayScore : event.homeScore;
+            const opposingTeam = isHome ? event.awayTeam : event.homeTeam;
             
-            // Check if the game is finished
+            // Check game status and format the display accordingly
             if (event.status === 'Final') {
               const result = teamScore > opposingScore ? 'W' : (teamScore < opposingScore ? 'L' : 'T');
-              return `${event.quarterDescription} ${result} ${teamScore}-${opposingScore}`;
+              return `Final ${result} ${teamScore}-${opposingScore} vs ${opposingTeam}`;
+            } else if (event.status === 'InProgress' || event.status === 'Halftime' || event.status.includes('Quarter')) {
+              // Format live game status with time remaining, quarter, score, opponent
+              // e.g., "5:11 Q2 14-19 vs GB"
+              const timeRemaining = event.timeRemaining || '';
+              const quarter = event.quarter ? `Q${event.quarter}` : 
+                             (event.status === 'Halftime' ? 'Halftime' : event.quarterDescription || '');
+              
+              return `${timeRemaining} ${quarter} ${teamScore}-${opposingScore} vs ${opposingTeam}`;
             } else {
-              return event.quarterDescription || event.status;
+              // Scheduled game - format the game time
+              // Handle both Firestore timestamp objects and ISO date strings
+              let gameDate;
+              if (event.gameDate?.toDate) {
+                // Handle Firestore timestamp
+                gameDate = event.gameDate.toDate();
+              } else if (event.date || event.dateTime) {
+                // Handle ISO date string format from the data
+                gameDate = new Date(event.date || event.dateTime);
+              } else {
+                // Fallback to current date if no date info is available
+                gameDate = new Date();
+              }
+              
+              // Format date as "Sun 4:25pm vs OPP"
+              const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+              const day = days[gameDate.getDay()];
+              
+              let hours = gameDate.getHours();
+              const ampm = hours >= 12 ? 'pm' : 'am';
+              hours = hours % 12;
+              hours = hours ? hours : 12; // Convert 0 to 12
+              
+              const minutes = gameDate.getMinutes().toString().padStart(2, '0');
+              
+              return `${day} ${hours}:${minutes}${ampm} vs ${opposingTeam}`;
             }
           } catch (error) {
             console.error('Error fetching game result for player:', playerId, error);
@@ -262,10 +296,10 @@ export default function MatchupView() {
           }
         };
 
-        // Helper function to determine if a game is final based on event status
-        const isGameFinal = async (playerId: string) => {
+        // Helper function to determine game status
+        const getGameStatus = async (playerId: string) => {
           const player = await firebaseService.getPlayerById(playerId);
-          if (!player || !player.team) return false;
+          if (!player || !player.team) return 'Scheduled';
           
           // Query events collection where the player's team is either homeTeam or awayTeam
           const homeTeamQuery = query(
@@ -288,14 +322,56 @@ export default function MatchupView() {
           // If no matches as home team, check away team
           if (querySnapshot.empty) {
             querySnapshot = await getDocs(awayTeamQuery);
-            if (querySnapshot.empty) return false;
+            if (querySnapshot.empty) return 'Scheduled';
           }
           
           // Get the first relevant event and check status
           const eventDoc = querySnapshot.docs[0];
           const event = eventDoc.data();
           
-          return event.status === 'Final';
+          if (event.status === 'Final') {
+            return 'Final';
+          } else if (event.status === 'InProgress' || event.status === 'Halftime' || event.status.includes('Quarter')) {
+            return 'InProgress';
+          } else {
+            return 'Scheduled';
+          }
+        };
+        
+        // Helper function to get live game points
+        const getLiveGamePoints = async (playerId: string) => {
+          try {
+            // Query playerGameScores collection for this player, season and week
+            const docRef = doc(db, 'playerGameScores', `${playerId}_${season}_1_${week}`);
+            const docSnap = await getDoc(docRef);
+            
+            if (!docSnap.exists()) return 0;
+            
+            const stats = docSnap.data();
+            
+            // Calculate live points based on stats
+            // This is a simplified calculation - you might need to adjust this based on your scoring rules
+            let points = 0;
+            
+            // Passing points
+            points += (stats.PassingYards || 0) * 0.04;  // 1 point per 25 yards
+            points += (stats.PassingTouchdowns || 0) * 4; // 4 points per TD
+            points -= (stats.PassingInterceptions || 0) * 2; // -2 points per INT
+            
+            // Rushing points
+            points += (stats.RushingYards || 0) * 0.1;   // 1 point per 10 yards
+            points += (stats.RushingTouchdowns || 0) * 6; // 6 points per TD
+            
+            // Receiving points
+            points += (stats.Receptions || 0) * 1;       // 1 point per reception (PPR)
+            points += (stats.ReceivingYards || 0) * 0.1; // 1 point per 10 yards
+            points += (stats.ReceivingTouchdowns || 0) * 6; // 6 points per TD
+            
+            return points;
+          } catch (error) {
+            console.error('Error calculating live points for player:', playerId, error);
+            return 0;
+          }
         };
 
         // Helper function to get player stats points
@@ -322,30 +398,53 @@ export default function MatchupView() {
             
             // Fetch player A data
             const playerA = await firebaseService.getPlayerById(starterId);
+            const playerAGameStatus = await getGameStatus(starterId) as 'Scheduled' | 'InProgress' | 'Final';
             const playerAGameResult = await getPlayerGameResult(starterId);
             const playerAGameStats = await getPlayerGameStats(starterId);
-            const isPlayerAGameFinal = await isGameFinal(starterId);
-            const playerAPoints = isPlayerAGameFinal ? getPlayerStatsBasedPoints(starterId) : 0;
+            
+            // Handle points based on game status
+            let playerAPoints = 0;
+            if (playerAGameStatus === 'Final') {
+              playerAPoints = getPlayerStatsBasedPoints(starterId);
+            } else if (playerAGameStatus === 'InProgress') {
+              playerAPoints = await getLiveGamePoints(starterId);
+            }
+            
+            // Get projected points (could come from a different source)
+            const playerAProjectedPoints = matchup.teamA.projectedFantasyPoints / matchup.teamA.starters.length; // Simple approximation
             
             // Fetch player B data (if exists)
             const playerB = teamBStarterId ? await firebaseService.getPlayerById(teamBStarterId) : null;
+            const playerBGameStatus = teamBStarterId ? (await getGameStatus(teamBStarterId) as 'Scheduled' | 'InProgress' | 'Final') : 'Scheduled';
             const playerBGameResult = teamBStarterId ? await getPlayerGameResult(teamBStarterId) : null;
             const playerBGameStats = teamBStarterId ? await getPlayerGameStats(teamBStarterId) : null;
-            const isPlayerBGameFinal = teamBStarterId ? await isGameFinal(teamBStarterId) : false;
-            const playerBPoints = teamBStarterId && isPlayerBGameFinal ? getPlayerStatsBasedPoints(teamBStarterId) : 0;
+            
+            // Handle points based on game status
+            let playerBPoints = 0;
+            if (playerBGameStatus === 'Final') {
+              playerBPoints = getPlayerStatsBasedPoints(teamBStarterId || '');
+            } else if (playerBGameStatus === 'InProgress' && teamBStarterId) {
+              playerBPoints = await getLiveGamePoints(teamBStarterId);
+            }
+            
+            // Get projected points for player B
+            const playerBProjectedPoints = teamBStarterId ? 
+              (matchup.teamB.projectedFantasyPoints / matchup.teamB.starters.length) : 0; // Simple approximation
             
             return {
               position: playerA?.position || "Unknown",
               playerA,
+              playerAGameStatus,
               playerAGameResult,
               playerAGameStats,
-              isPlayerAGameFinal,
               playerAPoints,
+              playerAProjectedPoints,
               playerB,
+              playerBGameStatus,
               playerBGameResult,
               playerBGameStats,
-              isPlayerBGameFinal,
-              playerBPoints
+              playerBPoints,
+              playerBProjectedPoints
             };
           })
         );
@@ -360,10 +459,10 @@ export default function MatchupView() {
             team: matchup.playerA?.team || "",
             position: matchup.playerA?.position || "",
             points: matchup.playerAPoints,
-            projectedPoints: 0,
-            status: matchup.isPlayerAGameFinal ? "Final" : "Proj.",
+            projectedPoints: matchup.playerAProjectedPoints,
+            status: matchup.playerAGameStatus,
             lastGameStats: matchup.playerAGameResult || "Game Details",
-            gameStats: matchup.playerAGameStats || "Player Stats",
+            gameStats: matchup.playerAGameStatus !== 'Scheduled' ? (matchup.playerAGameStats || "Player Stats") : "",
             imageUrl: matchup.playerA?.photoUrl || "/player-images/default.png"
           },
           playerB: matchup.playerB ? {
@@ -374,10 +473,10 @@ export default function MatchupView() {
             team: matchup.playerB?.team || "",
             position: matchup.playerB?.position || "",
             points: matchup.playerBPoints,
-            projectedPoints: 0,
-            status: matchup.isPlayerBGameFinal ? "Final" : "Proj.",
+            projectedPoints: matchup.playerBProjectedPoints,
+            status: matchup.playerBGameStatus,
             lastGameStats: matchup.playerBGameResult || "Game Details",
-            gameStats: matchup.playerBGameStats || "Player Stats",
+            gameStats: matchup.playerBGameStatus !== 'Scheduled' ? (matchup.playerBGameStats || "Player Stats") : "",
             imageUrl: matchup.playerB?.photoUrl || "/player-images/default.png"
           } : null
         })));
@@ -452,8 +551,11 @@ export default function MatchupView() {
             </div>
             <h2 className="text-sm font-bold truncate max-w-28">{teamA.teamName}</h2>
             <p className="text-green-500 text-xl font-bold mt-1">
-              {teamA.points !== undefined ? teamA.points.toFixed(1) : teamA.projectedPoints.toFixed(1)}
+              {teamA.points > 0 ? teamA.points.toFixed(1) : <span className="text-white">{teamA.projectedPoints.toFixed(1)}</span>}
             </p>
+            <div className="text-xs text-gray-400">
+              {teamA.points > 0 ? 'Current' : 'Projected'}
+            </div>
           </div>
 
           {/* Center Logo */}
@@ -480,8 +582,11 @@ export default function MatchupView() {
             </div>
             <h2 className="text-sm font-bold truncate max-w-28 text-right">{teamB.teamName}</h2>
             <p className="text-yellow-500 text-xl font-bold mt-1">
-              {teamB.points !== undefined ? teamB.points.toFixed(1) : teamB.projectedPoints.toFixed(1)}
+              {teamB.points > 0 ? teamB.points.toFixed(1) : <span className="text-white">{teamB.projectedPoints.toFixed(1)}</span>}
             </p>
+            <div className="text-xs text-gray-400 text-right">
+              {teamB.points > 0 ? 'Current' : 'Projected'}
+            </div>
           </div>
         </div>
 
@@ -543,12 +648,17 @@ export default function MatchupView() {
                   {matchup.playerA.lastGameStats?.split('\n').map((line, i) => (
                     <p key={i}>{line}</p>
                   ))}
-                  <p>{matchup.playerA.gameStats}</p>
+                  {matchup.playerA.status !== 'Scheduled' && <p>{matchup.playerA.gameStats}</p>}
                 </div>
                 {/* Points */}
                 <div className="absolute top-4 right-4 text-xl font-bold text-green-500">
-                  {matchup.playerA.points.toFixed(1)}
-                  <div className="text-xs text-gray-400 text-center">{matchup.playerA.status}</div>
+                  {matchup.playerA.status === 'Scheduled' 
+                    ? <span className="text-white">{matchup.playerA.projectedPoints.toFixed(1)}</span> 
+                    : matchup.playerA.points.toFixed(1)}
+                  <div className="text-xs text-gray-400 text-center">
+                    {matchup.playerA.status === 'Scheduled' ? 'Proj' : 
+                     matchup.playerA.status === 'InProgress' ? 'Live' : 'Final'}
+                  </div>
                 </div>
               </div>
 
@@ -571,12 +681,17 @@ export default function MatchupView() {
                     {matchup.playerB.lastGameStats?.split('\n').map((line, i) => (
                       <p key={i}>{line}</p>
                     ))}
-                    <p>{matchup.playerB.gameStats}</p>
+                    {matchup.playerB.status !== 'Scheduled' && <p>{matchup.playerB.gameStats}</p>}
                   </div>
                   {/* Points */}
                   <div className="absolute top-4 left-4 text-xl font-bold text-green-500">
-                    {matchup.playerB.points.toFixed(1)}
-                    <div className="text-xs text-gray-400 text-center">{matchup.playerB.status}</div>
+                    {matchup.playerB.status === 'Scheduled' 
+                      ? <span className="text-white">{matchup.playerB.projectedPoints.toFixed(1)}</span> 
+                      : matchup.playerB.points.toFixed(1)}
+                    <div className="text-xs text-gray-400 text-center">
+                      {matchup.playerB.status === 'Scheduled' ? 'Proj' : 
+                       matchup.playerB.status === 'InProgress' ? 'Live' : 'Final'}
+                    </div>
                   </div>
                 </div>
               ) : (
