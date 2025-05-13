@@ -78,6 +78,10 @@ interface FantasyTeamMatchup {
 // Add this type near your FantasyTeamMatchup interface
 interface MatchupTeam extends FantasyTeamMatchup {
   startersPoints: StarterPoint[];
+  starterProjectedPoints?: Array<{
+    playerId: string;
+    projectedPoints: number;
+  }>;
 }
 
 export default function MatchupView() {
@@ -338,41 +342,7 @@ export default function MatchupView() {
           }
         };
         
-        // Helper function to get live game points
-        const getLiveGamePoints = async (playerId: string) => {
-          try {
-            // Query playerGameScores collection for this player, season and week
-            const docRef = doc(db, 'playerGameScores', `${playerId}_${season}_1_${week}`);
-            const docSnap = await getDoc(docRef);
-            
-            if (!docSnap.exists()) return 0;
-            
-            const stats = docSnap.data();
-            
-            // Calculate live points based on stats
-            // This is a simplified calculation - you might need to adjust this based on your scoring rules
-            let points = 0;
-            
-            // Passing points
-            points += (stats.PassingYards || 0) * 0.04;  // 1 point per 25 yards
-            points += (stats.PassingTouchdowns || 0) * 4; // 4 points per TD
-            points -= (stats.PassingInterceptions || 0) * 2; // -2 points per INT
-            
-            // Rushing points
-            points += (stats.RushingYards || 0) * 0.1;   // 1 point per 10 yards
-            points += (stats.RushingTouchdowns || 0) * 6; // 6 points per TD
-            
-            // Receiving points
-            points += (stats.Receptions || 0) * 1;       // 1 point per reception (PPR)
-            points += (stats.ReceivingYards || 0) * 0.1; // 1 point per 10 yards
-            points += (stats.ReceivingTouchdowns || 0) * 6; // 6 points per TD
-            
-            return points;
-          } catch (error) {
-            console.error('Error calculating live points for player:', playerId, error);
-            return 0;
-          }
-        };
+
 
         // Helper function to get player stats points
         const getPlayerStatsBasedPoints = (playerId: string) => {
@@ -389,6 +359,27 @@ export default function MatchupView() {
           return 0;
         };
 
+        // Helper function to get player projected points
+        const getPlayerProjectedPoints = (playerId: string) => {
+          const teamA = matchup.teamA as unknown as MatchupTeam;
+          const teamB = matchup.teamB as unknown as MatchupTeam;
+          
+          // Check if starterProjectedPoints exists and contains data for this player
+          if (teamA.starters.includes(playerId) && teamA.starterProjectedPoints) {
+            const projectedPoints = teamA.starterProjectedPoints.find(
+              (p: { playerId: string; projectedPoints: number }) => p.playerId === playerId
+            );
+            return projectedPoints ? projectedPoints.projectedPoints : 0;
+          } else if (teamB.starters.includes(playerId) && teamB.starterProjectedPoints) {
+            const projectedPoints = teamB.starterProjectedPoints.find(
+              (p: { playerId: string; projectedPoints: number }) => p.playerId === playerId
+            );
+            return projectedPoints ? projectedPoints.projectedPoints : 0;
+          }
+          
+          return 0;
+        };
+
         // Fetch player data with game results
         // Build the player matchups dynamically from all starters
         const playerMatchups = await Promise.all(
@@ -402,16 +393,11 @@ export default function MatchupView() {
             const playerAGameResult = await getPlayerGameResult(starterId);
             const playerAGameStats = await getPlayerGameStats(starterId);
             
-            // Handle points based on game status
-            let playerAPoints = 0;
-            if (playerAGameStatus === 'Final') {
-              playerAPoints = getPlayerStatsBasedPoints(starterId);
-            } else if (playerAGameStatus === 'InProgress') {
-              playerAPoints = await getLiveGamePoints(starterId);
-            }
+            // Get points - use the same source for both live and final points
+            const playerAPoints = playerAGameStatus !== 'Scheduled' ? getPlayerStatsBasedPoints(starterId) : 0;
             
-            // Get projected points (could come from a different source)
-            const playerAProjectedPoints = matchup.teamA.projectedFantasyPoints / matchup.teamA.starters.length; // Simple approximation
+            // Get projected points from starterProjectedPoints
+            const playerAProjectedPoints = getPlayerProjectedPoints(starterId);
             
             // Fetch player B data (if exists)
             const playerB = teamBStarterId ? await firebaseService.getPlayerById(teamBStarterId) : null;
@@ -419,17 +405,11 @@ export default function MatchupView() {
             const playerBGameResult = teamBStarterId ? await getPlayerGameResult(teamBStarterId) : null;
             const playerBGameStats = teamBStarterId ? await getPlayerGameStats(teamBStarterId) : null;
             
-            // Handle points based on game status
-            let playerBPoints = 0;
-            if (playerBGameStatus === 'Final') {
-              playerBPoints = getPlayerStatsBasedPoints(teamBStarterId || '');
-            } else if (playerBGameStatus === 'InProgress' && teamBStarterId) {
-              playerBPoints = await getLiveGamePoints(teamBStarterId);
-            }
+            // Get points - use the same source for both live and final points
+            const playerBPoints = (playerBGameStatus !== 'Scheduled' && teamBStarterId) ? getPlayerStatsBasedPoints(teamBStarterId) : 0;
             
-            // Get projected points for player B
-            const playerBProjectedPoints = teamBStarterId ? 
-              (matchup.teamB.projectedFantasyPoints / matchup.teamB.starters.length) : 0; // Simple approximation
+            // Get projected points from starterProjectedPoints
+            const playerBProjectedPoints = teamBStarterId ? getPlayerProjectedPoints(teamBStarterId) : 0;
             
             return {
               position: playerA?.position || "Unknown",
