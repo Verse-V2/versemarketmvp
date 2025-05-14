@@ -94,7 +94,7 @@ export function usePolymarketEntries() {
     setError(null);
 
     const db = getFirestore();
-    const entriesRef = collection(db, 'polymarketEntry');
+    const entriesRef = collection(db, 'polymarketEntries');
     
     // Log the collection path
     console.log('Collection path:', entriesRef.path);

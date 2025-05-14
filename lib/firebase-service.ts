@@ -371,7 +371,7 @@ class FirebaseService {
   // Get fantasy league by ID
   async getFantasyLeagueById(leagueId: string): Promise<FantasyLeague | null> {
     try {
-      const docRef = doc(db, 'fantasyLeague', leagueId);
+      const docRef = doc(db, 'fantasyLeagues', leagueId);
       const docSnap = await getDoc(docRef);
       
       if (!docSnap.exists()) {
@@ -433,7 +433,7 @@ class FirebaseService {
     try {
       // Get all team matchups for this league, season, and week
       const q = query(
-        collection(db, 'fantasyMatchup'),
+        collection(db, 'fantasyMatchups'),
         where('leagueId', '==', leagueId),
         where('season', '==', season),
         where('seasonWeek', '==', week)
@@ -485,7 +485,7 @@ class FirebaseService {
 
   async getPlayerById(playerId: string): Promise<Player | null> {
     try {
-      const docRef = doc(db, 'player', playerId);
+      const docRef = doc(db, 'players', playerId);
       const docSnap = await getDoc(docRef);
       
       if (!docSnap.exists()) {

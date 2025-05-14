@@ -98,7 +98,7 @@ export function useFantasyMatchupEntries() {
     setIsLoading(true);
     setError(null);
 
-    const entriesRef = collection(db, 'fantasyMatchupEntry');
+    const entriesRef = collection(db, 'fantasyMatchupEntries');
     const userEntriesQuery = query(
       entriesRef,
       where('userId', '==', userId),
