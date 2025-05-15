@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const cloudFunctionUrl = 'https://us-central1-verse-fantasy-v2-staging.cloudfunctions.net/web-polymarket-placeEntry';
+    const cloudFunctionUrl = 'https://us-central1-verse-fantasy-v2-staging.cloudfunctions.net/web_polymarket_placeEntry';
     console.log('Attempting to call cloud function at:', cloudFunctionUrl);
     console.log('Request body:', JSON.stringify(body, null, 2));
     
