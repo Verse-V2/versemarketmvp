@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
-import { dailyChallengesService, type DailyChallenge, type DailyChallengeTask } from "@/lib/daily-challenges-service"
+import { dailyChallengesService, type DailyChallenge } from "@/lib/daily-challenges-service"
 
 export function DailyChallenges() {
   const user = useAuth()
@@ -17,14 +17,14 @@ export function DailyChallenges() {
 
     const fetchDailyChallenge = async () => {
       try {
-        // Get today's date in YYYY-MM-DD format
+        // Get today&apos;s date in YYYY-MM-DD format
         const today = new Date().toISOString().split('T')[0]
         
-        // Fetch today's challenge
+        // Fetch today&apos;s challenge
         const challengeData = await dailyChallengesService.getDailyChallenge(today)
         setChallenge(challengeData)
 
-        // Fetch user's progress
+        // Fetch user&apos;s progress
         const progress = await dailyChallengesService.getUserChallengeProgress(user.uid, today)
         setCompletedTasks(progress)
       } catch (error) {
@@ -78,7 +78,7 @@ export function DailyChallenges() {
             <span className="font-bold text-green-400 text-xl">${challenge.rewardAmount.toFixed(2)}</span>
           </div>
           <div className="text-sm text-muted-foreground mt-0.5">
-            With <span className="text-yellow-400 font-semibold">Verse Coins</span> to complete today's challenges.<br />
+            With <span className="text-yellow-400 font-semibold">Verse Coins</span> to complete today&apos;s challenges.<br />
             <span className="text-xs text-muted-foreground">Complete all {challenge.totalTasks} challenges to earn ${challenge.rewardAmount.toFixed(2)} Verse Cash</span>
           </div>
           <div className="flex items-center gap-2 mt-2">
@@ -90,11 +90,11 @@ export function DailyChallenges() {
         </div>
       </div>
 
-      {/* Today's Challenges */}
+      {/* Today&apos;s Challenges */}
       <div>
-        <div className="text-base font-semibold text-white mb-2">Today's Challenges</div>
+        <div className="text-base font-semibold text-white mb-2">Today&apos;s Challenges</div>
         <div className="space-y-3">
-          {challenge.tasks.map((task, idx) => (
+          {challenge.tasks.map((task) => (
             <div
               key={task.id}
               className="flex items-center justify-between rounded-xl bg-secondary/60 px-4 py-3 shadow-sm"
