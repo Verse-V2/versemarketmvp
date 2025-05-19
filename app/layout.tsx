@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Verse Gaming MVP",
-  description: "A Sweepstakes Prediciton Market for the Verse Community",
+  description: "A Sweepstakes Prediction Market for the Verse Community",
 };
 
 export default function RootLayout({
