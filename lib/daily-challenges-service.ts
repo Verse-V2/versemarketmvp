@@ -1,4 +1,4 @@
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
 
 export interface DailyChallengeTask {
   id: string;
@@ -34,14 +34,16 @@ export const dailyChallengesService = {
     try {
       console.log('Fetching daily challenge for date:', date);
       const db = getFirestore();
-      const challengeDoc = await getDoc(doc(db, 'dailyChallenges', date));
-      
-      if (!challengeDoc.exists()) {
+      const q = query(
+        collection(db, 'dailyChallenges'),
+        where('date', '==', date)
+      );
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
         console.log('No daily challenge found for date:', date);
         return null;
       }
-
-      const data = challengeDoc.data() as DailyChallenge;
+      const data = querySnapshot.docs[0].data() as DailyChallenge;
       console.log('Successfully fetched daily challenge:', {
         date: data.date,
         title: data.title,
