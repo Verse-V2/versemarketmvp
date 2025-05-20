@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { firebaseService } from "@/lib/firebase-service";
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from "@/lib/firebase";
+import type { FantasyMatchupEntry, FantasyMatchupPick, FantasyMatchupTeam } from '@/lib/hooks/use-fantasy-matchup-entries';
 
 // Helper function to ensure image URLs are safe
 const safeImage = (url?: string | null) =>
@@ -85,11 +86,11 @@ interface MatchupTeam extends FantasyTeamMatchup {
 }
 
 // Helper to get points from entryPickTeams startersPoints
-function getEntryPoints(entryPickTeams: any[] | null, teamIndex: number, playerId: string): number | null {
+function getEntryPoints(entryPickTeams: FantasyMatchupTeam[] | null, teamIndex: number, playerId: string): number | null {
   if (!entryPickTeams) return null;
   const team = entryPickTeams[teamIndex];
   if (!team.startersPoints) return null;
-  const starter = team.startersPoints.find((p: any) => p.playerId === playerId);
+  const starter = team.startersPoints.find((p: { playerId: string; statsBasedPoints: number }) => p.playerId === playerId);
   return starter ? starter.statsBasedPoints : null;
 }
 
@@ -188,12 +189,12 @@ export default function MatchupView() {
         });
 
         // Fetch the fantasyMatchupEntry and pick
-        let entryPickTeams: any[] | null = null;
+        let entryPickTeams: FantasyMatchupTeam[] | null = null;
         if (entryId && pickId) {
           const entryDoc = await getDoc(doc(db, 'fantasyMatchupEntries', entryId));
           if (entryDoc.exists()) {
-            const entryData = entryDoc.data();
-            const pick = entryData.picks.find((p: any) => p.id === pickId);
+            const entryData = entryDoc.data() as FantasyMatchupEntry;
+            const pick = entryData.picks.find((p: FantasyMatchupPick) => p.id === pickId);
             if (pick && pick.Teams && pick.Teams.length === 2) {
               entryPickTeams = pick.Teams;
             }
@@ -384,21 +385,6 @@ export default function MatchupView() {
         
 
 
-        // Helper function to get player stats points
-        const getPlayerStatsBasedPoints = (playerId: string) => {
-          const teamA = teamAData as unknown as MatchupTeam;
-          const teamB = teamBData as unknown as MatchupTeam;
-          
-          if (teamA.starters.includes(playerId) && teamA.startersPoints) {
-            const starterPoints = teamA.startersPoints.find((p: StarterPoint) => p.playerId === playerId);
-            return starterPoints ? starterPoints.statsBasedPoints : 0;
-          } else if (teamB.starters.includes(playerId) && teamB.startersPoints) {
-            const starterPoints = teamB.startersPoints.find((p: StarterPoint) => p.playerId === playerId);
-            return starterPoints ? starterPoints.statsBasedPoints : 0;
-          }
-          return 0;
-        };
-
         // Helper function to get player projected points
         const getPlayerProjectedPoints = (playerId: string) => {
           const teamA = teamAData as unknown as MatchupTeam;
@@ -581,10 +567,10 @@ export default function MatchupView() {
             </div>
             <h2 className="text-sm font-bold truncate max-w-28">{teamA.teamName}</h2>
             <p className="text-green-500 text-xl font-bold mt-1">
-              {teamA.points > 0 ? teamA.points.toFixed(1) : <span className="text-white">{teamA.projectedPoints.toFixed(1)}</span>}
+              {teamA.points.toFixed(1)}
             </p>
             <div className="text-xs text-gray-400">
-              {teamA.points > 0 ? 'Current' : 'Projected'}
+              Projected: {teamA.projectedPoints.toFixed(1)}
             </div>
           </div>
 
@@ -612,10 +598,10 @@ export default function MatchupView() {
             </div>
             <h2 className="text-sm font-bold truncate max-w-28 text-right">{teamB.teamName}</h2>
             <p className="text-yellow-500 text-xl font-bold mt-1">
-              {teamB.points > 0 ? teamB.points.toFixed(1) : <span className="text-white">{teamB.projectedPoints.toFixed(1)}</span>}
+              {teamB.points.toFixed(1)}
             </p>
             <div className="text-xs text-gray-400 text-right">
-              {teamB.points > 0 ? 'Current' : 'Projected'}
+              Projected: {teamB.projectedPoints.toFixed(1)}
             </div>
           </div>
         </div>

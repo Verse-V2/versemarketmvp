@@ -13,6 +13,7 @@ export interface FantasyMatchupTeam {
   projectedFantasyPoints: number;
   starters: string[];
   teamId: string;
+  startersPoints?: { playerId: string; statsBasedPoints: number }[];
 }
 
 export interface FantasyMatchupPick {
