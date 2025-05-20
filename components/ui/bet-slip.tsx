@@ -412,6 +412,13 @@ export function BetSlip() {
                     </div>
                   </div>
                 </div>
+                {/* Insufficient Balance Warning */}
+                {((Number(entryAmount) > 0 && hasInsufficientFunds()) || (currency === 'cash' ? cashBalance === 0 : coinBalance === 0)) && (
+                  <div className="flex items-center gap-2 bg-[#232323] border border-yellow-600 rounded-md px-3 py-2 mb-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    <span className="text-xs text-yellow-100">Insufficient balance. Please deposit funds to continue.</span>
+                  </div>
+                )}
                 <Button 
                   className="w-full" 
                   disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds()}
@@ -529,6 +536,13 @@ export function BetSlip() {
                     </div>
                   </div>
                 </div>
+                {/* Insufficient Balance Warning */}
+                {((Number(entryAmount) > 0 && hasInsufficientFunds()) || (currency === 'cash' ? cashBalance === 0 : coinBalance === 0)) && (
+                  <div className="flex items-center gap-2 bg-[#232323] border border-yellow-600 rounded-md px-3 py-2 mb-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    <span className="text-xs text-yellow-100">Insufficient balance. Please deposit funds to continue.</span>
+                  </div>
+                )}
                 <Button 
                   className="w-full" 
                   disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds()}
