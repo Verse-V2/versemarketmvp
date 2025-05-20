@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ShareDialog } from "@/components/ui/share-dialog";
 import { Timestamp } from 'firebase/firestore';
 import { FantasyMatchupEntry } from "@/lib/hooks/use-fantasy-matchup-entries";
+import { useRouter } from "next/navigation";
 
 function formatDate(timestamp: Timestamp) {
   return timestamp.toDate().toLocaleDateString('en-US', {
@@ -38,6 +39,7 @@ function FantasyMatchupEntryCard({ entry }: { entry: FantasyMatchupEntry }) {
   const [showLegs, setShowLegs] = useState(true);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const odds = entry.picks.length > 1 ? entry.moneylineOdds : entry.picks[0]?.moneylineOdds;
+  const router = useRouter();
 
   // Get entry title based on picks
   let entryTitle;
@@ -133,11 +135,14 @@ function FantasyMatchupEntryCard({ entry }: { entry: FantasyMatchupEntry }) {
           {entry.picks.map((pick, index) => {
             const selectedTeam = pick.Teams.find(t => t.teamId === pick.selectedTeamId);
             const opponentTeam = pick.Teams.find(t => t.teamId !== pick.selectedTeamId);
+            // Construct matchupId for navigation
+            const matchupId = `${pick.leagueId}-${pick.seasonWeek}-${pick.Teams[0].teamId}-${pick.Teams[1].teamId}`;
             
             return (
               <div 
                 key={pick.id}
-                className="px-4 py-2 border-b border-[#2A2A2D] last:border-b-0 relative"
+                className="px-4 py-2 border-b border-[#2A2A2D] last:border-b-0 relative cursor-pointer"
+                onClick={() => router.push(`/matchupViewLive?id=${matchupId}&entryId=${entry.id}&pickId=${pick.id}`)}
               >
                 {/* Dotted line */}
                 {index < entry.picks.length - 1 && (
