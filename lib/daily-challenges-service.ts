@@ -29,13 +29,6 @@ export interface DailyChallenge {
   totalTasks: number; // computed
 }
 
-function parseFirestoreTime(obj: any): string {
-  if (obj && typeof obj === 'object' && obj.__time__) {
-    return obj.__time__;
-  }
-  return '';
-}
-
 export const dailyChallengesService = {
   async getDailyChallenge(date: string): Promise<DailyChallenge | null> {
     try {
