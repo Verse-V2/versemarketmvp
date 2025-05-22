@@ -144,7 +144,7 @@ export default function AccountPage() {
 
         {/* Menu List */}
         <nav className="bg-[#18181B] rounded-2xl divide-y divide-[#232323] shadow-lg mb-6">
-          <MenuItem href="/my-entries" icon={<TrophyIcon className="h-6 w-6" />} label="My Leagues" />
+          <MenuItem href="/leagueSyncHome" icon={<TrophyIcon className="h-6 w-6" />} label="My Leagues" />
           <MenuItem href="#" icon={<ClipboardDocumentListIcon className="h-6 w-6" />} label="Transaction History" />
           <MenuItem href="#" icon={<Cog6ToothIcon className="h-6 w-6" />} label="Account Settings" />
           <MenuItem href="#" icon={<QuestionMarkCircleIcon className="h-6 w-6" />} label="Support" />
