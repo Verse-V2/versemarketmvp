@@ -63,7 +63,7 @@ export function DailyChallenges() {
   }
 
   const completedCount = Object.values(completedTasks).filter(Boolean).length
-  const progressPercentage = (completedCount / challenge.totalTasks) * 100
+  const progressPercentage = (completedCount / challenge.tasks.length) * 100
 
   return (
     <div className="space-y-6">
@@ -79,13 +79,13 @@ export function DailyChallenges() {
           </div>
           <div className="text-sm text-muted-foreground mt-0.5">
             With <span className="text-yellow-400 font-semibold">Verse Coins</span> to complete today&apos;s challenges.<br />
-            <span className="text-xs text-muted-foreground">Complete all {challenge.totalTasks} challenges to earn ${challenge.rewardAmount.toFixed(2)} Verse Cash</span>
+            <span className="text-xs text-muted-foreground">Complete all {challenge.tasks.length} challenges to earn ${challenge.rewardAmount.toFixed(2)} Verse Cash</span>
           </div>
           <div className="flex items-center gap-2 mt-2">
             <div className="flex-1 h-2 bg-background/30 rounded-full overflow-hidden">
               <div className="h-full bg-primary transition-all duration-300 ease-in-out" style={{ width: `${progressPercentage}%` }} />
             </div>
-            <span className="text-xs text-white font-medium whitespace-nowrap">{completedCount}/{challenge.totalTasks} Challenges</span>
+            <span className="text-xs text-white font-medium whitespace-nowrap">{completedCount}/{challenge.tasks.length} Challenges</span>
           </div>
         </div>
       </div>
