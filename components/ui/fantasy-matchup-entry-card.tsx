@@ -69,7 +69,7 @@ function FantasyMatchupEntryCard({ entry }: { entry: FantasyMatchupEntry }) {
     : getPickTypeLabel(entry.picks[0]?.pickType || '').toUpperCase();
 
   // Define the odds color class based on isCash
-  const oddsColorClass = entry.isCash ? "text-[#0BC700]" : "text-[#FFCC00]";
+  const oddsColorClass = entry.isCash ? "text-[#0BC700]" : "text-[#E9ED05]";
 
   return (
     <Card className="bg-[#131415] text-white overflow-hidden p-0 rounded-lg flex flex-col">

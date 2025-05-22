@@ -217,7 +217,7 @@ export default function LeagueSyncHome() {
   const onSelectLeague = (l: LeagueDetails) =>
     startTransition(() => setSelectedLeague(l)); // keeps old UI stable while fetching
 
-  const oddsColor = currency === 'cash' ? 'text-green-500' : 'text-[#FFCC00]';
+  const oddsColor = currency === 'cash' ? 'text-green-500' : 'text-[#E9ED05]';
 
   const handleMatchupClick = (matchupId: string, teamAId: string, teamBId: string) => {
     router.push(`/matchupView?id=${matchupId}&teamA=${teamAId}&teamB=${teamBId}`);

@@ -224,7 +224,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                         isDisabled ? 'text-gray-500 dark:text-gray-400' :
                         isSelected ? 'text-primary' :
                         currency === 'cash' ? 'text-[#0BC700] dark:text-[#0BC700] group-hover:text-[#0FE800] dark:group-hover:text-[#0FE800]' :
-                        'text-[#FFCC00] dark:text-[#FFCC00] group-hover:text-[#FFDD33] dark:group-hover:text-[#FFDD33]'
+                        'text-[#E9ED05] dark:text-[#E9ED05] group-hover:text-[#FFDD33] dark:group-hover:text-[#FFDD33]'
                       } ${isFlashing ? 'odds-changed-text' : ''}`}>
                         {toAmericanOdds(submarket.probability)}
                       </span>
@@ -250,7 +250,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                               className={`pointer-events-auto py-2 h-12 min-w-[100px] ${
                                 isSelected ? 'bg-primary/10 border-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30' :
                                 currency === 'cash' ? 'border-[#0BC700] text-[#0BC700] hover:bg-[#0BC700]/10 dark:border-[#0BC700] dark:text-[#0BC700] dark:hover:bg-[#0BC700]/20' :
-                                'border-[#FFCC00] text-[#FFCC00] hover:bg-[#FFCC00]/10 dark:border-[#FFCC00] dark:text-[#FFCC00] dark:hover:bg-[#FFCC00]/20'
+                                'border-[#E9ED05] text-[#E9ED05] hover:bg-[#E9ED05]/10 dark:border-[#E9ED05] dark:text-[#E9ED05] dark:hover:bg-[#E9ED05]/20'
                               } ${isFlashing ? 'odds-changed' : ''} ${
                                 isDisabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent dark:hover:bg-transparent border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400' : ''
                               }`}

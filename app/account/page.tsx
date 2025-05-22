@@ -5,7 +5,6 @@ import { useUserBalance } from "@/lib/user-balance-context";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { Button } from "@/components/ui/button";
-import { Header } from "@/components/ui/header";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -17,8 +16,6 @@ import {
   QuestionMarkCircleIcon,
   BookOpenIcon,
   ClipboardDocumentListIcon,
-  UsersIcon,
-  CurrencyDollarIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";

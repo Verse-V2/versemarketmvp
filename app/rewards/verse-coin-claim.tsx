@@ -130,7 +130,7 @@ export function VerseCoinClaim() {
               className="object-contain"
             />
           </div>
-          <div className="text-3xl font-bold text-[#FFCC00]">1,000</div>
+          <div className="text-3xl font-bold text-[#E9ED05]">1,000</div>
         </motion.div>
         <div className="text-sm text-muted-foreground">Verse Coins Available</div>
         

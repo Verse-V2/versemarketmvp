@@ -25,12 +25,12 @@ export function Header() {
           <div className="flex items-center justify-end space-x-4">
             <div className="flex flex-col items-end mr-2">
               <span className={`text-sm font-medium ${
-                currency === 'cash' ? 'text-[#0BC700]' : 'text-[#FFCC00]'
+                currency === 'cash' ? 'text-[#0BC700]' : 'text-[#E9ED05]'
               }`}>
                 {isLoading ? '...' : currency === 'cash' ? '$' : '₡'}
                 {displayBalance}
               </span>
-              <span className={`text-xs ${currency === 'cash' ? 'text-[#0BC700]' : 'text-[#FFCC00]'}`}>
+              <span className={`text-xs ${currency === 'cash' ? 'text-[#0BC700]' : 'text-[#E9ED05]'}`}>
                 {currencyName}
               </span>
             </div>

@@ -309,7 +309,7 @@ export function BetSlip() {
           >
             <div className="flex items-center gap-2">
               <span className="font-semibold text-base">Pick Slip</span>
-              <span className={`${currency === 'cash' ? 'bg-[#0BC700]' : 'bg-[#FFCC00] text-black'} rounded-full px-2.5 py-1 text-sm`}>
+              <span className={`${currency === 'cash' ? 'bg-[#0BC700]' : 'bg-[#E9ED05] text-black'} rounded-full px-2.5 py-1 text-sm`}>
                 {bets.length}
               </span>
             </div>
@@ -439,7 +439,7 @@ export function BetSlip() {
             <div className="flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Pick Slip</span>
-                <span className={`${currency === 'cash' ? 'bg-[#0BC700]' : 'bg-[#FFCC00] text-black'} rounded-full px-2.5 py-1 text-sm`}>
+                <span className={`${currency === 'cash' ? 'bg-[#0BC700]' : 'bg-[#E9ED05] text-black'} rounded-full px-2.5 py-1 text-sm`}>
                   {bets.length}
                 </span>
               </div>
