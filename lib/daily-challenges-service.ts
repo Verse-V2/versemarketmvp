@@ -9,7 +9,7 @@ export interface DailyChallengeTask {
   title: string;
   description: string;
   type: string;
-  requirements: Record<string, any>;
+  requirements: Record<string, unknown>;
 }
 
 export interface DailyChallenge {
@@ -54,25 +54,28 @@ export const dailyChallengesService = {
         console.log('No daily challenge found for date:', date);
         return null;
       }
-      const raw = querySnapshot.docs[0].data();
+      const raw = querySnapshot.docs[0].data() as Record<string, unknown>;
       // Parse Firestore timestamps and structure
       const challenge: DailyChallenge = {
-        id: raw.id,
-        title: raw.title,
-        description: raw.description,
-        rewardAmount: raw.rewardAmount,
-        tasks: (raw.tasks || []).map((task: any) => ({
-          id: task.id,
-          title: task.title,
-          description: task.description,
-          type: task.type,
-          requirements: task.requirements || {},
-        })),
-        stats: raw.stats || { completedUsers: 0, completionRate: 0, totalUsers: 0 },
-        createdAt: raw.createdAt?.toDate().toISOString() || '',
-        updatedAt: raw.updatedAt?.toDate().toISOString() || '',
-        date: raw.date?.toDate().toISOString() || '',
-        totalTasks: (raw.tasks || []).length,
+        id: raw.id as string,
+        title: raw.title as string,
+        description: raw.description as string,
+        rewardAmount: raw.rewardAmount as number,
+        tasks: (raw.tasks as DailyChallengeTask[] || []).map((task: unknown) => {
+          const t = task as Record<string, unknown>;
+          return {
+            id: t.id as string,
+            title: t.title as string,
+            description: t.description as string,
+            type: t.type as string,
+            requirements: t.requirements as Record<string, unknown> || {},
+          };
+        }),
+        stats: (raw.stats as { completedUsers: number; completionRate: number; totalUsers: number }) || { completedUsers: 0, completionRate: 0, totalUsers: 0 },
+        createdAt: (raw.createdAt as Timestamp)?.toDate().toISOString() || '',
+        updatedAt: (raw.updatedAt as Timestamp)?.toDate().toISOString() || '',
+        date: (raw.date as Timestamp)?.toDate().toISOString() || '',
+        totalTasks: ((raw.tasks as unknown[]) || []).length,
       };
       console.log('Successfully fetched daily challenge:', {
         date: challenge.date,
