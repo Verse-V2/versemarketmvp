@@ -104,8 +104,12 @@ export default function AccountPage() {
           <div className="flex-1 z-10">
             <h2 className="text-lg font-semibold mb-1">Refer Friends</h2>
             <p className="text-sm text-gray-400 mb-3">Share the fun! Invite friends and claim your rewards!</p>
-            <Button className="bg-black border border-[#0BC700] text-[#0BC700] rounded-full px-6 font-semibold hover:bg-[#0BC700]/10 transition-all h-[34px]" size="lg">
-              Invite Friends
+            <Button 
+              className="bg-black border border-[#0BC700] text-[#0BC700] rounded-full px-6 font-semibold hover:bg-[#0BC700]/10 transition-all h-[34px]" 
+              size="lg"
+              asChild
+            >
+              <Link href="/account/invite-friends">Invite Friends</Link>
             </Button>
           </div>
           <div className="relative flex items-center justify-center w-[90px] h-[90px] z-10">
