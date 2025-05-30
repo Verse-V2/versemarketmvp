@@ -10,8 +10,9 @@ import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
 import { firebaseService } from "@/lib/firebase-service";
 import { getPredictionsFilters } from "@/lib/predictions-config";
-import { Trophy, ChevronRight } from "lucide-react";
+import { Trophy, ChevronRight, Search, X } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
+import { Input } from "@/components/ui/input";
 
 export default function Home() {
   const router = useRouter();
@@ -24,6 +25,8 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [predictionFilters, setPredictionFilters] = useState<string[]>([]);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Redirect to auth page if not logged in
   useEffect(() => {
@@ -113,6 +116,13 @@ export default function Home() {
     };
   }, [user, loading, hasMore, loadingMore, lastVisible, loadMoreMarkets]);
 
+  // Filtered markets for search
+  const filteredMarkets = searchMode && searchQuery
+    ? markets.filter((market) =>
+        market.question?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : markets;
+
   // Show loading state while checking auth
   if (user === null) {
     return (
@@ -131,17 +141,51 @@ export default function Home() {
       <Header />
       
       <main className="container mx-auto px-4 pt-4 pb-6">
-        <div className="flex overflow-x-auto pb-1 -mx-4 px-4 mb-4 no-scrollbar">
-          {predictionFilters.map((filter) => (
-            <Button
-              key={filter}
-              variant={activeTag === filter ? "default" : "outline"}
-              onClick={() => handleTagClick(filter)}
-              className="text-sm whitespace-nowrap flex-shrink-0 mr-2"
+        <div className="flex overflow-x-auto pb-1 -mx-4 px-4 mb-4 no-scrollbar items-center">
+          {/* Search Icon */}
+          {!searchMode && (
+            <button
+              className="mr-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+              onClick={() => setSearchMode(true)}
+              aria-label="Search"
             >
-              {filter}
-            </Button>
-          ))}
+              <Search className="h-5 w-5 text-gray-500" />
+            </button>
+          )}
+          {/* Search Bar */}
+          {searchMode && (
+            <div className="flex items-center w-full max-w-md md:max-w-2xl lg:max-w-3xl bg-transparent rounded-lg px-0 py-0 mr-0 md:mr-4">
+              <Search className="h-5 w-5 text-gray-400 mr-2" />
+              <Input
+                type="text"
+                placeholder="Search events..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                autoFocus
+                className="flex-1"
+              />
+              <button
+                className="ml-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                onClick={() => { setSearchMode(false); setSearchQuery(""); }}
+                aria-label="Close search"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+          )}
+          {/* Choice chips: hide on mobile if searchMode, show always on md+ */}
+          <div className={`flex flex-1 items-center ${searchMode ? 'hidden' : ''} md:flex md:items-center md:space-x-0`}>
+            {predictionFilters.map((filter) => (
+              <Button
+                key={filter}
+                variant={activeTag === filter ? "default" : "outline"}
+                onClick={() => handleTagClick(filter)}
+                className="text-sm whitespace-nowrap flex-shrink-0 mr-2"
+              >
+                {filter}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* LeagueSync Promotional Header */}
@@ -166,10 +210,10 @@ export default function Home() {
               />
             ))}
           </div>
-        ) : markets.length > 0 ? (
+        ) : filteredMarkets.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {markets.map((market) => (
+              {filteredMarkets.map((market) => (
                 <MarketCard key={market.id} market={market} />
               ))}
             </div>
@@ -182,10 +226,10 @@ export default function Home() {
             )}
             
             {/* Intersection observer target */}
-            <div ref={observerTarget} className="h-4 mt-4" />
+            {!searchMode && <div ref={observerTarget} className="h-4 mt-4" />}
             
             {/* No more content indicator */}
-            {!hasMore && markets.length > 0 && (
+            {!hasMore && filteredMarkets.length > 0 && !searchMode && (
               <div className="text-center mt-6 text-gray-500 dark:text-gray-400">
                 No more markets to load
               </div>
@@ -194,7 +238,7 @@ export default function Home() {
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400">
-              No markets found for the selected category.
+              No markets found{searchMode && searchQuery ? ' for your search.' : ' for the selected category.'}
             </p>
           </div>
         )}
