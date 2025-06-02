@@ -9,7 +9,7 @@ import { useFantasyMatchupEntries } from "@/lib/hooks/use-fantasy-matchup-entrie
 import EntryCard from "@/components/ui/entry-card";
 import FantasyMatchupEntryCard from "@/components/ui/fantasy-matchup-entry-card";
 
-type EntryStatus = 'all' | 'open' | 'won' | 'lost';
+type EntryStatus = 'all' | 'open' | 'settled' | 'won' | 'lost';
 
 export default function EntriesPage() {
   const { entries: polymarketEntries, isLoading: isLoadingPolymarket, error: polymarketError } = usePolymarketEntries();
@@ -43,6 +43,8 @@ export default function EntriesPage() {
     switch (activeTab) {
       case 'open':
         return entry.status === 'submitted';
+      case 'settled':
+        return entry.status === 'won' || entry.status === 'lost';
       case 'won':
         return entry.status === 'won';
       case 'lost':
@@ -76,6 +78,16 @@ export default function EntriesPage() {
             }`}
           >
             Open
+          </button>
+          <button 
+            onClick={() => setActiveTab('settled')}
+            className={`flex-1 px-6 py-2 text-sm font-medium ${
+              activeTab === 'settled' 
+                ? 'text-white border-b-2 border-white' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Settled
           </button>
           <button 
             onClick={() => setActiveTab('won')}
