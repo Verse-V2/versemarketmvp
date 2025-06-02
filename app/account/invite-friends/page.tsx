@@ -25,14 +25,14 @@ export default function InviteFriendsPage() {
           text: 'Get $25 in Verse Cash when you join Verse using my invite link!',
           url: inviteLink,
         });
-      } catch (err) {
+      } catch {
         // User cancelled or error
       }
     } else if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(inviteLink);
         toast.success('Invite link copied to clipboard!');
-      } catch (err) {
+      } catch {
         toast.error('Failed to copy invite link.');
       }
     } else {
@@ -81,7 +81,7 @@ export default function InviteFriendsPage() {
           >
             <div className="text-left">
               <div className="text-base font-semibold">Your Referrals</div>
-              <div className="text-sm text-gray-400">See progress of friends you've referred</div>
+              <div className="text-sm text-gray-400">See progress of friends you&apos;ve referred</div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-[#0BC700]">0</span>
