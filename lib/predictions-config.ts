@@ -39,18 +39,27 @@ interface FirebaseConfig {
 export async function getPredictionsFilters(): Promise<PredictionsConfig['predictionFilters']> {
   try {
     const config = await firebaseService.getConfig() as FirebaseConfig;
+    let filters: string[] = [];
+    
     if (config && config.predictionFilters) {
-      return config.predictionFilters;
+      filters = config.predictionFilters;
+    } else {
+      // Default filters if not found in config
+      filters = [
+        "All",
+        "Popular",
+        "Trending"
+      ];
     }
     
-    // Default filters if not found in config
-    return [
-      "All",
-      "Popular",
-      "Featured"
-    ];
+    // Always ensure Fantasy Football is included
+    if (!filters.includes("Fantasy Football")) {
+      filters.push("Fantasy Football");
+    }
+    
+    return filters;
   } catch (error) {
     console.error("Error fetching predictions filters:", error);
-    return [];
+    return ["All", "Fantasy Football"]; // Fallback with at least Fantasy Football
   }
 } 

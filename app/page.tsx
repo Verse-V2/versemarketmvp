@@ -13,6 +13,7 @@ import { getPredictionsFilters } from "@/lib/predictions-config";
 import { Trophy, ChevronRight, Search, X } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
+import { LeagueSyncContent } from "@/components/ui/league-sync-content";
 
 export default function Home() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function Home() {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [activeTag, setActiveTag] = useState('All');
+  const [activeTag, setActiveTag] = useState('Trending');
   const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [predictionFilters, setPredictionFilters] = useState<string[]>([]);
@@ -49,7 +50,7 @@ export default function Home() {
     if (!lastVisible || !hasMore || loadingMore) return;
 
     setLoadingMore(true);
-    const tagFilter = activeTag !== 'All' ? activeTag : undefined;
+    const tagFilter = activeTag !== 'All' && activeTag !== 'Trending' ? activeTag : undefined;
 
     const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 50, lastVisible, (newMarkets, lastDoc) => {
       // Append only markets that are not already in the list to avoid duplicate keys
@@ -73,8 +74,8 @@ export default function Home() {
     setLastVisible(null);
     setHasMore(true);
     
-    // Use tag filter if not "All"
-    const tagFilter = activeTag !== 'All' ? activeTag : undefined;
+    // Use tag filter if not "All" or "Trending" (both show all markets)
+    const tagFilter = activeTag !== 'All' && activeTag !== 'Trending' ? activeTag : undefined;
     
     // Set up real-time listener for market updates
     const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 50, null, (updatedMarkets, lastDoc) => {
@@ -201,7 +202,12 @@ export default function Home() {
           </div>
         </Link>
 
-        {loading ? (
+        {/* Show League Sync Content when Fantasy Football is selected */}
+        {activeTag === 'Fantasy Football' ? (
+          <div className="bg-black rounded-lg overflow-hidden">
+            <LeagueSyncContent />
+          </div>
+        ) : loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div
