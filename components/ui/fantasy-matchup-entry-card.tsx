@@ -35,6 +35,29 @@ function formatOdds(odds: number): string {
   return odds > 0 ? `+${odds}` : odds.toString();
 }
 
+// Helper function to get status badge styling and text
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'won':
+      return { 
+        text: 'Won', 
+        className: 'bg-[#0BC700]/20 text-[#0BC700] text-xs px-2 py-1 rounded-md font-medium' 
+      };
+    case 'lost':
+      return { 
+        text: 'Lost', 
+        className: 'bg-[#DD3055]/20 text-[#DD3055] text-xs px-2 py-1 rounded-md font-medium' 
+      };
+    case 'submitted':
+      return { 
+        text: 'Open', 
+        className: 'bg-[#F1D327]/20 text-[#F1D327] text-xs px-2 py-1 rounded-md font-medium' 
+      };
+    default:
+      return null;
+  }
+}
+
 function FantasyMatchupEntryCard({ entry }: { entry: FantasyMatchupEntry }) {
   const [showLegs, setShowLegs] = useState(true);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -105,6 +128,15 @@ function FantasyMatchupEntryCard({ entry }: { entry: FantasyMatchupEntry }) {
             </div>
             <p className="text-xs text-gray-400 uppercase">{subtitleText}</p>
           </div>
+          {/* Status Badge */}
+          {(() => {
+            const statusBadge = getStatusBadge(entry.status);
+            return statusBadge ? (
+              <div className={statusBadge.className}>
+                {statusBadge.text}
+              </div>
+            ) : null;
+          })()}
         </div>
 
         <div className="flex items-center gap-3 -mb-1">
