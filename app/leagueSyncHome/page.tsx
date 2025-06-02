@@ -4,8 +4,9 @@ import { useState, useEffect, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import { firebaseService } from "@/lib/firebase-service";
+import { leagueSyncService } from "@/lib/league-sync-service";
 import Image from "next/image";
 import { useCurrency } from "@/lib/currency-context";
 import { Carousel } from "@/components/Carousel";
@@ -99,6 +100,11 @@ export default function LeagueSyncHome() {
   const [matchups, setMatchups] = useState<FantasyMatchup[]>([]);
   const [matchupsLoading, setMatchupsLoading] = useState(false);
 
+  /* sync state */
+  const [syncInProgress, setSyncInProgress] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+  const [syncMessage, setSyncMessage] = useState<string>('');
+
   /* transition keeps old matchups visible until new ones arrive */
   const [isPending, startTransition] = useTransition();
 
@@ -187,25 +193,67 @@ export default function LeagueSyncHome() {
     })();
   }, [user?.uid, selectedLeague]);
 
-  /*───────────────── Matchups fetch ────────────────*/
+  /*───────────────── Matchups fetch with sync ─────*/
   const fetchMatchups = useCallback(
-    async (league: LeagueDetails) => {
-      if (!config) return;
+    async (league: LeagueDetails, forceSync: boolean = false) => {
+      if (!config || !user?.uid) return;
+      
       setMatchupsLoading(true);
+      setSyncInProgress(true);
+      setSyncStatus('syncing');
+      setSyncMessage('Syncing league data...');
+
       try {
-        const data = await firebaseService.getFantasyMatchups(
+        // Get Firebase auth token (force refresh to ensure it's valid, matching iOS implementation)
+        const authToken = await user.getIdToken(true);
+        
+        // First, sync the league data via cloud function
+        const syncResult = await leagueSyncService.syncAndRefreshLeague(
           league.id,
-          config.currentSeason,
-          config.currentNFLWeek
+          league.type,
+          user.uid,
+          authToken,
+          {
+            forceSync,
+            cooldownMinutes: 5 // 5 minute cooldown
+          }
         );
-        setMatchups(data);
+
+        // Update sync status
+        if (syncResult.success) {
+          setSyncStatus('success');
+          setSyncMessage(syncResult.message || 'League synced successfully');
+        } else {
+          setSyncStatus('error');
+          setSyncMessage(syncResult.message || 'Sync failed, loading cached data');
+        }
+
+        // Always fetch data from Firebase (either newly synced or cached)
+        if (syncResult.shouldRefreshData) {
+          const data = await firebaseService.getFantasyMatchups(
+            league.id,
+            config.currentSeason,
+            config.currentNFLWeek
+          );
+          setMatchups(data);
+        }
+
       } catch (e) {
-        console.error('matchups', e);
+        console.error('Error in fetchMatchups:', e);
+        setSyncStatus('error');
+        setSyncMessage('Failed to sync and load data');
       } finally {
         setMatchupsLoading(false);
+        setSyncInProgress(false);
+        
+        // Clear status messages after a delay
+        setTimeout(() => {
+          setSyncStatus('idle');
+          setSyncMessage('');
+        }, 3000);
       }
     },
-    [config]
+    [config, user]
   );
 
   /* refetch when league or config changes */
@@ -278,13 +326,31 @@ export default function LeagueSyncHome() {
                     {selectedLeague.lastSynced}
                   </span>
                   <button
-                    onClick={() => fetchMatchups(selectedLeague)}
+                    onClick={() => fetchMatchups(selectedLeague, true)} // Force sync when manually refreshing
                     className="ml-2 text-green-500 hover:text-green-400 flex-shrink-0"
+                    disabled={syncInProgress}
                   >
-                    <RefreshCw size={14} className="sm:size-4" />
+                    <RefreshCw size={14} className={`sm:size-4 ${syncInProgress ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/*──────────── Sync Status ─────────────────────────*/}
+        {syncStatus !== 'idle' && syncMessage && (
+          <div className="px-4 mb-4">
+            <div className={`
+              rounded-lg p-3 flex items-center gap-2 text-sm
+              ${syncStatus === 'syncing' ? 'bg-blue-900/30 text-blue-300 border border-blue-500/30' : ''}
+              ${syncStatus === 'success' ? 'bg-green-900/30 text-green-300 border border-green-500/30' : ''}
+              ${syncStatus === 'error' ? 'bg-red-900/30 text-red-300 border border-red-500/30' : ''}
+            `}>
+              {syncStatus === 'syncing' && <RefreshCw size={16} className="animate-spin flex-shrink-0" />}
+              {syncStatus === 'success' && <CheckCircle size={16} className="flex-shrink-0" />}
+              {syncStatus === 'error' && <AlertCircle size={16} className="flex-shrink-0" />}
+              <span>{syncMessage}</span>
             </div>
           </div>
         )}
