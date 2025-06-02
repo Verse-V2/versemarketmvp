@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { ChevronUp, ChevronDown, Send } from "lucide-react";
+import { ChevronUp, ChevronDown, Send, X, Check } from "lucide-react";
 import { useState } from "react";
 import { ShareDialog } from "@/components/ui/share-dialog";
 import { Timestamp } from 'firebase/firestore';
@@ -189,7 +189,21 @@ function FantasyMatchupEntryCard({ entry }: { entry: FantasyMatchupEntry }) {
                     <div className="w-full">
                       <div className="w-full">
                         <div className="flex items-center gap-3 mb-1">
-                          <div className="w-4 h-4 md:w-4 md:h-4 w-3 h-3 rounded-full border-2 border-gray-600 shrink-0" />
+                          {/* Status circle with icon based on pick status */}
+                          <div className={`w-4 h-4 md:w-4 md:h-4 w-3 h-3 rounded-full border-2 shrink-0 flex items-center justify-center ${
+                            pick.status === 'won' 
+                              ? 'border-[#0BC700] bg-[#0BC700]' 
+                              : pick.status === 'lost' 
+                              ? 'border-[#DD3055] bg-[#DD3055]' 
+                              : 'border-gray-600'
+                          }`}>
+                            {pick.status === 'won' && (
+                              <Check className="w-2 h-2 md:w-2.5 md:h-2.5 text-white" />
+                            )}
+                            {pick.status === 'lost' && (
+                              <X className="w-2 h-2 md:w-2.5 md:h-2.5 text-white" />
+                            )}
+                          </div>
                           <h4 className="text-base md:text-base text-sm font-semibold flex-1">
                             {pick.pickType === 'total' ? (
                               `${pick.isOver ? 'Over' : 'Under'} ${pick.totalPoints}`
