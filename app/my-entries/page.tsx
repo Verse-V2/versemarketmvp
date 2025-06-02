@@ -8,12 +8,20 @@ import { usePolymarketEntries } from "@/lib/hooks/use-polymarket-entries";
 import { useFantasyMatchupEntries } from "@/lib/hooks/use-fantasy-matchup-entries";
 import EntryCard from "@/components/ui/entry-card";
 import FantasyMatchupEntryCard from "@/components/ui/fantasy-matchup-entry-card";
+import { RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 
 type EntryStatus = 'all' | 'open' | 'settled' | 'won' | 'lost';
 
 export default function EntriesPage() {
   const { entries: polymarketEntries, isLoading: isLoadingPolymarket, error: polymarketError } = usePolymarketEntries();
-  const { entries: fantasyEntries, isLoading: isLoadingFantasy, error: fantasyError } = useFantasyMatchupEntries();
+  const { 
+    entries: fantasyEntries, 
+    isLoading: isLoadingFantasy, 
+    error: fantasyError,
+    updateStatus,
+    updateMessage,
+    refreshEntries
+  } = useFantasyMatchupEntries();
   const [activeTab, setActiveTab] = useState<EntryStatus>('all');
   const user = useAuth();
   const router = useRouter();
@@ -58,6 +66,36 @@ export default function EntriesPage() {
     <main className="min-h-screen bg-background">
       <Header />
       <div className="container max-w-2xl mx-auto px-6 pt-2 pb-24">
+        {/* Update Status Banner */}
+        {updateStatus !== 'idle' && updateMessage && (
+          <div className="mb-4">
+            <div className={`
+              rounded-lg p-3 flex items-center gap-2 text-sm
+              ${updateStatus === 'updating' ? 'bg-blue-900/30 text-blue-300 border border-blue-500/30' : ''}
+              ${updateStatus === 'success' ? 'bg-green-900/30 text-green-300 border border-green-500/30' : ''}
+              ${updateStatus === 'error' ? 'bg-red-900/30 text-red-300 border border-red-500/30' : ''}
+            `}>
+              {updateStatus === 'updating' && <RefreshCw size={16} className="animate-spin flex-shrink-0" />}
+              {updateStatus === 'success' && <CheckCircle size={16} className="flex-shrink-0" />}
+              {updateStatus === 'error' && <AlertCircle size={16} className="flex-shrink-0" />}
+              <span>{updateMessage}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Header with Refresh Button */}
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-semibold text-white">My Entries</h1>
+          <button
+            onClick={refreshEntries}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+            disabled={updateStatus === 'updating'}
+          >
+            <RefreshCw size={14} className={`${updateStatus === 'updating' ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+
         <div className="flex w-full border-b border-[#2A2A2D] mb-4">
           <button 
             onClick={() => setActiveTab('all')}
