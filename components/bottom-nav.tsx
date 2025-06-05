@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, TrophyIcon, UserIcon, StarIcon, ShoppingBagIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, TrophyIcon, UserIcon, StarIcon, WalletIcon } from "@heroicons/react/24/outline";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -32,8 +32,8 @@ export function BottomNav() {
             isActive('/store') ? 'text-primary' : 'text-muted-foreground'
           }`}
         >
-          <ShoppingBagIcon className="h-6 w-6" />
-          <span className="text-xs">Store</span>
+          <WalletIcon className="h-6 w-6" />
+          <span className="text-xs">Wallet</span>
         </Link>
         <Link
           href="/my-entries"

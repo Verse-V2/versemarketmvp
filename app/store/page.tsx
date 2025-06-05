@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { PackageCard } from "@/components/ui/package-card";
 import { PurchaseSheet } from "@/components/ui/purchase-sheet";
 import { Header } from "@/components/ui/header";
+import { VerseBalance } from "@/components/verse-balance";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { CoinPurchasePackage, getActiveCoinPurchasePackages } from "@/lib/coin-purchase-service";
@@ -49,6 +50,8 @@ export default function StorePage() {
       <Header />
       <main className="min-h-screen bg-background">
         <div className="container max-w-2xl mx-auto p-6 pb-24">
+          <VerseBalance />
+          
           <div className="space-y-1.5 mb-6">
             <h1 className="text-lg font-semibold">Store</h1>
             <p className="text-sm text-muted-foreground">
