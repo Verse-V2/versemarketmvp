@@ -84,6 +84,7 @@ function EventDetails() {
   const [topMarketPriceHistories, setTopMarketPriceHistories] = useState<MarketPriceHistory[]>([]);
   const [loadingPriceHistory, setLoadingPriceHistory] = useState(false);
   const [isRateLimited, setIsRateLimited] = useState(false);
+  const [selectedTimeFrame, setSelectedTimeFrame] = useState('1w');
 
   useEffect(() => {
     if (!user) {
@@ -111,7 +112,7 @@ function EventDetails() {
       if (yesToken && yesToken.token_id) {
         // Now fetch price history using the token ID
         const historyResponse = await fetch(
-          `https://clob.polymarket.com/prices-history?market=${yesToken.token_id}&interval=1w&fidelity=60`
+          `https://clob.polymarket.com/prices-history?market=${yesToken.token_id}&interval=${selectedTimeFrame}&fidelity=60`
         );
         if (!historyResponse.ok) {
           if (historyResponse.status === 429) {
@@ -351,6 +352,37 @@ function EventDetails() {
     fetchEvent();
   }, [params.id]);
 
+  // Effect to refetch price history when time frame changes
+  useEffect(() => {
+    if (event && event.markets && event.markets.length > 0) {
+      const marketsWithProbability = event.markets
+        .filter(m => m.outcomePrices)
+        .map(m => {
+          let probability = 0;
+          if (m.outcomePrices) {
+            try {
+              const prices = JSON.parse(m.outcomePrices);
+              probability = parseFloat(prices[0] || "0");
+            } catch (e) {
+              console.error('Error parsing prices:', e);
+            }
+          }
+          return {
+            market: m,
+            probability: probability
+          };
+        });
+        
+      const sortedMarkets = [...marketsWithProbability].sort((a, b) => {
+        return b.probability - a.probability;
+      });
+      
+      if (sortedMarkets.length > 0) {
+        fetchTopMarketsPriceHistories(sortedMarkets);
+      }
+    }
+  }, [selectedTimeFrame]);
+
   // Function to fetch related events based on tags
   const fetchRelatedEvents = async (tags: Array<{ id?: string; label?: string; slug?: string }>, currentEventId: string) => {
     setLoadingRelated(true);
@@ -451,10 +483,7 @@ function EventDetails() {
           
           {/* Price Chart */}
           <Card>
-            <CardHeader>
-              <CardTitle>Price History</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               {loadingPriceHistory ? (
                 <div className="h-[300px] w-full bg-gray-900 dark:bg-gray-950 animate-pulse rounded-lg"></div>
               ) : isRateLimited ? (
@@ -465,9 +494,9 @@ function EventDetails() {
                   </div>
                 </div>
               ) : topMarketPriceHistories.length > 0 ? (
-                <div className="h-[300px] w-full p-4 relative">
+                <div className="h-[300px] w-full px-1 pb-4 relative">
                   {/* Add legend at the top with better styling */}
-                  <div className="mb-6 pt-2 flex flex-wrap gap-x-4 gap-y-2 justify-center text-xs">
+                  <div className="mb-4 pt-0 flex flex-wrap gap-x-4 gap-y-2 justify-center text-xs">
                     {topMarketPriceHistories.map((market, idx) => (
                       <div key={market.id} className="flex items-center">
                         <div 
@@ -486,7 +515,7 @@ function EventDetails() {
                     ))}
                   </div>
                   
-                  <ResponsiveContainer width="100%" height="85%">
+                  <ResponsiveContainer width="100%" height="85%" style={{ marginLeft: '-10px' }}>
                     <LineChart
                       data={
                         // Create a merged dataset with all market prices
@@ -505,7 +534,7 @@ function EventDetails() {
                           return timePoint;
                         })
                       }
-                      margin={{ top: 10, right: 0, left: 0, bottom: 5 }}
+                      margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.5} />
                       <XAxis 
@@ -524,7 +553,7 @@ function EventDetails() {
                         tick={{ fill: '#9ca3af', fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
-                        width={40}
+                        width={25}
                       />
                       <Tooltip 
                         formatter={(value: number, name: string) => {
@@ -590,6 +619,32 @@ function EventDetails() {
                   <p className="text-gray-400">No price history available</p>
                 </div>
               )}
+              
+              {/* Time frame toggles - moved outside chart container */}
+              <div className="flex justify-center px-1">
+                <div className="flex space-x-1">
+                  {[
+                    { label: '1h', value: '1h' },
+                    { label: '6h', value: '6h' },
+                    { label: '1d', value: '1d' },
+                    { label: '1w', value: '1w' },
+                    { label: '1m', value: '1m' },
+                    { label: 'All', value: 'all' }
+                  ].map((timeFrame) => (
+                    <button
+                      key={timeFrame.value}
+                      onClick={() => setSelectedTimeFrame(timeFrame.value)}
+                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                        selectedTimeFrame === timeFrame.value
+                          ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      {timeFrame.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
