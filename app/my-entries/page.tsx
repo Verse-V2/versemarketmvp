@@ -83,18 +83,7 @@ export default function EntriesPage() {
           </div>
         )}
 
-        {/* Header with Refresh Button */}
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-white">My Entries</h1>
-          <button
-            onClick={refreshEntries}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
-            disabled={updateStatus === 'updating'}
-          >
-            <RefreshCw size={14} className={`${updateStatus === 'updating' ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-        </div>
+
 
         <div className="flex w-full border-b border-[#2A2A2D] mb-4">
           <button 
