@@ -165,20 +165,39 @@ function EventDetails() {
       
       // Initialize the price histories array with empty data
       setTopMarketPriceHistories(
-        topMarkets.map(market => ({
-          id: market.market.id,
-          name: market.market.groupItemTitle || market.market.question || `Market ${markets.indexOf(market) + 1}`,
-          data: []
-        }))
+        topMarkets.map((market, index) => {
+          // For single market events, just use "Yes" since we're tracking the Yes outcome
+          // For multiple markets, use groupItemTitle or question
+          let name;
+          if (topMarkets.length === 1) {
+            name = "Yes";
+          } else {
+            name = market.market.groupItemTitle || market.market.question || `Market ${index + 1}`;
+          }
+          
+          return {
+            id: market.market.id,
+            name: name,
+            data: []
+          };
+        })
       );
       
       // Fetch price history for each market in parallel
       const fetchPromises = topMarkets.map((market, index) => {
         const marketObj = market.market;
         if (marketObj.conditionId) {
+          // Use same naming logic as when initializing the array
+          let name;
+          if (topMarkets.length === 1) {
+            name = "Yes";
+          } else {
+            name = marketObj.groupItemTitle || marketObj.question || `Market ${index + 1}`;
+          }
+          
           return fetchPriceHistory(
             marketObj.conditionId, 
-            marketObj.groupItemTitle || marketObj.question || `Market ${index + 1}`,
+            name,
             index
           );
         }
@@ -496,7 +515,7 @@ function EventDetails() {
               ) : topMarketPriceHistories.length > 0 ? (
                 <div className="h-[300px] w-full px-1 pb-4 relative">
                   {/* Add legend at the top with better styling */}
-                  <div className="mb-4 pt-0 flex flex-wrap gap-x-4 gap-y-2 justify-center text-xs">
+                  <div className="mb-4 pt-0 flex flex-wrap gap-x-4 gap-y-2 justify-end text-xs">
                     {topMarketPriceHistories.map((market, idx) => (
                       <div key={market.id} className="flex items-center">
                         <div 
