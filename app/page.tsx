@@ -28,6 +28,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeTag, setActiveTag] = useState('Trending');
+  const [activeSubTag, setActiveSubTag] = useState<string | null>(null);
   const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [predictionFilters, setPredictionFilters] = useState<string[]>([]);
@@ -177,6 +178,15 @@ export default function Home() {
       // If no endDate, rely on closed status only
       return true;
     });
+
+    // Apply subcategory filter if both main category and subcategory are selected
+    if (activeSubTag && activeTag !== 'All' && activeTag !== 'Trending') {
+      result = result.filter((market) => {
+        const hasMainTag = market.tags?.some(tag => tag.label === activeTag);
+        const hasSubTag = market.tags?.some(tag => tag.label === activeSubTag);
+        return hasMainTag && hasSubTag;
+      });
+    }
     
     // Then apply search filter if needed
     if (searchQuery) {
@@ -202,7 +212,31 @@ export default function Home() {
     // Volume sorting can be added here if needed in the future
 
     return result;
-  }, [markets, searchQuery, sortBy]);
+  }, [markets, searchQuery, sortBy, activeSubTag, activeTag]);
+
+  // Get subcategories for the active main category
+  const subCategories = useMemo(() => {
+    if (activeTag === 'All' || activeTag === 'Trending' || activeTag === 'Fantasy Football') {
+      return [];
+    }
+
+    // Find all markets that have the active tag
+    const matchingMarkets = markets.filter(market => 
+      market.tags?.some(tag => tag.label === activeTag)
+    );
+
+    // Extract all other unique tags from these markets
+    const subTags = new Set<string>();
+    matchingMarkets.forEach(market => {
+      market.tags?.forEach(tag => {
+        if (tag.label && tag.label !== activeTag) {
+          subTags.add(tag.label);
+        }
+      });
+    });
+
+    return Array.from(subTags).sort();
+  }, [markets, activeTag]);
 
   // Show loading state while checking auth
   if (user === null) {
@@ -215,6 +249,11 @@ export default function Home() {
 
   const handleTagClick = (tag: string) => {
     setActiveTag(tag);
+    setActiveSubTag(null); // Reset subtag when main tag changes
+  };
+
+  const handleSubTagClick = (subTag: string) => {
+    setActiveSubTag(activeSubTag === subTag ? null : subTag); // Toggle subtag
   };
 
   const dismissLeagueSyncBanner = () => {
@@ -230,6 +269,7 @@ export default function Home() {
       {/* Choice chips container - Sticky below header */}
       <div className="sticky top-14 z-40 bg-background border-b border-border/10">
         <div className="container mx-auto px-4">
+          {/* Main category chips */}
           <div className="flex overflow-x-auto pb-1 -mx-4 px-4 py-2 no-scrollbar items-center">
             <div className="flex flex-1 items-center space-x-0">
               {predictionFilters.map((filter) => (
@@ -244,6 +284,25 @@ export default function Home() {
               ))}
             </div>
           </div>
+          
+          {/* Subcategory chips - Only shown when main category is selected and has subcategories */}
+          {subCategories.length > 0 && (
+            <div className="flex overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar items-center border-t border-border/5">
+              <div className="flex flex-1 items-center space-x-0 pt-2">
+                {subCategories.map((subCategory) => (
+                  <Button
+                    key={subCategory}
+                    variant={activeSubTag === subCategory ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => handleSubTagClick(subCategory)}
+                    className="text-xs whitespace-nowrap flex-shrink-0 mr-2 h-7"
+                  >
+                    {subCategory}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
