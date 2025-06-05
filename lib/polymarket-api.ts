@@ -12,6 +12,7 @@ export interface Market {
   category?: string;
   imageUrl?: string;
   status: string;
+  closed?: boolean; // Whether the event has ended
   marketsCount?: number; // Number of submarkets
   commentCount?: number; // Number of comments
   description?: string; // Market description/rules
@@ -161,6 +162,7 @@ export async function getMarkets(limit: number = 10, tagFilter?: string): Promis
         category: event.tags?.[0]?.label,
         imageUrl: event.image,
         status: event.active ? "active" : "inactive",
+        closed: event.closed,
         marketsCount: Array.isArray(event.markets) ? event.markets.length : 1,
         commentCount: event.commentCount,
         description: event.description,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MarketCard } from "@/components/ui/market-card";
@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
 import { firebaseService } from "@/lib/firebase-service";
 import { getPredictionsFilters } from "@/lib/predictions-config";
-import { Trophy, Search, X, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Trophy, Search, X, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { LeagueSyncContent } from "@/components/ui/league-sync-content";
@@ -33,8 +33,7 @@ export default function Home() {
   const [predictionFilters, setPredictionFilters] = useState<string[]>([]);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("24hr Volume");
-  const [frequency, setFrequency] = useState("All");
+  const [sortBy, setSortBy] = useState("Volume");
   const [showFilters, setShowFilters] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [loadingDebounceTimer, setLoadingDebounceTimer] = useState<NodeJS.Timeout | null>(null);
@@ -161,12 +160,49 @@ export default function Home() {
     };
   }, [user, loading, hasMore, loadingMore, lastVisible, loadMoreMarkets]);
 
-  // Filtered markets for search
-  const filteredMarkets = searchQuery
-    ? markets.filter((market) =>
+  // Filtered and sorted markets for search
+  const filteredMarkets = useMemo(() => {
+    // First filter out closed/ended events globally with double protection
+    let result = markets.filter((market) => {
+      // Check if market is not closed
+      if (market.closed) return false;
+      
+      // Additional protection: check if endDate is in the future
+      if (market.endDate) {
+        const endDate = new Date(market.endDate);
+        const now = new Date();
+        return endDate > now;
+      }
+      
+      // If no endDate, rely on closed status only
+      return true;
+    });
+    
+    // Then apply search filter if needed
+    if (searchQuery) {
+      result = result.filter((market) =>
         market.question?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : markets;
+      );
+    }
+
+    // Apply sorting based on sortBy state
+    if (sortBy === "Newest") {
+      result = [...result].sort((a, b) => {
+        const dateA = new Date(a.endDate || 0);
+        const dateB = new Date(b.endDate || 0);
+        return dateB.getTime() - dateA.getTime(); // Newest end dates first
+      });
+    } else if (sortBy === "Ending Soon") {
+      result = [...result].sort((a, b) => {
+        const dateA = new Date(a.endDate || 0);
+        const dateB = new Date(b.endDate || 0);
+        return dateA.getTime() - dateB.getTime(); // Earliest end dates first
+      });
+    }
+    // Volume sorting can be added here if needed in the future
+
+    return result;
+  }, [markets, searchQuery, sortBy]);
 
   // Show loading state while checking auth
   if (user === null) {
@@ -248,7 +284,7 @@ export default function Home() {
 
             {/* Sort and Filter Controls - Only shown when filter icon is clicked */}
             {showFilters && (
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center justify-end gap-3 text-sm">
                 {/* Sort By Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
@@ -256,39 +292,17 @@ export default function Home() {
                     <ChevronDown className="h-4 w-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => setSortBy("24hr Volume")}>
-                      24hr Volume
+                    <DropdownMenuItem onClick={() => setSortBy("Volume")} className="flex items-center justify-between">
+                      Volume
+                      {sortBy === "Volume" && <Check className="h-4 w-4" />}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy("Liquidity")}>
-                      Liquidity
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy("Activity")}>
-                      Activity
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy("Newest")}>
+                    <DropdownMenuItem onClick={() => setSortBy("Newest")} className="flex items-center justify-between">
                       Newest
+                      {sortBy === "Newest" && <Check className="h-4 w-4" />}
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* Frequency Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
-                    Frequency: <span className="font-medium">{frequency}</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => setFrequency("All")}>
-                      All
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setFrequency("Daily")}>
-                      Daily
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setFrequency("Weekly")}>
-                      Weekly
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setFrequency("Monthly")}>
-                      Monthly
+                    <DropdownMenuItem onClick={() => setSortBy("Ending Soon")} className="flex items-center justify-between">
+                      Ending Soon
+                      {sortBy === "Ending Soon" && <Check className="h-4 w-4" />}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
