@@ -93,7 +93,7 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
   const handleBetClick = (outcome: { name: string; probability: number }, submarketId?: string) => {
     // For submarkets, we need to use the groupItemTitle or cleaned question as the name
     const outcomeName = outcome.name.includes('?') 
-      ? outcome.name.replace(/Will the |win the 2025 NBA Finals\?/g, '')
+                              ? outcome.name
       : outcome.name;
     const outcomeId = `${market.id}-${outcomeName}`;
     
@@ -128,7 +128,7 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
     // Collect all current odds
     if (market.topSubmarkets && market.topSubmarkets.length > 0) {
       market.topSubmarkets.forEach((submarket) => {
-        const outcomeName = submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '');
+        const outcomeName = submarket.groupItemTitle || submarket.question;
         const outcomeId = `${market.id}-${outcomeName}`;
         currentOdds[outcomeId] = toAmericanOdds(submarket.probability);
       });
@@ -178,7 +178,7 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
               <div className="space-y-2">
                 <div className={`space-y-2 transition-all duration-300 ease-in-out ${isExpanded ? '' : 'relative'}`}>
                   {displayedMarkets!.map((submarket, index) => {
-                    const outcomeName = submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '');
+                    const outcomeName = submarket.groupItemTitle || submarket.question;
                     const outcomeId = `${market.id}-${outcomeName}`;
                     const isYesSelected = isBetInSlip(outcomeId);
                     const isNoSelected = isBetInSlip(outcomeId);

@@ -166,7 +166,7 @@ function EventDetails() {
       setTopMarketPriceHistories(
         topMarkets.map(market => ({
           id: market.market.id,
-          name: market.market.question?.replace(/Will the |win the 2025 NBA Finals\?/g, '') || `Market ${markets.indexOf(market) + 1}`,
+          name: market.market.groupItemTitle || market.market.question || `Market ${markets.indexOf(market) + 1}`,
           data: []
         }))
       );
@@ -177,7 +177,7 @@ function EventDetails() {
         if (marketObj.conditionId) {
           return fetchPriceHistory(
             marketObj.conditionId, 
-            marketObj.question?.replace(/Will the |win the 2025 NBA Finals\?/g, '') || `Market ${index + 1}`,
+            marketObj.groupItemTitle || marketObj.question || `Market ${index + 1}`,
             index
           );
         }

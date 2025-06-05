@@ -93,7 +93,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
   const handleBetClick = (outcome: { name: string; probability: number }, submarketId?: string) => {
     // For submarkets, we need to use the groupItemTitle or cleaned question as the name
     const outcomeName = outcome.name.includes('?') 
-      ? outcome.name.replace(/Will the |win the 2025 NBA Finals\?/g, '')
+                              ? outcome.name
       : outcome.name;
     const outcomeId = `${market.id}-${outcomeName}`;
     
@@ -120,7 +120,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
     // Collect all current odds
     if (market.topSubmarkets && market.topSubmarkets.length > 0) {
       market.topSubmarkets.forEach((submarket) => {
-        const outcomeName = submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '');
+        const outcomeName = submarket.groupItemTitle || submarket.question;
         const outcomeId = `${market.id}-${outcomeName}`;
         currentOdds[outcomeId] = toAmericanOdds(submarket.probability);
       });
@@ -192,7 +192,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
               <div className="space-y-1">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Top Markets:</div>
                 {market.topSubmarkets!.map((submarket, index) => {
-                  const outcomeName = submarket.groupItemTitle || submarket.question.replace(/Will the |win the 2025 NBA Finals\?/g, '');
+                  const outcomeName = submarket.groupItemTitle || submarket.question;
                   const outcomeId = `${market.id}-${outcomeName}`;
                   const isSelected = isBetInSlip(outcomeId);
                   const isFlashing = flashingOdds[outcomeId];
