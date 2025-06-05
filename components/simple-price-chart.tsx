@@ -74,7 +74,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 };
 
 // Colors for the additional lines
-const LINE_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#ca8a04', '#9333ea', '#f97316'];
+const LINE_COLORS = ['#2563eb', '#dc2626', '#0BC700', '#ca8a04', '#9333ea', '#f97316'];
 const LINE_NAMES = ['Yes', 'No', 'Option 1', 'Option 2', 'Option 3', 'Option 4'];
 
 // SimplePriceChart component that displays either 2 lines (Yes/No) or up to 4 lines for submarkets

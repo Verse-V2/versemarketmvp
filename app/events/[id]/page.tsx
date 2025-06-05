@@ -503,7 +503,7 @@ function EventDetails() {
                           className="w-3 h-3 mr-1 rounded-full" 
                           style={{ 
                             backgroundColor: [
-                              "#10b981", // green for main market
+                              "#0BC700", // green for main market
                               "#3b82f6", // blue
                               "#f59e0b", // amber
                               "#ef4444"  // red
@@ -580,10 +580,10 @@ function EventDetails() {
                         type="monotone" 
                         dataKey="market0" 
                         name="market0"
-                        stroke="#10b981" 
+                        stroke="#0BC700" 
                         strokeWidth={2.5}
                         dot={false}
-                        activeDot={{ r: 6, fill: "#10b981", stroke: "#064e3b" }}
+                        activeDot={{ r: 6, fill: "#0BC700", stroke: "#064e3b" }}
                         isAnimationActive={true}
                       />
                       
