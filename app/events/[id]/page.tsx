@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Event } from '@/lib/polymarket-service';
 import { EventMarketCard } from '@/components/ui/event-market-card';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+
 import Link from 'next/link';
 import { Header } from '@/components/ui/header';
 import { Market } from '@/lib/polymarket-api';
@@ -93,7 +93,7 @@ function EventDetails() {
   }, [user, router]);
 
   // Function to fetch price history for a market
-  const fetchPriceHistory = async (conditionId: string, marketName: string, marketIndex: number) => {
+  const fetchPriceHistory = useCallback(async (conditionId: string, marketName: string, marketIndex: number) => {
     try {
       // First, get market data to extract token ID
       const marketResponse = await fetch(`https://clob.polymarket.com/markets/${conditionId}`);
@@ -147,10 +147,10 @@ function EventDetails() {
         setIsRateLimited(true);
       }
     }
-  };
+  }, [selectedTimeFrame]);
 
   // Function to fetch price histories for top markets
-  const fetchTopMarketsPriceHistories = async (markets: Array<{market: FirebaseMarket; probability: number}>) => {
+  const fetchTopMarketsPriceHistories = useCallback(async (markets: Array<{market: FirebaseMarket; probability: number}>) => {
     setLoadingPriceHistory(true);
     setIsRateLimited(false); // Reset rate limited state on new fetch attempt
     
@@ -191,7 +191,7 @@ function EventDetails() {
     } finally {
       setLoadingPriceHistory(false);
     }
-  };
+  }, [fetchPriceHistory]);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -350,7 +350,7 @@ function EventDetails() {
     };
 
     fetchEvent();
-  }, [params.id]);
+  }, [params.id, fetchTopMarketsPriceHistories]);
 
   // Effect to refetch price history when time frame changes
   useEffect(() => {
@@ -381,7 +381,7 @@ function EventDetails() {
         fetchTopMarketsPriceHistories(sortedMarkets);
       }
     }
-  }, [selectedTimeFrame]);
+  }, [selectedTimeFrame, event, fetchTopMarketsPriceHistories]);
 
   // Function to fetch related events based on tags
   const fetchRelatedEvents = async (tags: Array<{ id?: string; label?: string; slug?: string }>, currentEventId: string) => {
