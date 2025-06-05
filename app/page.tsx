@@ -80,7 +80,16 @@ export default function Home() {
     setLoadingMore(true);
     const tagFilter = activeTag !== 'All' && activeTag !== 'Trending' ? activeTag : undefined;
 
+    let loadMoreTimer: NodeJS.Timeout | null = null;
+    const LOAD_MORE_TIMEOUT = 3000; // 3 second timeout for load more
+
     const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 50, lastVisible, (newMarkets, lastDoc) => {
+      // Clear the timeout since we got results
+      if (loadMoreTimer) {
+        clearTimeout(loadMoreTimer);
+        loadMoreTimer = null;
+      }
+
       // Append only markets that are not already in the list to avoid duplicate keys
       setMarkets(prev => {
         const existingIds = new Set(prev.map(m => m.id));
@@ -92,6 +101,15 @@ export default function Home() {
       setHasMore(newMarkets.length > 0); // If we got any markets, there might be more
       unsubscribe(); // Unsubscribe immediately since we don't need real-time updates for older content
     });
+
+    // Set a timeout to handle cases where no new markets are available
+    loadMoreTimer = setTimeout(() => {
+      setLoadingMore(false);
+      setHasMore(false); // No more markets available
+      unsubscribe();
+      loadMoreTimer = null;
+    }, LOAD_MORE_TIMEOUT);
+
   }, [lastVisible, hasMore, loadingMore, activeTag]);
 
   useEffect(() => {
@@ -106,24 +124,69 @@ export default function Home() {
     // Use tag filter if not "All" or "Trending" (both show all markets)
     const tagFilter = activeTag !== 'All' && activeTag !== 'Trending' ? activeTag : undefined;
     
+    let batchTimer: NodeJS.Timeout | null = null;
+    let hasReceivedInitialBatch = false;
+    const MINIMUM_BATCH_SIZE = 10; // Minimum events before showing results
+    const BATCH_TIMEOUT = 1000; // Maximum wait time for initial batch (1 second)
+    
     // Set up real-time listener for market updates
     const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 50, null, (updatedMarkets, lastDoc) => {
-      setMarkets(updatedMarkets);
-      setLastVisible(lastDoc);
-      setHasMore(updatedMarkets.length > 0); // If we got any markets, there might be more
-      
-      // Clear any existing debounce timer
-      if (loadingDebounceTimer) {
-        clearTimeout(loadingDebounceTimer);
+      // For the initial load, only update UI if we have a reasonable batch size or after timeout
+      if (!hasReceivedInitialBatch) {
+        if (updatedMarkets.length >= MINIMUM_BATCH_SIZE || updatedMarkets.length === 0) {
+          // We have enough events or no events, update immediately
+          setMarkets(updatedMarkets);
+          setLastVisible(lastDoc);
+          setHasMore(updatedMarkets.length > 0);
+          hasReceivedInitialBatch = true;
+          
+          // Clear any existing timers
+          if (loadingDebounceTimer) {
+            clearTimeout(loadingDebounceTimer);
+          }
+          if (batchTimer) {
+            clearTimeout(batchTimer);
+            batchTimer = null;
+          }
+          
+          // End loading state after a short delay to ensure smooth transition
+          const newTimer = setTimeout(() => {
+            setLoading(false);
+            setIsTransitioning(false);
+          }, 200);
+          
+          setLoadingDebounceTimer(newTimer);
+        } else {
+          // We don't have enough events yet, set a timeout to force update
+          if (!batchTimer) {
+            batchTimer = setTimeout(() => {
+              setMarkets(updatedMarkets);
+              setLastVisible(lastDoc);
+              setHasMore(updatedMarkets.length > 0);
+              hasReceivedInitialBatch = true;
+              
+              // Clear any existing debounce timer
+              if (loadingDebounceTimer) {
+                clearTimeout(loadingDebounceTimer);
+              }
+              
+              // End loading state
+              const newTimer = setTimeout(() => {
+                setLoading(false);
+                setIsTransitioning(false);
+              }, 200);
+              
+              setLoadingDebounceTimer(newTimer);
+              batchTimer = null;
+            }, BATCH_TIMEOUT);
+          }
+        }
+      } else {
+        // After initial batch, update immediately for real-time updates
+        setMarkets(updatedMarkets);
+        setLastVisible(lastDoc);
+        setHasMore(updatedMarkets.length > 0);
       }
-      
-      // Set a new timer to end loading state after data has stabilized
-      const newTimer = setTimeout(() => {
-        setLoading(false);
-        setIsTransitioning(false);
-      }, 300); // Wait 300ms after last update to ensure data has stabilized
-      
-      setLoadingDebounceTimer(newTimer);
     });
 
     // Cleanup listener when component unmounts or filter changes
@@ -131,6 +194,9 @@ export default function Home() {
       unsubscribe();
       if (loadingDebounceTimer) {
         clearTimeout(loadingDebounceTimer);
+      }
+      if (batchTimer) {
+        clearTimeout(batchTimer);
       }
     };
   }, [activeTag, user]);
