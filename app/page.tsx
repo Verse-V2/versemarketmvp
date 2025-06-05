@@ -36,6 +36,8 @@ export default function Home() {
   const [sortBy, setSortBy] = useState("24hr Volume");
   const [frequency, setFrequency] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [loadingDebounceTimer, setLoadingDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Redirect to auth page if not logged in
   useEffect(() => {
@@ -78,6 +80,7 @@ export default function Home() {
     if (!user) return;
 
     setLoading(true);
+    setIsTransitioning(true);
     setMarkets([]);
     setLastVisible(null);
     setHasMore(true);
@@ -89,13 +92,28 @@ export default function Home() {
     const unsubscribe = firebaseService.onEventsUpdate(tagFilter, 50, null, (updatedMarkets, lastDoc) => {
       setMarkets(updatedMarkets);
       setLastVisible(lastDoc);
-      setLoading(false);
       setHasMore(updatedMarkets.length > 0); // If we got any markets, there might be more
+      
+      // Clear any existing debounce timer
+      if (loadingDebounceTimer) {
+        clearTimeout(loadingDebounceTimer);
+      }
+      
+      // Set a new timer to end loading state after data has stabilized
+      const newTimer = setTimeout(() => {
+        setLoading(false);
+        setIsTransitioning(false);
+      }, 300); // Wait 300ms after last update to ensure data has stabilized
+      
+      setLoadingDebounceTimer(newTimer);
     });
 
     // Cleanup listener when component unmounts or filter changes
     return () => {
       unsubscribe();
+      if (loadingDebounceTimer) {
+        clearTimeout(loadingDebounceTimer);
+      }
     };
   }, [activeTag, user]);
 
@@ -275,13 +293,50 @@ export default function Home() {
           <div className="bg-black rounded-lg overflow-hidden">
             <LeagueSyncContent embedded={true} />
           </div>
-        ) : loading ? (
+        ) : loading || isTransitioning || (markets.length === 0 && !searchQuery) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="h-[300px] bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg"
-              />
+              <div key={i} className="h-full">
+                <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm animate-pulse">
+                  {/* Header with image and title */}
+                  <div className="p-6 pb-0">
+                    <div className="flex gap-4 items-start">
+                      {/* Image skeleton */}
+                      <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-md shrink-0"></div>
+                      {/* Title and date skeleton */}
+                      <div className="flex-1 min-w-0">
+                        <div className="h-5 bg-gray-200 dark:bg-gray-600 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-2/3"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mt-2"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Content with betting options */}
+                  <div className="p-6 py-1 flex-grow">
+                    <div className="space-y-2">
+                      {/* Betting option 1 */}
+                      <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/3"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-16"></div>
+                      </div>
+                      {/* Betting option 2 */}
+                      <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/4"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-16"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Footer */}
+                  <div className="p-6 pt-0">
+                    <div className="flex justify-between items-center">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-20"></div>
+                      <div className="h-9 bg-gray-200 dark:bg-gray-600 rounded w-24"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         ) : filteredMarkets.length > 0 ? (
