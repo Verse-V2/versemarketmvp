@@ -142,7 +142,7 @@ export default function Home() {
       <Header />
       
       <main className="container mx-auto px-4 pt-4 pb-6">
-        <div className="flex overflow-x-auto pb-1 -mx-4 px-4 mb-4 no-scrollbar items-center">
+        <div className={`flex overflow-x-auto pb-1 -mx-4 px-4 ${activeTag === 'Fantasy Football' ? 'mb-2' : 'mb-4'} no-scrollbar items-center`}>
           {/* Search Icon */}
           {!searchMode && (
             <button
@@ -189,23 +189,25 @@ export default function Home() {
           </div>
         </div>
 
-        {/* LeagueSync Promotional Header */}
-        <Link href="/leagueSyncHome" className="block mb-6 group">
-          <div className="bg-[#0BC700] text-white p-3 rounded-lg flex items-center justify-between transition-all duration-300 ease-in-out hover:opacity-90 shadow-sm hover:shadow transform hover:-translate-y-0.5 relative overflow-hidden">
-            <div className="flex items-center space-x-2">
-              <div className="bg-white/20 rounded-full p-1.5">
-                <Trophy className="h-5 w-5 text-white" />
+        {/* LeagueSync Promotional Header - Hidden when Fantasy Football tab is active */}
+        {activeTag !== 'Fantasy Football' && (
+          <Link href="/leagueSyncHome" className="block mb-6 group">
+            <div className="bg-[#0BC700] text-white p-3 rounded-lg flex items-center justify-between transition-all duration-300 ease-in-out hover:opacity-90 shadow-sm hover:shadow transform hover:-translate-y-0.5 relative overflow-hidden">
+              <div className="flex items-center space-x-2">
+                <div className="bg-white/20 rounded-full p-1.5">
+                  <Trophy className="h-5 w-5 text-white" />
+                </div>
+                <span className="font-semibold text-base">Play League Sync</span>
               </div>
-              <span className="font-semibold text-base">Play League Sync</span>
+              <ChevronRight className="h-5 w-5 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
             </div>
-            <ChevronRight className="h-5 w-5 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
-          </div>
-        </Link>
+          </Link>
+        )}
 
         {/* Show League Sync Content when Fantasy Football is selected */}
         {activeTag === 'Fantasy Football' ? (
           <div className="bg-black rounded-lg overflow-hidden">
-            <LeagueSyncContent />
+            <LeagueSyncContent embedded={true} />
           </div>
         ) : loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

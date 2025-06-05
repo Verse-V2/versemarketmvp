@@ -83,7 +83,7 @@ interface FantasyMatchup {
   total: number;
 }
 
-export function LeagueSyncContent() {
+export function LeagueSyncContent({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const user = useAuth();
   const { currency } = useCurrency();
@@ -228,7 +228,7 @@ export function LeagueSyncContent() {
     <div className="text-white">
       {/*──────────── Header for selected league ────────────*/}
       {selectedLeague && (
-        <div className="px-4 py-4 sm:py-6 mb-4">
+        <div className={`px-4 ${embedded ? 'py-2 sm:py-3' : 'py-4 sm:py-6'} mb-4`}>
           <div className="bg-zinc-900 rounded-lg p-3 sm:p-5 shadow-lg flex items-center gap-2 sm:gap-4">
             <div className="relative size-12 sm:size-16 bg-black rounded-full p-1 sm:p-2 border-2 border-green-500 overflow-hidden flex items-center justify-center">
               <Image
