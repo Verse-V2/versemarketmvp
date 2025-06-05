@@ -16,8 +16,17 @@ export function EventHeader({ market }: EventHeaderProps) {
     : "No end date";
 
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-0">
+    <Card className="mb-4 relative overflow-hidden">
+      {/* Large transparent background logo */}
+      <Image 
+        src="/VerseAppIconTrans.png" 
+        alt="Verse Logo BG" 
+        width={190} 
+        height={190} 
+        priority 
+        className="object-cover opacity-100 drop-shadow-2xl pointer-events-none select-none absolute right-0 top-1/2 -translate-y-1/2 z-10" 
+      />
+      <CardHeader className="pb-0 relative z-20">
         <div className="flex gap-4 items-start">
           {market.imageUrl && (
             <div className="relative w-16 h-16 shrink-0 overflow-hidden rounded-md">
