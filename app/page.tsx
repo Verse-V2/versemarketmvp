@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
 import { firebaseService } from "@/lib/firebase-service";
 import { getPredictionsFilters } from "@/lib/predictions-config";
-import { Trophy, ChevronRight, Search, X, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Trophy, Search, X, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { LeagueSyncContent } from "@/components/ui/league-sync-content";

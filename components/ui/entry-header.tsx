@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { FantasyMatchupEntry } from "@/lib/hooks/use-fantasy-matchup-entries";
+import { FantasyMatchupEntry, FantasyMatchupPick } from "@/lib/hooks/use-fantasy-matchup-entries";
 
 function formatOdds(odds: number): string {
   return odds > 0 ? `+${odds}` : odds.toString();
@@ -41,7 +41,7 @@ function getStatusBadge(status: string) {
 }
 
 // Helper function to get connected parlay status badges
-function getParlayStatusInfo(entry: FantasyMatchupEntry, specificPick: any, pickId: string | undefined) {
+function getParlayStatusInfo(entry: FantasyMatchupEntry, specificPick: FantasyMatchupPick | null, pickId: string | undefined) {
   // Only show parlay context if we're viewing a specific pick from a multi-pick entry
   if (!specificPick || !pickId || entry.picks.length <= 1) {
     return null;
@@ -50,9 +50,8 @@ function getParlayStatusInfo(entry: FantasyMatchupEntry, specificPick: any, pick
   const pickStatus = specificPick.status;
   const entryStatus = entry.status;
   const totalPicks = entry.picks.length;
-  const wonPicks = entry.picks.filter((p: any) => p.status === 'won').length;
-  const lostPicks = entry.picks.filter((p: any) => p.status === 'lost').length;
-  const openPicks = entry.picks.filter((p: any) => p.status === 'submitted').length;
+  const wonPicks = entry.picks.filter((p: FantasyMatchupPick) => p.status === 'won').length;
+  const openPicks = entry.picks.filter((p: FantasyMatchupPick) => p.status === 'submitted').length;
 
   // Create connected badges
   let pickBadge = { text: '', className: '' };
@@ -147,7 +146,7 @@ export function EntryHeader({ entry, pickId }: EntryHeaderProps) {
   const oddsColorClass = entry.isCash ? "text-[#0BC700]" : "text-[#E9ED05]";
 
   // Get parlay status info if applicable
-  const parlayStatusInfo = getParlayStatusInfo(entry, specificPick, pickId);
+  const parlayStatusInfo = getParlayStatusInfo(entry, specificPick || null, pickId);
 
   return (
     <div className="bg-[#131415] text-white rounded-lg p-3">
