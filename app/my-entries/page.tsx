@@ -99,7 +99,7 @@ export default function EntriesPage() {
         <div className="flex w-full border-b border-[#2A2A2D] mb-4">
           <button 
             onClick={() => setActiveTab('all')}
-            className={`flex-1 px-6 py-2 text-sm font-medium ${
+            className={`flex-1 px-2 py-2 text-xs font-medium ${
               activeTab === 'all' 
                 ? 'text-white border-b-2 border-white' 
                 : 'text-gray-400 hover:text-white'
@@ -109,7 +109,7 @@ export default function EntriesPage() {
           </button>
           <button 
             onClick={() => setActiveTab('open')}
-            className={`flex-1 px-6 py-2 text-sm font-medium ${
+            className={`flex-1 px-2 py-2 text-xs font-medium ${
               activeTab === 'open' 
                 ? 'text-white border-b-2 border-white' 
                 : 'text-gray-400 hover:text-white'
@@ -119,7 +119,7 @@ export default function EntriesPage() {
           </button>
           <button 
             onClick={() => setActiveTab('settled')}
-            className={`flex-1 px-6 py-2 text-sm font-medium ${
+            className={`flex-1 px-2 py-2 text-xs font-medium ${
               activeTab === 'settled' 
                 ? 'text-white border-b-2 border-white' 
                 : 'text-gray-400 hover:text-white'
@@ -129,7 +129,7 @@ export default function EntriesPage() {
           </button>
           <button 
             onClick={() => setActiveTab('won')}
-            className={`flex-1 px-6 py-2 text-sm font-medium ${
+            className={`flex-1 px-2 py-2 text-xs font-medium ${
               activeTab === 'won' 
                 ? 'text-white border-b-2 border-white' 
                 : 'text-gray-400 hover:text-white'
@@ -139,7 +139,7 @@ export default function EntriesPage() {
           </button>
           <button 
             onClick={() => setActiveTab('lost')}
-            className={`flex-1 px-6 py-2 text-sm font-medium ${
+            className={`flex-1 px-2 py-2 text-xs font-medium ${
               activeTab === 'lost' 
                 ? 'text-white border-b-2 border-white' 
                 : 'text-gray-400 hover:text-white'

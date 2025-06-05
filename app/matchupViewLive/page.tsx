@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Header } from "@/components/ui/header";
+import { EntryHeader } from "@/components/ui/entry-header";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { firebaseService } from "@/lib/firebase-service";
@@ -103,6 +104,7 @@ export default function MatchupView() {
   const [teamA, setTeamA] = useState<TeamData | null>(null);
   const [teamB, setTeamB] = useState<TeamData | null>(null);
   const [playerMatchups, setPlayerMatchups] = useState<PlayerMatchup[]>([]);
+  const [entry, setEntry] = useState<FantasyMatchupEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -194,6 +196,7 @@ export default function MatchupView() {
           const entryDoc = await getDoc(doc(db, 'fantasyMatchupEntries', entryId));
           if (entryDoc.exists()) {
             const entryData = entryDoc.data() as FantasyMatchupEntry;
+            setEntry(entryData); // Store the entry data for the header
             const pick = entryData.picks.find((p: FantasyMatchupPick) => p.id === pickId);
             if (pick && pick.Teams && pick.Teams.length === 2) {
               entryPickTeams = pick.Teams;
@@ -550,6 +553,13 @@ export default function MatchupView() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
+      
+      {/* Entry Header (when coming from my-entries) */}
+      {entry && (
+        <div className="mx-2 mt-4 mb-4">
+          <EntryHeader entry={entry} pickId={pickId || undefined} />
+        </div>
+      )}
       
       {/* Teams Header with Score */}
       <div className="bg-zinc-900 rounded-lg mx-2 mt-4 overflow-hidden">
