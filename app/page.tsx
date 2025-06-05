@@ -38,6 +38,7 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [loadingDebounceTimer, setLoadingDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [showLeagueSyncBanner, setShowLeagueSyncBanner] = useState(false);
 
   // Redirect to auth page if not logged in
   useEffect(() => {
@@ -53,6 +54,23 @@ export default function Home() {
       setPredictionFilters(filters);
     };
     loadCategories();
+  }, []);
+
+  // Check if LeagueSync banner should be shown
+  useEffect(() => {
+    // Ensure we're on the client side
+    if (typeof window === 'undefined') return;
+    
+    const sessionId = sessionStorage.getItem('sessionId') || Date.now().toString();
+    const dismissedSession = localStorage.getItem('leagueSyncBannerDismissed');
+    
+    // If no session ID exists, create one
+    if (!sessionStorage.getItem('sessionId')) {
+      sessionStorage.setItem('sessionId', sessionId);
+    }
+    
+    // Show banner if it wasn't dismissed in this session
+    setShowLeagueSyncBanner(dismissedSession !== sessionId);
   }, []);
 
   // Load more markets when user scrolls to bottom
@@ -161,6 +179,12 @@ export default function Home() {
 
   const handleTagClick = (tag: string) => {
     setActiveTag(tag);
+  };
+
+  const dismissLeagueSyncBanner = () => {
+    const sessionId = sessionStorage.getItem('sessionId') || Date.now().toString();
+    localStorage.setItem('leagueSyncBannerDismissed', sessionId);
+    setShowLeagueSyncBanner(false);
   };
 
   return (
@@ -273,19 +297,32 @@ export default function Home() {
           </div>
         )}
 
-        {/* LeagueSync Promotional Header - Hidden when Fantasy Football tab is active */}
-        {activeTag !== 'Fantasy Football' && (
-          <Link href="/leagueSyncHome" className="block mb-6 group">
-            <div className="bg-[#0BC700] text-white p-3 rounded-lg flex items-center justify-between transition-all duration-300 ease-in-out hover:opacity-90 shadow-sm hover:shadow transform hover:-translate-y-0.5 relative overflow-hidden">
-              <div className="flex items-center space-x-2">
-                <div className="bg-white/20 rounded-full p-1.5">
-                  <Trophy className="h-5 w-5 text-white" />
+        {/* LeagueSync Promotional Header - Hidden when Fantasy Football tab is active or dismissed */}
+        {activeTag !== 'Fantasy Football' && showLeagueSyncBanner && (
+          <div className="relative mb-6">
+            <Link href="/leagueSyncHome" className="block group">
+              <div className="bg-[#0BC700] text-white p-3 rounded-lg flex items-center transition-all duration-300 ease-in-out hover:opacity-90 shadow-sm hover:shadow transform hover:-translate-y-0.5 relative overflow-hidden">
+                <div className="flex items-center space-x-2">
+                  <div className="bg-white/20 rounded-full p-1.5">
+                    <Trophy className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="font-semibold text-base">Play League Sync</span>
                 </div>
-                <span className="font-semibold text-base">Play League Sync</span>
               </div>
-              <ChevronRight className="h-5 w-5 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </Link>
+            </Link>
+            {/* Dismiss button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dismissLeagueSyncBanner();
+              }}
+              className="absolute top-1 right-1 p-1 rounded-full hover:bg-white/20 transition-colors z-10"
+              aria-label="Dismiss League Sync banner"
+            >
+              <X className="h-4 w-4 text-white" />
+            </button>
+          </div>
         )}
 
         {/* Show League Sync Content when Fantasy Football is selected */}
