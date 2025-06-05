@@ -465,7 +465,7 @@ function EventDetails() {
                   </div>
                 </div>
               ) : topMarketPriceHistories.length > 0 ? (
-                <div className="h-[300px] w-full bg-gray-900 dark:bg-gray-950 rounded-lg p-4 relative">
+                <div className="h-[300px] w-full p-4 relative">
                   {/* Add legend at the top with better styling */}
                   <div className="mb-6 pt-2 flex flex-wrap gap-x-4 gap-y-2 justify-center text-xs">
                     {topMarketPriceHistories.map((market, idx) => (
@@ -505,7 +505,7 @@ function EventDetails() {
                           return timePoint;
                         })
                       }
-                      margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+                      margin={{ top: 10, right: 0, left: 0, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.5} />
                       <XAxis 
@@ -524,6 +524,7 @@ function EventDetails() {
                         tick={{ fill: '#9ca3af', fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
+                        width={40}
                       />
                       <Tooltip 
                         formatter={(value: number, name: string) => {
