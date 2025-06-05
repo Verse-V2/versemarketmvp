@@ -10,10 +10,16 @@ import { useAuth } from "@/lib/auth-context";
 import type { Market } from "@/lib/polymarket-api";
 import { firebaseService } from "@/lib/firebase-service";
 import { getPredictionsFilters } from "@/lib/predictions-config";
-import { Trophy, ChevronRight, Search, X } from "lucide-react";
+import { Trophy, ChevronRight, Search, X, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { DocumentData } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { LeagueSyncContent } from "@/components/ui/league-sync-content";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function Home() {
   const router = useRouter();
@@ -26,8 +32,10 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [predictionFilters, setPredictionFilters] = useState<string[]>([]);
   const observerTarget = useRef<HTMLDivElement>(null);
-  const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("24hr Volume");
+  const [frequency, setFrequency] = useState("All");
+  const [showFilters, setShowFilters] = useState(false);
 
   // Redirect to auth page if not logged in
   useEffect(() => {
@@ -118,7 +126,7 @@ export default function Home() {
   }, [user, loading, hasMore, loadingMore, lastVisible, loadMoreMarkets]);
 
   // Filtered markets for search
-  const filteredMarkets = searchMode && searchQuery
+  const filteredMarkets = searchQuery
     ? markets.filter((market) =>
         market.question?.toLowerCase().includes(searchQuery.toLowerCase())
       )
@@ -141,53 +149,111 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <Header />
       
+      {/* Choice chips container - Sticky below header */}
+      <div className="sticky top-14 z-40 bg-background border-b border-border/10">
+        <div className="container mx-auto px-4">
+          <div className="flex overflow-x-auto pb-1 -mx-4 px-4 py-2 no-scrollbar items-center">
+            <div className="flex flex-1 items-center space-x-0">
+              {predictionFilters.map((filter) => (
+                <Button
+                  key={filter}
+                  variant={activeTag === filter ? "default" : "outline"}
+                  onClick={() => handleTagClick(filter)}
+                  className="text-sm whitespace-nowrap flex-shrink-0 mr-2"
+                >
+                  {filter}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <main className="container mx-auto px-4 pt-4 pb-6">
-        <div className={`flex overflow-x-auto pb-1 -mx-4 px-4 ${activeTag === 'Fantasy Football' ? 'mb-2' : 'mb-4'} no-scrollbar items-center`}>
-          {/* Search Icon */}
-          {!searchMode && (
-            <button
-              className="mr-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-              onClick={() => setSearchMode(true)}
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5 text-gray-500" />
-            </button>
-          )}
-          {/* Search Bar */}
-          {searchMode && (
-            <div className="flex items-center w-full max-w-md md:max-w-2xl lg:max-w-3xl bg-transparent rounded-lg px-0 py-0 mr-0 md:mr-4">
+
+        {/* Search container - Hidden when Fantasy Football is selected */}
+        {activeTag !== 'Fantasy Football' && (
+          <div className="mb-4 space-y-3">
+            {/* Search Bar with Filter Icon */}
+            <div className="flex items-center w-full bg-transparent rounded-lg px-0 py-0 gap-2">
               <Search className="h-5 w-5 text-gray-400 mr-2" />
               <Input
                 type="text"
                 placeholder="Search events..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                autoFocus
                 className="flex-1"
               />
-              <button
-                className="ml-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                onClick={() => { setSearchMode(false); setSearchQuery(""); }}
-                aria-label="Close search"
-              >
-                <X className="h-5 w-5 text-gray-500" />
-              </button>
+              <div className="flex items-center gap-1">
+                {searchQuery && (
+                  <button
+                    className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                  >
+                    <X className="h-5 w-5 text-gray-500" />
+                  </button>
+                )}
+                <button
+                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                  onClick={() => setShowFilters(!showFilters)}
+                  aria-label="Toggle filters"
+                >
+                  <SlidersHorizontal className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
             </div>
-          )}
-          {/* Choice chips: hide on mobile if searchMode, show always on md+ */}
-          <div className={`flex flex-1 items-center ${searchMode ? 'hidden' : ''} md:flex md:items-center md:space-x-0`}>
-            {predictionFilters.map((filter) => (
-              <Button
-                key={filter}
-                variant={activeTag === filter ? "default" : "outline"}
-                onClick={() => handleTagClick(filter)}
-                className="text-sm whitespace-nowrap flex-shrink-0 mr-2"
-              >
-                {filter}
-              </Button>
-            ))}
+
+            {/* Sort and Filter Controls - Only shown when filter icon is clicked */}
+            {showFilters && (
+              <div className="flex items-center gap-3 text-sm">
+                {/* Sort By Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+                    Sort by: <span className="font-medium">{sortBy}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => setSortBy("24hr Volume")}>
+                      24hr Volume
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("Liquidity")}>
+                      Liquidity
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("Activity")}>
+                      Activity
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("Newest")}>
+                      Newest
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Frequency Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+                    Frequency: <span className="font-medium">{frequency}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => setFrequency("All")}>
+                      All
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFrequency("Daily")}>
+                      Daily
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFrequency("Weekly")}>
+                      Weekly
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFrequency("Monthly")}>
+                      Monthly
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* LeagueSync Promotional Header - Hidden when Fantasy Football tab is active */}
         {activeTag !== 'Fantasy Football' && (
@@ -234,10 +300,10 @@ export default function Home() {
             )}
             
             {/* Intersection observer target */}
-            {!searchMode && <div ref={observerTarget} className="h-4 mt-4" />}
+            {!searchQuery && <div ref={observerTarget} className="h-4 mt-4" />}
             
             {/* No more content indicator */}
-            {!hasMore && filteredMarkets.length > 0 && !searchMode && (
+            {!hasMore && filteredMarkets.length > 0 && !searchQuery && (
               <div className="text-center mt-6 text-gray-500 dark:text-gray-400">
                 No more markets to load
               </div>
@@ -246,7 +312,7 @@ export default function Home() {
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400">
-              No markets found{searchMode && searchQuery ? ' for your search.' : ' for the selected category.'}
+              No markets found{searchQuery ? ' for your search.' : ' for the selected category.'}
             </p>
           </div>
         )}
