@@ -553,7 +553,7 @@ function EventDetails() {
                         tick={{ fill: '#9ca3af', fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
-                        width={25}
+                        width={35}
                       />
                       <Tooltip 
                         formatter={(value: number, name: string) => {
