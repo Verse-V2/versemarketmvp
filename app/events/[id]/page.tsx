@@ -444,12 +444,7 @@ function EventDetails() {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="container mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-6">
-          <Link href="/" className="inline-flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">
-            <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Back to Markets
-          </Link>
-        </div>
+
 
         <div className="space-y-6">
           <EventHeader market={marketData} />
