@@ -19,8 +19,7 @@ export default function EntriesPage() {
     isLoading: isLoadingFantasy, 
     error: fantasyError,
     updateStatus,
-    updateMessage,
-    refreshEntries
+    updateMessage
   } = useFantasyMatchupEntries();
   const [activeTab, setActiveTab] = useState<EntryStatus>('all');
   const user = useAuth();
