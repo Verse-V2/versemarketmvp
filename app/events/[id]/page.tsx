@@ -629,7 +629,7 @@ function EventDetails() {
                     { label: '1d', value: '1d' },
                     { label: '1w', value: '1w' },
                     { label: '1m', value: '1m' },
-                    { label: 'All', value: 'all' }
+                    { label: 'All', value: 'max' }
                   ].map((timeFrame) => (
                     <button
                       key={timeFrame.value}
