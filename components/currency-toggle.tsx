@@ -13,7 +13,7 @@ export function CurrencyToggle() {
   return (
     <div className="flex items-center gap-2">
       <div 
-        className="relative flex items-center bg-black rounded-full cursor-pointer transition-all duration-200 w-16 h-10 border border-gray-600"
+        className="relative flex items-center bg-black rounded-full cursor-pointer transition-all duration-200 w-16 h-8 border border-border"
         onClick={toggleCurrency}
       >
         {/* Background track */}
