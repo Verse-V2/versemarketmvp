@@ -37,7 +37,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState("Volume");
   const [showFilters, setShowFilters] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [loadingDebounceTimer, setLoadingDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const loadingDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const [showLeagueSyncBanner, setShowLeagueSyncBanner] = useState(false);
 
   // Redirect to auth page if not logged in
@@ -141,8 +141,8 @@ export default function Home() {
           hasReceivedInitialBatch = true;
           
           // Clear any existing timers
-          if (loadingDebounceTimer) {
-            clearTimeout(loadingDebounceTimer);
+          if (loadingDebounceTimer.current) {
+            clearTimeout(loadingDebounceTimer.current);
           }
           if (batchTimer) {
             clearTimeout(batchTimer);
@@ -150,12 +150,10 @@ export default function Home() {
           }
           
           // End loading state after a short delay to ensure smooth transition
-          const newTimer = setTimeout(() => {
+          loadingDebounceTimer.current = setTimeout(() => {
             setLoading(false);
             setIsTransitioning(false);
           }, 200);
-          
-          setLoadingDebounceTimer(newTimer);
         } else {
           // We don't have enough events yet, set a timeout to force update
           if (!batchTimer) {
@@ -166,17 +164,15 @@ export default function Home() {
               hasReceivedInitialBatch = true;
               
               // Clear any existing debounce timer
-              if (loadingDebounceTimer) {
-                clearTimeout(loadingDebounceTimer);
+              if (loadingDebounceTimer.current) {
+                clearTimeout(loadingDebounceTimer.current);
               }
               
               // End loading state
-              const newTimer = setTimeout(() => {
+              loadingDebounceTimer.current = setTimeout(() => {
                 setLoading(false);
                 setIsTransitioning(false);
               }, 200);
-              
-              setLoadingDebounceTimer(newTimer);
               batchTimer = null;
             }, BATCH_TIMEOUT);
           }
@@ -192,8 +188,8 @@ export default function Home() {
     // Cleanup listener when component unmounts or filter changes
     return () => {
       unsubscribe();
-      if (loadingDebounceTimer) {
-        clearTimeout(loadingDebounceTimer);
+      if (loadingDebounceTimer.current) {
+        clearTimeout(loadingDebounceTimer.current);
       }
       if (batchTimer) {
         clearTimeout(batchTimer);
