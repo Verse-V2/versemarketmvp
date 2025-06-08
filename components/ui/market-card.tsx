@@ -175,8 +175,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
 
           <CardContent className="py-1 flex-grow">
             {hasTopSubmarkets ? (
-              <div className="space-y-1">
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Top Markets:</div>
+              <div className="space-y-1 py-3">
                 {market.topSubmarkets!.map((submarket, index) => {
                   const outcomeName = submarket.groupItemTitle || submarket.question;
                   const outcomeId = `${market.id}-${outcomeName}`;
@@ -219,7 +218,7 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                 })}
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 py-3">
                 {market.outcomes && market.outcomes.length > 0 ? (
                   <>
                     <div className="flex flex-col gap-1">
@@ -277,10 +276,10 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                 </div>
               )}
               {!hideViewDetails && (
-                <Button variant="outline" size="sm" className="pointer-events-auto flex items-center gap-1">
-                  <span>View Details</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                <div className="text-xs flex items-center text-gray-600 dark:text-gray-400">
+                  <span>Details</span>
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </div>
               )}
             </CardFooter>
           )}
