@@ -331,39 +331,57 @@ export default function Home() {
       {/* Choice chips container - Sticky below header */}
       <div className="sticky top-14 z-40 bg-background border-b border-border/10">
         <div className="container mx-auto px-4">
-          {/* Main category chips */}
-          <div className="flex overflow-x-auto pb-1 -mx-4 px-4 py-2 no-scrollbar items-center">
-            <div className="flex flex-1 items-center space-x-0">
-              {predictionFilters.map((filter) => (
-                <Button
-                  key={filter}
-                  variant={activeTag === filter ? "default" : "outline"}
-                  onClick={() => handleTagClick(filter)}
-                  className="text-sm whitespace-nowrap flex-shrink-0 mr-2"
-                >
-                  {filter}
-                </Button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Subcategory chips - Only shown when main category is selected and has subcategories */}
-          {subCategories.length > 0 && (
-            <div className="flex overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar items-center border-t border-border/5">
-              <div className="flex flex-1 items-center space-x-0 pt-2">
-                {subCategories.map((subCategory) => (
-                  <Button
-                    key={subCategory}
-                    variant={activeSubTag === subCategory ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => handleSubTagClick(subCategory)}
-                    className="text-xs whitespace-nowrap flex-shrink-0 mr-2 h-7"
-                  >
-                    {subCategory}
-                  </Button>
+          {/* Show skeleton while loading or predictionFilters are empty */}
+          {(loading || isTransitioning || predictionFilters.length === 0) ? (
+            <div className="flex overflow-x-auto pb-1 -mx-4 px-4 py-2 no-scrollbar items-center">
+              <div className="flex flex-1 items-center space-x-0">
+                {/* Skeleton chips */}
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-9 bg-gray-200 dark:bg-gray-600 rounded-md flex-shrink-0 mr-2 animate-pulse"
+                    style={{ width: `${60 + Math.random() * 40}px` }} // Random widths between 60-100px
+                  />
                 ))}
               </div>
             </div>
+          ) : (
+            <>
+              {/* Main category chips */}
+              <div className="flex overflow-x-auto pb-1 -mx-4 px-4 py-2 no-scrollbar items-center">
+                <div className="flex flex-1 items-center space-x-0">
+                  {predictionFilters.map((filter) => (
+                    <Button
+                      key={filter}
+                      variant={activeTag === filter ? "default" : "outline"}
+                      onClick={() => handleTagClick(filter)}
+                      className="text-sm whitespace-nowrap flex-shrink-0 mr-2"
+                    >
+                      {filter}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Subcategory chips - Only shown when main category is selected and has subcategories */}
+              {subCategories.length > 0 && (
+                <div className="flex overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar items-center border-t border-border/5">
+                  <div className="flex flex-1 items-center space-x-0 pt-2">
+                    {subCategories.map((subCategory) => (
+                      <Button
+                        key={subCategory}
+                        variant={activeSubTag === subCategory ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => handleSubTagClick(subCategory)}
+                        className="text-xs whitespace-nowrap flex-shrink-0 mr-2 h-7"
+                      >
+                        {subCategory}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
