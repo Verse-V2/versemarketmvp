@@ -149,10 +149,10 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
     <Link href={`/events/${market.id}`} className="block h-full">
       <Card className="h-full flex flex-col hover:shadow-md transition-shadow relative">
         <div className="pointer-events-none">
-          <CardHeader className="pb-0">
+          <CardHeader className="pb-0 px-3">
             <div className="flex gap-4 items-start">
               {market.imageUrl && (
-                <div className="relative w-16 h-16 shrink-0 overflow-hidden rounded-md">
+                <div className="relative w-[45px] h-[45px] shrink-0 overflow-hidden rounded-md">
                   <Image
                     src={market.imageUrl}
                     alt={market.question}
@@ -164,16 +164,16 @@ export function MarketCard({ market, hideViewDetails = false, hideComments = fal
                   />
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start gap-2 mb-1">
-                  <CardTitle className="text-lg line-clamp-2">{market.question}</CardTitle>
+              <div className="flex-1 min-w-0 mt-0">
+                <div className="flex justify-between items-start gap-2 mb-0">
+                  <CardTitle className="text-lg line-clamp-2 mt-0">{market.question}</CardTitle>
                 </div>
                 <CardDescription className="text-gray-500 dark:text-gray-400">{formattedEndDate}</CardDescription>
               </div>
             </div>
           </CardHeader>
 
-          <CardContent className="py-1 flex-grow">
+          <CardContent className="py-1 px-3 flex-grow">
             {hasTopSubmarkets ? (
               <div className="space-y-1 py-3">
                 {market.topSubmarkets!.map((submarket, index) => {
