@@ -109,10 +109,10 @@ export function RelatedEvents({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-0 px-3">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 py-1">
         {renderContent()}
       </CardContent>
     </Card>

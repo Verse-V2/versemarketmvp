@@ -471,10 +471,10 @@ function EventDetails() {
           <EventMarketCard market={marketData} hideViewDetails />
           {/* Rules Card */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-0 px-3">
               <CardTitle>Rules</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 py-1">
               <div className="space-y-3">
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   {marketData.description}

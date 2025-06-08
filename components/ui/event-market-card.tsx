@@ -159,7 +159,7 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
     <Link href={`/events/${market.id}`} className="block h-full">
       <Card className="h-full flex flex-col hover:shadow-md transition-shadow relative">
         <div className="pointer-events-none">
-          <CardContent className="py-1 flex-grow">
+          <CardContent className="py-1 px-3 flex-grow">
             {hasTopSubmarkets ? (
               <div className="space-y-2">
                 <div className={`space-y-2 transition-all duration-300 ease-in-out ${isExpanded ? '' : 'relative'}`}>
