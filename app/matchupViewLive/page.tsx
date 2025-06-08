@@ -19,13 +19,24 @@ const safeImage = (url?: string | null) =>
     : url;
 
 // Component for player image with icon fallback
-const PlayerImage = ({ src, alt, className }: { src?: string | null; alt: string; className?: string }) => {
+interface PlayerImageProps {
+  src?: string | null;
+  alt: string;
+  className?: string;
+}
+
+const PlayerImage = ({ src, alt, className }: PlayerImageProps) => {
   const [imageError, setImageError] = useState(false);
+  
+  // Reset error state when src changes
+  useEffect(() => {
+    setImageError(false);
+  }, [src]);
   
   if (!src || imageError) {
     return (
       <div className="absolute inset-0 bg-zinc-700 rounded-full flex items-center justify-center">
-        <User className="w-7 h-7 text-gray-300" />
+        <User className="w-7 h-7 text-gray-300" aria-label={`${alt} placeholder`} />
       </div>
     );
   }
@@ -35,7 +46,7 @@ const PlayerImage = ({ src, alt, className }: { src?: string | null; alt: string
       src={src}
       alt={alt}
       fill
-      className="object-cover rounded-full"
+      className={`object-cover rounded-full ${className || ''}`}
       onError={() => setImageError(true)}
     />
   );
