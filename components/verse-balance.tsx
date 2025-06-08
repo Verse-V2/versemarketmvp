@@ -9,9 +9,6 @@ export function VerseBalance() {
 
   return (
     <>
-      {/* Verse Balance Title */}
-      <h2 className="text-lg font-semibold mb-2">Verse Balance</h2>
-
       {/* Verse Balance Card */}
       <div className="bg-[#18181B] rounded-2xl p-5 mb-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
