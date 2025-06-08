@@ -457,7 +457,7 @@ function EventDetails() {
   return (
     <div className="min-h-screen bg-background">
       <Header title="Details" />
-      <div className="container mx-auto max-w-3xl px-4 py-8 mt-0">
+      <div className="container mx-auto max-w-3xl px-4 pt-4 pb-6">
         <div className="space-y-3">
           <EventHeader market={marketData} />
           {/* Price Chart */}
