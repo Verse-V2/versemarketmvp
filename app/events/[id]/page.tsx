@@ -5,16 +5,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { Event } from '@/lib/polymarket-service';
 import { EventMarketCard } from '@/components/ui/event-market-card';
 
-import Link from 'next/link';
 import { Header } from '@/components/ui/header';
 import { Market } from '@/lib/polymarket-api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import Image from 'next/image';
 import { firebaseService } from '@/lib/firebase-service';
 import { useAuth } from '@/lib/auth-context';
 import { EventHeader } from "@/components/ui/event-header";
 import { PriceHistoryChart } from '@/components/ui/price-history-chart';
-import { toAmericanOdds, formatDate, formatVolume } from '@/utils';
+import { RelatedEvents } from '@/components/ui/related-events';
 
 // Interface for polymarket token
 interface Token {
@@ -491,66 +489,10 @@ function EventDetails() {
           </Card>
 
           {/* Related Events */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Related Events</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingRelated ? (
-                <div className="space-y-4">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-24 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg" />
-                  ))}
-                </div>
-              ) : relatedEvents.length > 0 ? (
-                <div className="space-y-4">
-                  {relatedEvents.map((relEvent) => (
-                    <div key={relEvent.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                      <Link href={`/events/${relEvent.id}`} className="block">
-                        <div className="flex p-4 gap-4">
-                          {relEvent.image && (
-                            <div className="relative w-16 h-16 flex-shrink-0">
-                              <Image
-                                src={relEvent.image}
-                                alt={relEvent.title}
-                                fill
-                                className="object-cover rounded-lg"
-                              />
-                            </div>
-                          )}
-                          
-                          <div className="flex-1">
-                            <p className="font-semibold text-sm line-clamp-2">{relEvent.title}</p>
-                            <div className="flex justify-between items-center mt-1">
-                              {relEvent.probability !== undefined ? (
-                                <>
-                                  <div className="text-xs text-gray-500">{(relEvent.probability * 100).toFixed(1)}% Yes</div>
-                                  <div className="text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-2 py-0.5 rounded-full">
-                                    {toAmericanOdds(relEvent.probability)}
-                                  </div>
-                                </>
-                              ) : relEvent.endDate && relEvent.volume ? (
-                                <>
-                                  <div className="text-xs text-gray-500">{formatDate(relEvent.endDate)}</div>
-                                  <div className="text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-2 py-0.5 rounded-full">
-                                    {formatVolume(relEvent.volume)}
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="text-xs text-gray-500">Related market</div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">No related events found.</p>
-              )}
-            </CardContent>
-          </Card>
+          <RelatedEvents
+            events={relatedEvents}
+            loading={loadingRelated}
+          />
         </div>
       </div>
     </div>
