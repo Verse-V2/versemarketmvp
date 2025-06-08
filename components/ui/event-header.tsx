@@ -16,7 +16,7 @@ export function EventHeader({ market }: EventHeaderProps) {
     : "No end date";
 
   return (
-    <Card className="mb-4 relative overflow-hidden">
+    <Card className="relative overflow-hidden">
       {/* Large transparent background logo */}
       <Image 
         src="/VerseAppIconTrans.png" 
@@ -26,10 +26,10 @@ export function EventHeader({ market }: EventHeaderProps) {
         priority 
         className="object-cover opacity-100 drop-shadow-2xl pointer-events-none select-none absolute right-0 top-1/2 -translate-y-1/2 z-10" 
       />
-      <CardHeader className="pb-0 relative z-20">
+      <CardHeader className="pb-0 px-3 relative z-20">
         <div className="flex gap-4 items-start">
           {market.imageUrl && (
-            <div className="relative w-16 h-16 shrink-0 overflow-hidden rounded-md">
+            <div className="relative w-[45px] h-[45px] shrink-0 overflow-hidden rounded-md">
               <Image
                 src={market.imageUrl}
                 alt={market.question}
@@ -41,9 +41,9 @@ export function EventHeader({ market }: EventHeaderProps) {
               />
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-start gap-2 mb-1">
-              <CardTitle className="text-lg line-clamp-2">{market.question}</CardTitle>
+          <div className="flex-1 min-w-0 mt-0">
+            <div className="flex justify-between items-start gap-2 mb-0">
+              <CardTitle className="text-lg line-clamp-2 mt-0">{market.question}</CardTitle>
             </div>
             <CardDescription className="text-gray-500 dark:text-gray-400">{formattedEndDate}</CardDescription>
           </div>
