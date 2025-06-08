@@ -16,7 +16,7 @@ export function VerseBalance() {
             <Image src="/verse-coin.png" alt="Verse Coin" width={32} height={32} className="object-contain" />
             <div>
               <div className="text-xs text-white font-bold">Verse Coins</div>
-              <div className="text-xl font-bold text-[#E9ED05]">{isBalanceLoading ? "-" : coinBalance.toLocaleString()}</div>
+              <div className="text-xl font-bold text-[#E9ED05]">{isBalanceLoading ? "-" : coinBalance.toFixed(2)}</div>
             </div>
           </div>
           <div className="w-px h-8 bg-[#232323] mx-2" />

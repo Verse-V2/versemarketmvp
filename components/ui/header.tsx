@@ -10,8 +10,8 @@ export function Header() {
   const displayBalance = isLoading
     ? "..." 
     : currency === 'cash'
-    ? cashBalance.toFixed(2) 
-    : coinBalance.toLocaleString();
+    ? cashBalance.toFixed(2)
+    : coinBalance.toFixed(2);
     
   const currencyName = currency === 'cash' ? "Verse Cash" : "Verse Coins";
 
