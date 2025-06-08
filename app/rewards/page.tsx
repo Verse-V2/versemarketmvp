@@ -25,10 +25,9 @@ export default function RewardsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header title="Rewards" />
       <main className="container max-w-2xl mx-auto p-6 pb-24">
         <div className="space-y-1.5 mb-6">
-          <h1 className="text-lg font-semibold">Rewards</h1>
           <p className="text-sm text-muted-foreground">
             Complete daily challenges and claim rewards
           </p>

@@ -2,13 +2,18 @@ import { CurrencyToggle } from "@/components/currency-toggle";
 import Link from "next/link";
 import { useCurrency } from "@/lib/currency-context";
 import { useUserBalance } from "@/lib/user-balance-context";
+import React from "react";
 
-export function Header() {
+interface HeaderProps {
+  title?: string;
+}
+
+export function Header({ title }: HeaderProps) {
   const { currency } = useCurrency();
   const { coinBalance, cashBalance, isLoading } = useUserBalance();
 
   const displayBalance = isLoading
-    ? "..." 
+    ? "..."
     : currency === 'cash'
     ? cashBalance.toFixed(2)
     : coinBalance.toFixed(2);
@@ -20,7 +25,7 @@ export function Header() {
       <div className="container mx-auto px-4 py-0">
         <div className="flex h-14 items-center justify-between">
           <Link href="/" className="flex items-center">
-            <span className="font-bold">Verse</span>
+            <span className="font-bold">{title || "Verse"}</span>
           </Link>
           <div className="flex items-center justify-end space-x-4">
             <div className="flex flex-col items-end mr-2">

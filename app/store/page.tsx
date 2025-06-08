@@ -47,7 +47,7 @@ export default function StorePage() {
 
   return (
     <>
-      <Header />
+      <Header title="Wallet" />
       <main className="min-h-screen bg-background">
         <div className="container max-w-2xl mx-auto p-6 pb-24">
           <VerseBalance />

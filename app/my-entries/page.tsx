@@ -63,7 +63,7 @@ export default function EntriesPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <Header />
+      <Header title="My Entries" />
       <div className="container max-w-2xl mx-auto px-6 pt-2 pb-24">
         {/* Update Status Banner */}
         {updateStatus !== 'idle' && updateMessage && (

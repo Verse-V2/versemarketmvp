@@ -330,7 +330,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header title="Home" />
       
       {/* Choice chips container - Sticky below header */}
       <div className="sticky top-14 z-40 bg-background border-b border-border/10">
