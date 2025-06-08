@@ -9,6 +9,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { UserBalanceProvider } from "@/lib/user-balance-context";
 import { BetSlip } from "@/components/ui/bet-slip";
 import { BottomNav } from "@/components/bottom-nav";
+import { ImagePreloader } from "@/components/ui/image-preloader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
               <CurrencyProvider>
                 <EntriesProvider>
                   <BetSlipProvider>
+                    <ImagePreloader />
                     {children}
                     <BetSlip />
                     <BottomNav />

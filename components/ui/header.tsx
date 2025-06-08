@@ -10,7 +10,7 @@ interface HeaderProps {
   title?: string;
 }
 
-export function Header({ title }: HeaderProps) {
+export const Header = React.memo(function Header({ title }: HeaderProps) {
   const { currency } = useCurrency();
   const { coinBalance, cashBalance, isLoading } = useUserBalance();
 
@@ -47,4 +47,4 @@ export function Header({ title }: HeaderProps) {
       </div>
     </header>
   );
-} 
+}); 

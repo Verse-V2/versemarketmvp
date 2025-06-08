@@ -2,8 +2,9 @@
 
 import { useCurrency } from "@/lib/currency-context";
 import Image from "next/image";
+import React from "react";
 
-export function CurrencyToggle() {
+export const CurrencyToggle = React.memo(function CurrencyToggle() {
   const { currency, setCurrency } = useCurrency();
 
   const toggleCurrency = () => {
@@ -29,15 +30,30 @@ export function CurrencyToggle() {
           `}
         >
           <div className="relative w-8 h-8">
+            {/* Preload both images to prevent flashing */}
             <Image
-              src={currency === 'cash' ? "/cash-icon.png" : "/verse-coin.png"}
-              alt={currency === 'cash' ? "Verse Cash" : "Verse Coin"}
+              src="/cash-icon.png"
+              alt="Verse Cash"
               fill
-              className="object-contain"
+              className={`object-contain transition-opacity duration-200 ${
+                currency === 'cash' ? 'opacity-100' : 'opacity-0'
+              }`}
+              priority
+              sizes="32px"
+            />
+            <Image
+              src="/verse-coin.png"
+              alt="Verse Coin"
+              fill
+              className={`object-contain transition-opacity duration-200 ${
+                currency === 'coins' ? 'opacity-100' : 'opacity-0'
+              }`}
+              priority
+              sizes="32px"
             />
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}); 

@@ -12,6 +12,9 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+    minimumCacheTTL: 31536000, // Cache images for 1 year
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // Merge existing config options here if needed
 };
