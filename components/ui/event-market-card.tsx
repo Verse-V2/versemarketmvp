@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { useCurrency } from "@/lib/currency-context";
 import { firebaseService } from '@/lib/firebase-service';
 import { Config } from '@/lib/firebase-service';
+import { toAmericanOdds } from '@/utils';
 
 interface EventMarketCardProps {
   market: Market;
@@ -55,22 +56,7 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
     maximumFractionDigits: 0,
   })}`;
 
-  // Convert probability to American odds
-  const toAmericanOdds = (prob: number) => {
-    if (prob <= 0) return "N/A"; // Handle edge cases
-    
-    if (prob >= 1) return "-∞"; // Very close to certainty
-    
-    if (prob > 0.5) {
-      // Favorite: negative odds
-      const odds = Math.round(-100 / (prob - 1));
-      return `-${Math.abs(odds).toLocaleString()}`;
-    } else {
-      // Underdog: positive odds
-      const odds = Math.round(100 / prob - 100);
-      return `+${odds.toLocaleString()}`;
-    }
-  };
+
 
   // Check if odds exceed max limit
   const isOddsExceedingLimit = (prob: number): boolean => {

@@ -14,23 +14,7 @@ import { firebaseService } from '@/lib/firebase-service';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/lib/auth-context';
 import { EventHeader } from "@/components/ui/event-header";
-
-// Convert probability to American odds - same as in market-card.tsx
-const toAmericanOdds = (prob: number) => {
-  if (prob <= 0) return "N/A"; // Handle edge cases
-  
-  if (prob >= 1) return "-∞"; // Very close to certainty
-  
-  if (prob > 0.5) {
-    // Favorite: negative odds
-    const odds = Math.round(-100 / (prob - 1));
-    return `-${Math.abs(odds).toLocaleString()}`;
-  } else {
-    // Underdog: positive odds
-    const odds = Math.round(100 / prob - 100);
-    return `+${odds.toLocaleString()}`;
-  }
-};
+import { toAmericanOdds, formatDate, formatVolume } from '@/utils';
 
 // Interface for polymarket token
 interface Token {
@@ -471,25 +455,6 @@ function EventDetails() {
       </div>
     );
   }
-
-  // Format a date string as "MMM DD, YYYY"
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  // Format volume for display
-  const formatVolume = (volume: string) => {
-    const num = parseFloat(volume);
-    if (num >= 1_000_000_000) {
-      return `$${(num / 1_000_000_000).toFixed(1)}B`;
-    } else if (num >= 1_000_000) {
-      return `$${(num / 1_000_000).toFixed(1)}M`;
-    } else if (num >= 1_000) {
-      return `$${(num / 1_000).toFixed(1)}K`;
-    }
-    return `$${num.toFixed(0)}`;
-  };
 
   return (
     <div className="min-h-screen bg-background">

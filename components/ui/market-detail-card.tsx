@@ -2,29 +2,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Market } from "@/lib/polymarket-service";
+import { toAmericanOdds as coreToAmericanOdds } from '@/utils';
 
 interface MarketDetailCardProps {
   market: Market;
 }
 
 export function MarketDetailCard({ market }: MarketDetailCardProps) {
-  // Convert probability to American odds
+  // String-to-number wrapper for the centralized toAmericanOdds function
   const toAmericanOdds = (priceStr: string) => {
     try {
       const prob = Number(priceStr);
-      if (prob <= 0) return "N/A"; // Handle edge cases
-      
-      if (prob >= 1) return "-∞"; // Very close to certainty
-      
-      if (prob > 0.5) {
-        // Favorite: negative odds
-        const odds = Math.round(-100 / (prob - 1));
-        return `-${Math.abs(odds).toLocaleString()}`;
-      } else {
-        // Underdog: positive odds
-        const odds = Math.round(100 / prob - 100);
-        return `+${odds.toLocaleString()}`;
-      }
+      return coreToAmericanOdds(prob);
     } catch {
       return 'N/A';
     }
