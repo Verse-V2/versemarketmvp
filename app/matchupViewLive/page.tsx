@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { firebaseService } from "@/lib/firebase-service";
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from "@/lib/firebase";
+import { User } from 'lucide-react';
 import type { FantasyMatchupEntry, FantasyMatchupPick, FantasyMatchupTeam } from '@/lib/hooks/use-fantasy-matchup-entries';
 
 // Helper function to ensure image URLs are safe
@@ -16,6 +17,29 @@ const safeImage = (url?: string | null) =>
   (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/'))
     ? '/league-logos/generic-league-logo.svg'
     : url;
+
+// Component for player image with icon fallback
+const PlayerImage = ({ src, alt, className }: { src?: string | null; alt: string; className?: string }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  if (!src || imageError) {
+    return (
+      <div className="absolute inset-0 bg-zinc-700 rounded-full flex items-center justify-center">
+        <User className="w-7 h-7 text-gray-300" />
+      </div>
+    );
+  }
+  
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      className="object-cover rounded-full"
+      onError={() => setImageError(true)}
+    />
+  );
+};
 
 interface Player {
   id: string;
@@ -482,7 +506,7 @@ export default function MatchupView() {
             status: matchup.playerAGameStatus,
             lastGameStats: matchup.playerAGameResult || "Game Details",
             gameStats: matchup.playerAGameStatus !== 'Scheduled' ? (matchup.playerAGameStats || "Player Stats") : "",
-            imageUrl: matchup.playerA?.photoUrl || "/player-images/default.png"
+            imageUrl: matchup.playerA?.photoUrl
           },
           playerB: matchup.playerB ? {
             id: matchup.playerB?.id || "",
@@ -496,7 +520,7 @@ export default function MatchupView() {
             status: matchup.playerBGameStatus,
             lastGameStats: matchup.playerBGameResult || "Game Details",
             gameStats: matchup.playerBGameStatus !== 'Scheduled' ? (matchup.playerBGameStats || "Player Stats") : "",
-            imageUrl: matchup.playerB?.photoUrl || "/player-images/default.png"
+            imageUrl: matchup.playerB?.photoUrl
           } : null
         })));
 
@@ -660,11 +684,9 @@ export default function MatchupView() {
               <div className="p-4 relative">
                 <div className="flex flex-col items-start w-20">
                   <div className="relative size-10 bg-zinc-800 rounded-full overflow-hidden">
-                    <Image
-                      src={matchup.playerA.imageUrl || "/player-images/default.png"}
+                    <PlayerImage
+                      src={matchup.playerA.imageUrl}
                       alt={matchup.playerA.name}
-                      fill
-                      className="object-cover"
                     />
                   </div>
                   <h3 className="font-bold text-sm mt-1 truncate w-full">{matchup.playerA.name}</h3>
@@ -693,11 +715,9 @@ export default function MatchupView() {
                 <div className="p-4 relative">
                   <div className="flex flex-col items-end w-20 ml-auto">
                     <div className="relative size-10 bg-zinc-800 rounded-full overflow-hidden">
-                      <Image
-                        src={matchup.playerB.imageUrl || "/player-images/default.png"}
+                      <PlayerImage
+                        src={matchup.playerB.imageUrl}
                         alt={matchup.playerB.name}
-                        fill
-                        className="object-cover"
                       />
                     </div>
                     <h3 className="font-bold text-sm mt-1 truncate w-full text-right">{matchup.playerB.name}</h3>
