@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { firebaseService } from "@/lib/firebase-service";
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from "@/lib/firebase";
+import { User } from 'lucide-react';
 
 // Helper function to ensure image URLs are safe
 const safeImage = (url?: string | null) =>
@@ -14,6 +15,40 @@ const safeImage = (url?: string | null) =>
   (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/'))
     ? '/league-logos/generic-league-logo.svg'
     : url;
+
+// Component for player image with icon fallback
+interface PlayerImageProps {
+  src?: string | null;
+  alt: string;
+  className?: string;
+}
+
+const PlayerImage = ({ src, alt, className }: PlayerImageProps) => {
+  const [imageError, setImageError] = useState(false);
+  
+  // Reset error state when src changes
+  useEffect(() => {
+    setImageError(false);
+  }, [src]);
+  
+  if (!src || imageError) {
+    return (
+      <div className="absolute inset-0 bg-zinc-700 rounded-full flex items-center justify-center">
+        <User className="w-7 h-7 text-gray-300" aria-label={`${alt} placeholder`} />
+      </div>
+    );
+  }
+  
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      className={`object-cover rounded-full ${className || ''}`}
+      onError={() => setImageError(true)}
+    />
+  );
+};
 
 interface Player {
   id: string;
@@ -516,30 +551,52 @@ export default function MatchupView() {
       <Header />
       
       {/* Teams Header with Score */}
-      <div className="bg-zinc-900 rounded-lg mx-2 mt-4 overflow-hidden">
-        <div className="flex justify-between items-center p-4">
-          {/* Team A */}
-          <div className="flex flex-col items-start">
-            <div className="relative size-16 bg-black rounded-full overflow-hidden flex items-center justify-center mb-2">
-              <Image
-                src={safeImage(teamA.logoUrl)}
-                alt={teamA.teamName}
-                width={56}
-                height={56}
-                className="object-cover rounded-full"
-              />
+      <div className="rounded-lg mx-2 mt-4 overflow-hidden" style={{ backgroundColor: '#131415' }}>
+        <div className="relative p-4">
+          <div className="flex justify-between items-center">
+            {/* Team A */}
+            <div className="flex flex-col items-start flex-1 max-w-[40%]">
+              <div className="relative size-16 bg-black rounded-full overflow-hidden flex items-center justify-center mb-2">
+                <Image
+                  src={safeImage(teamA.logoUrl)}
+                  alt={teamA.teamName}
+                  width={56}
+                  height={56}
+                  className="object-cover rounded-full"
+                />
+              </div>
+              <h2 className="text-sm font-bold truncate w-full">{teamA.teamName}</h2>
+              <p className="text-green-500 text-xl font-bold mt-1">
+                {teamA.points > 0 ? teamA.points.toFixed(1) : <span className="text-white">{teamA.projectedPoints.toFixed(1)}</span>}
+              </p>
+              <div className="text-xs text-gray-400">
+                {teamA.points > 0 ? 'Current' : 'Projected'}
+              </div>
             </div>
-            <h2 className="text-sm font-bold truncate max-w-28">{teamA.teamName}</h2>
-            <p className="text-green-500 text-xl font-bold mt-1">
-              {teamA.points > 0 ? teamA.points.toFixed(1) : <span className="text-white">{teamA.projectedPoints.toFixed(1)}</span>}
-            </p>
-            <div className="text-xs text-gray-400">
-              {teamA.points > 0 ? 'Current' : 'Projected'}
+
+            {/* Team B */}
+            <div className="flex flex-col items-end flex-1 max-w-[40%]">
+              <div className="relative size-16 bg-black rounded-full overflow-hidden flex items-center justify-center mb-2">
+                <Image
+                  src={safeImage(teamB.logoUrl)}
+                  alt={teamB.teamName}
+                  width={56}
+                  height={56}
+                  className="object-cover rounded-full"
+                />
+              </div>
+              <h2 className="text-sm font-bold truncate w-full text-right">{teamB.teamName}</h2>
+              <p className="text-yellow-500 text-xl font-bold mt-1">
+                {teamB.points > 0 ? teamB.points.toFixed(1) : <span className="text-white">{teamB.projectedPoints.toFixed(1)}</span>}
+              </p>
+              <div className="text-xs text-gray-400 text-right">
+                {teamB.points > 0 ? 'Current' : 'Projected'}
+              </div>
             </div>
           </div>
 
-          {/* Center Logo */}
-          <div className="relative size-10">
+          {/* Center Logo - Absolutely positioned to always be centered */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 size-10">
             <Image
               src="/Icon_Original@2x.png"
               alt="Verse"
@@ -547,26 +604,6 @@ export default function MatchupView() {
               height={40}
               className="object-contain"
             />
-          </div>
-
-          {/* Team B */}
-          <div className="flex flex-col items-end">
-            <div className="relative size-16 bg-black rounded-full overflow-hidden flex items-center justify-center mb-2">
-              <Image
-                src={safeImage(teamB.logoUrl)}
-                alt={teamB.teamName}
-                width={56}
-                height={56}
-                className="object-cover rounded-full"
-              />
-            </div>
-            <h2 className="text-sm font-bold truncate max-w-28 text-right">{teamB.teamName}</h2>
-            <p className="text-yellow-500 text-xl font-bold mt-1">
-              {teamB.points > 0 ? teamB.points.toFixed(1) : <span className="text-white">{teamB.projectedPoints.toFixed(1)}</span>}
-            </p>
-            <div className="text-xs text-gray-400 text-right">
-              {teamB.points > 0 ? 'Current' : 'Projected'}
-            </div>
           </div>
         </div>
 
@@ -607,22 +644,20 @@ export default function MatchupView() {
       {/* Player Matchups */}
       <div className="mt-4 space-y-1">
         {playerMatchups.map((matchup, idx) => (
-          <div key={idx} className="bg-zinc-900 rounded-lg mx-2 overflow-hidden">
-            {/* Player A vs Player B */}
-            <div className="grid grid-cols-2 divide-x divide-zinc-800">
+          <div key={idx} className="bg-zinc-900 overflow-hidden">
+            {/* Player A vs Player B with Position in Middle */}
+            <div className="grid" style={{ gridTemplateColumns: '1fr 40px 1fr' }}>
               {/* Player A */}
               <div className="p-4 relative">
-                <div className="flex flex-col items-start w-20">
-                  <div className="relative size-10 bg-zinc-800 rounded-full overflow-hidden">
-                    <Image
-                      src={matchup.playerA.imageUrl || "/player-images/default.png"}
+                <div className="flex flex-col items-start w-28">
+                  <div className="relative bg-zinc-800 rounded-full overflow-hidden" style={{ width: '34px', height: '34px' }}>
+                    <PlayerImage
+                      src={matchup.playerA.imageUrl}
                       alt={matchup.playerA.name}
-                      fill
-                      className="object-cover"
                     />
                   </div>
                   <h3 className="font-bold text-sm mt-1 truncate w-full">{matchup.playerA.name}</h3>
-                  <p className="text-gray-400 text-xs truncate w-full">{matchup.playerA.team}</p>
+                  <p className="text-gray-400 text-xs truncate w-full" style={{ marginTop: '4px' }}>{matchup.playerA.team}</p>
                 </div>
                 <div className="text-xs text-gray-400 mt-2">
                   {matchup.playerA.lastGameStats?.split('\n').map((line, i) => (
@@ -631,7 +666,7 @@ export default function MatchupView() {
                   {matchup.playerA.status !== 'Scheduled' && <p>{matchup.playerA.gameStats}</p>}
                 </div>
                 {/* Points */}
-                <div className="absolute top-4 right-4 text-xl font-bold text-green-500">
+                <div className="absolute top-2 right-4 text-xl font-bold text-green-500">
                   {matchup.playerA.status === 'Scheduled' 
                     ? <span className="text-white">{matchup.playerA.projectedPoints.toFixed(1)}</span> 
                     : matchup.playerA.points.toFixed(1)}
@@ -642,20 +677,23 @@ export default function MatchupView() {
                 </div>
               </div>
 
+              {/* Position rectangle - dedicated column */}
+              <div className="flex items-center justify-center" style={{ backgroundColor: '#202425' }}>
+                <span className="text-sm font-bold" style={{ color: '#ADB0BC' }}>{matchup.position}</span>
+              </div>
+
               {/* Player B */}
               {matchup.playerB ? (
                 <div className="p-4 relative">
-                  <div className="flex flex-col items-end w-20 ml-auto">
-                    <div className="relative size-10 bg-zinc-800 rounded-full overflow-hidden">
-                      <Image
-                        src={matchup.playerB.imageUrl || "/player-images/default.png"}
+                  <div className="flex flex-col items-end w-28 ml-auto">
+                    <div className="relative bg-zinc-800 rounded-full overflow-hidden" style={{ width: '34px', height: '34px' }}>
+                      <PlayerImage
+                        src={matchup.playerB.imageUrl}
                         alt={matchup.playerB.name}
-                        fill
-                        className="object-cover"
                       />
                     </div>
                     <h3 className="font-bold text-sm mt-1 truncate w-full text-right">{matchup.playerB.name}</h3>
-                    <p className="text-gray-400 text-xs truncate w-full text-right">{matchup.playerB.team}</p>
+                    <p className="text-gray-400 text-xs truncate w-full text-right" style={{ marginTop: '4px' }}>{matchup.playerB.team}</p>
                   </div>
                   <div className="text-xs text-gray-400 mt-2 text-right">
                     {matchup.playerB.lastGameStats?.split('\n').map((line, i) => (
@@ -664,7 +702,7 @@ export default function MatchupView() {
                     {matchup.playerB.status !== 'Scheduled' && <p>{matchup.playerB.gameStats}</p>}
                   </div>
                   {/* Points */}
-                  <div className="absolute top-4 left-4 text-xl font-bold text-green-500">
+                  <div className="absolute top-2 left-4 text-xl font-bold text-green-500">
                     {matchup.playerB.status === 'Scheduled' 
                       ? <span className="text-white">{matchup.playerB.projectedPoints.toFixed(1)}</span> 
                       : matchup.playerB.points.toFixed(1)}
@@ -679,11 +717,6 @@ export default function MatchupView() {
                   <p className="text-gray-500">No matched player</p>
                 </div>
               )}
-            </div>
-
-            {/* Position label */}
-            <div className="bg-zinc-800 text-center py-2 font-bold text-gray-400">
-              {matchup.position}
             </div>
           </div>
         ))}
