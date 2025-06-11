@@ -102,7 +102,7 @@ export default function AccountPage() {
           <Image src="/VerseAppIconTrans.png" alt="App Icon BG" width={190} height={190} priority className="object-cover opacity-100 drop-shadow-2xl pointer-events-none select-none absolute right-0 top-1/2 -translate-y-1/2 z-0" />
           <div className="flex-1 z-10">
             <h2 className="text-lg font-semibold mb-1">Refer Friends</h2>
-            <p className="text-sm text-gray-400 mb-3">Share the fun! Invite friends and claim your rewards!</p>
+            <p className="text-sm text-gray-400 mb-3">Invite friends and claim your rewards!</p>
             <Button 
               className="bg-black border border-[#0BC700] text-[#0BC700] rounded-full px-6 font-semibold hover:bg-[#0BC700]/10 transition-all h-[34px]" 
               size="lg"
