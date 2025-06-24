@@ -2,7 +2,6 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
-import { getAnalytics, isSupported } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 
 // Firebase configuration values are read from environment variables so that
@@ -15,7 +14,6 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Avoid re‑initialising the app when running in a React Fast Refresh situation
@@ -32,11 +30,6 @@ if (typeof window !== 'undefined') {
       console.error("Error setting auth persistence:", error);
     });
 }
-
-// Only initialize analytics in the browser and if it's supported
-export const analytics = typeof window !== 'undefined' 
-  ? isSupported().then(yes => yes ? getAnalytics(app) : null) 
-  : null; 
 
 // Initialize Firestore
 export const db = getFirestore(app); 
