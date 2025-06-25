@@ -209,6 +209,8 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
                               {toAmericanOdds(submarket.probability)}
                             </span>
                           </Button>
+                          {/* Hide the No button for multi-market events */}
+                          {(!hasMultipleMarkets) && (
                           <Button 
                             variant={isNoSelected ? "outline" : "outline"}
                             className={`pointer-events-auto flex-1 justify-between py-2 h-12 hover:bg-gray-50 dark:hover:bg-gray-800 group ${
@@ -239,6 +241,7 @@ export function EventMarketCard({ market, hideViewDetails = false, hideComments 
                               {toAmericanOdds(1 - submarket.probability)}
                             </span>
                           </Button>
+                          )}
                         </div>
                       </div>
                     );
