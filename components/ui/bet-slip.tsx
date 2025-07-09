@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBetSlip } from '@/lib/bet-slip-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { useUserBalance } from "@/lib/user-balance-context";
 import { getDoc, doc, getFirestore } from "firebase/firestore";
+import { firebaseService } from "@/lib/firebase-service";
 
 function americanToDecimal(odds: string): number {
   // Remove commas before parsing the number
@@ -94,6 +95,18 @@ export function BetSlip() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [entryAmount, setEntryAmount] = useState('');
   const [isPlacingEntry, setIsPlacingEntry] = useState(false);
+  const [configSafeguards, setConfigSafeguards] = useState<{ singleMaxWin: number; parlayMaxWin: number } | null>(null);
+
+  useEffect(() => {
+    firebaseService.getConfig().then((config) => {
+      if (config && config.webPolymarketSafeguards) {
+        setConfigSafeguards({
+          singleMaxWin: config.webPolymarketSafeguards.singleMaxWin,
+          parlayMaxWin: config.webPolymarketSafeguards.parlayMaxWin,
+        });
+      }
+    });
+  }, []);
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -261,6 +274,28 @@ export function BetSlip() {
     }
   };
 
+  // Calculate odds multiplier
+  const getOddsMultiplier = () => {
+    if (bets.length === 0) return 1;
+    if (bets.length === 1) {
+      return americanToDecimal(bets[0].odds);
+    }
+    return bets.reduce((acc, bet) => acc * americanToDecimal(bet.odds), 1);
+  };
+
+  // Calculate max risk (profit-based)
+  const getMaxRisk = () => {
+    if (!configSafeguards) return null;
+    const maxWin = bets.length > 1 ? configSafeguards.parlayMaxWin : configSafeguards.singleMaxWin;
+    const oddsMultiplier = getOddsMultiplier();
+    if (oddsMultiplier <= 1) return null; // No profit possible or invalid odds
+    return maxWin / (oddsMultiplier - 1);
+  };
+
+  const maxRisk = getMaxRisk();
+  const entryAmountNum = Number(entryAmount);
+  const exceedsMaxRisk = maxRisk !== null && entryAmountNum > maxRisk;
+
   const ConflictWarning = () => (
     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-3">
       <div className="flex items-start gap-2">
@@ -419,12 +454,26 @@ export function BetSlip() {
                     <span className="text-xs text-yellow-100">Insufficient balance. Please deposit funds to continue.</span>
                   </div>
                 )}
+                {exceedsMaxRisk && (
+                  <div className="flex items-center gap-2 bg-[#232323] border border-yellow-600 rounded-md px-3 py-2 mb-2 mt-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    <span className="text-xs text-yellow-100">
+                      Entry amount exceeds the maximum allowed for this bet. Maximum risk is <span className="font-bold">${maxRisk?.toFixed(2)}</span>.
+                    </span>
+                  </div>
+                )}
                 <Button 
                   className="w-full" 
-                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds()}
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds() || exceedsMaxRisk}
                   onClick={handlePlaceBets}
                 >
-                  {isPlacingEntry ? 'Placing Entry...' : hasInsufficientFunds() ? 'Insufficient Funds' : 'Place Entry'}
+                  {isPlacingEntry
+                    ? 'Placing Entry...'
+                    : hasInsufficientFunds()
+                      ? 'Insufficient Funds'
+                      : exceedsMaxRisk
+                        ? 'Exceeds Max Win'
+                        : 'Place Entry'}
                 </Button>
               </div>
             )}
@@ -543,12 +592,26 @@ export function BetSlip() {
                     <span className="text-xs text-yellow-100">Insufficient balance. Please deposit funds to continue.</span>
                   </div>
                 )}
+                {exceedsMaxRisk && (
+                  <div className="flex items-center gap-2 bg-[#232323] border border-yellow-600 rounded-md px-3 py-2 mb-2 mt-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    <span className="text-xs text-yellow-100">
+                      Entry amount exceeds the maximum allowed for this bet. Maximum risk is <span className="font-bold">${maxRisk?.toFixed(2)}</span>.
+                    </span>
+                  </div>
+                )}
                 <Button 
                   className="w-full" 
-                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds()}
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds() || exceedsMaxRisk}
                   onClick={handlePlaceBets}
                 >
-                  {isPlacingEntry ? 'Placing Entry...' : hasInsufficientFunds() ? 'Insufficient Funds' : 'Place Entry'}
+                  {isPlacingEntry
+                    ? 'Placing Entry...'
+                    : hasInsufficientFunds()
+                      ? 'Insufficient Funds'
+                      : exceedsMaxRisk
+                        ? 'Exceeds Max Win'
+                        : 'Place Entry'}
                 </Button>
               </div>
             )}

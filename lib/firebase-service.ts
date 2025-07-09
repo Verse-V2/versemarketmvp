@@ -89,6 +89,10 @@ export interface Config {
     minPredictionOdds: number;
     minTotalOdds: number;
   };
+  webPolymarketSafeguards?: {
+    singleMaxWin: number;
+    parlayMaxWin: number;
+  };
   stateList?: Array<{
     name: string;
     stateCode: string;
@@ -98,18 +102,7 @@ export interface Config {
   lastUpdated?: {
     __time__: number;
   };
-  [key: string]: string | number | { __time__: number } | string[] | undefined | {
-    maxParlayLegs: number;
-    maxPredictionOdds: number;
-    maxRiskAmount: number;
-    maxTotalOdds: number;
-    minPredictionOdds: number;
-    minTotalOdds: number;
-  } | Array<{
-    name: string;
-    stateCode: string;
-    valid: boolean;
-  }>;
+  [key: string]: any;
 }
 
 // Updated to match the actual structure from Firestore
