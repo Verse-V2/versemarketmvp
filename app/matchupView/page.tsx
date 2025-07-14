@@ -108,6 +108,11 @@ interface FantasyTeamMatchup {
   serviceProvider: string;
   starters: string[];
   startersPoints?: StarterPoint[];
+  starterProjectedPoints?: Array<{
+    playerId: string;
+    projectedPoints: number;
+  }>;
+  starterPositions?: string[];
 }
 
 // Add this type near your FantasyTeamMatchup interface
@@ -415,86 +420,90 @@ export default function MatchupView() {
           return 0;
         };
 
-        // Fetch player data with game results
-        // Build the player matchups dynamically from all starters
+        // Use starterPositions and starters from the backend for correct order and labels
+        const starterPositions = (matchup.teamA as any).starterPositions || (matchup.teamB as any).starterPositions;
+        if (!starterPositions) {
+          setError("No starterPositions found in matchup data");
+          setLoading(false);
+          return;
+        }
+
+        // Helper to get projected points for a player by index
+        const getProjectedPoints = (team: FantasyTeamMatchup, idx: number) => {
+          if (team.starterProjectedPoints && team.starterProjectedPoints[idx]) {
+            return team.starterProjectedPoints[idx].projectedPoints;
+          }
+          return 0;
+        };
+
+        // Helper to get stats-based points for a player by index
+        const getStatsBasedPoints = (team: FantasyTeamMatchup, idx: number) => {
+          if (team.startersPoints && team.startersPoints[idx]) {
+            return team.startersPoints[idx].statsBasedPoints;
+          }
+          return 0;
+        };
+
+        // Build player matchups using backend order and columns
         const playerMatchups = await Promise.all(
-          matchup.teamA.starters.map(async (starterId, index) => {
-            // Get the corresponding starter from team B (if exists)
-            const teamBStarterId = matchup.teamB.starters[index] || null;
-            
-            // Fetch player A data
-            const playerA = await firebaseService.getPlayerById(starterId);
-            const playerAGameStatus = await getGameStatus(starterId) as 'Scheduled' | 'InProgress' | 'Final';
-            const playerAGameResult = await getPlayerGameResult(starterId);
-            const playerAGameStats = await getPlayerGameStats(starterId);
-            
-            // Get points - use the same source for both live and final points
-            const playerAPoints = playerAGameStatus !== 'Scheduled' ? getPlayerStatsBasedPoints(starterId) : 0;
-            
-            // Get projected points from starterProjectedPoints
-            const playerAProjectedPoints = getPlayerProjectedPoints(starterId);
-            
-            // Fetch player B data (if exists)
-            const playerB = teamBStarterId ? await firebaseService.getPlayerById(teamBStarterId) : null;
-            const playerBGameStatus = teamBStarterId ? (await getGameStatus(teamBStarterId) as 'Scheduled' | 'InProgress' | 'Final') : 'Scheduled';
-            const playerBGameResult = teamBStarterId ? await getPlayerGameResult(teamBStarterId) : null;
-            const playerBGameStats = teamBStarterId ? await getPlayerGameStats(teamBStarterId) : null;
-            
-            // Get points - use the same source for both live and final points
-            const playerBPoints = (playerBGameStatus !== 'Scheduled' && teamBStarterId) ? getPlayerStatsBasedPoints(teamBStarterId) : 0;
-            
-            // Get projected points from starterProjectedPoints
-            const playerBProjectedPoints = teamBStarterId ? getPlayerProjectedPoints(teamBStarterId) : 0;
-            
+          starterPositions.map(async (position: string, idx: number) => {
+            const playerAId = matchup.teamA.starters[idx];
+            const playerBId = matchup.teamB.starters[idx];
+
+            const playerA = playerAId ? await firebaseService.getPlayerById(playerAId) : null;
+            const playerB = playerBId ? await firebaseService.getPlayerById(playerBId) : null;
+
+            // Fetch game status, result, and stats for playerA
+            const playerAGameStatus = playerAId ? await getGameStatus(playerAId) : 'Scheduled';
+            const playerAGameResult = playerAId ? await getPlayerGameResult(playerAId) : null;
+            const playerAGameStats = playerAId ? await getPlayerGameStats(playerAId) : null;
+            const playerAPoints = playerAGameStatus !== 'Scheduled' ? getStatsBasedPoints(matchup.teamA, idx) : 0;
+            const playerAProjectedPoints = getProjectedPoints(matchup.teamA, idx);
+
+            // Fetch game status, result, and stats for playerB
+            const playerBGameStatus = playerBId ? await getGameStatus(playerBId) : 'Scheduled';
+            const playerBGameResult = playerBId ? await getPlayerGameResult(playerBId) : null;
+            const playerBGameStats = playerBId ? await getPlayerGameStats(playerBId) : null;
+            const playerBPoints = playerBGameStatus !== 'Scheduled' ? getStatsBasedPoints(matchup.teamB, idx) : 0;
+            const playerBProjectedPoints = getProjectedPoints(matchup.teamB, idx);
+
             return {
-              position: playerA?.position || "Unknown",
-              playerA,
-              playerAGameStatus,
-              playerAGameResult,
-              playerAGameStats,
-              playerAPoints,
-              playerAProjectedPoints,
-              playerB,
-              playerBGameStatus,
-              playerBGameResult,
-              playerBGameStats,
-              playerBPoints,
-              playerBProjectedPoints
+              position,
+              playerA: playerA ? {
+                id: playerA.id || '',
+                name: playerA.name || '',
+                firstName: playerA.firstName || '',
+                lastName: playerA.lastName || '',
+                team: playerA.team || '',
+                position: playerA.position || position,
+                points: playerAPoints,
+                projectedPoints: playerAProjectedPoints,
+                status: playerAGameStatus,
+                lastGameStats: playerAGameResult || 'Game Details',
+                gameStats: playerAGameStatus !== 'Scheduled' ? (playerAGameStats || 'Player Stats') : '',
+                imageUrl: playerA.photoUrl || '/player-images/default.png',
+              } : {
+                id: '', name: '', firstName: '', lastName: '', team: '', position, points: 0, projectedPoints: 0, status: 'Scheduled', lastGameStats: '', gameStats: '', imageUrl: '/player-images/default.png'
+              },
+              playerB: playerB ? {
+                id: playerB.id || '',
+                name: playerB.name || '',
+                firstName: playerB.firstName || '',
+                lastName: playerB.lastName || '',
+                team: playerB.team || '',
+                position: playerB.position || position,
+                points: playerBPoints,
+                projectedPoints: playerBProjectedPoints,
+                status: playerBGameStatus,
+                lastGameStats: playerBGameResult || 'Game Details',
+                gameStats: playerBGameStatus !== 'Scheduled' ? (playerBGameStats || 'Player Stats') : '',
+                imageUrl: playerB.photoUrl || '/player-images/default.png',
+              } : null
             };
           })
         );
 
-        setPlayerMatchups(playerMatchups.map(matchup => ({
-          position: matchup.position,
-          playerA: {
-            id: matchup.playerA?.id || "",
-            name: matchup.playerA?.name || "",
-            firstName: matchup.playerA?.firstName || "",
-            lastName: matchup.playerA?.lastName || "",
-            team: matchup.playerA?.team || "",
-            position: matchup.playerA?.position || "",
-            points: matchup.playerAPoints,
-            projectedPoints: matchup.playerAProjectedPoints,
-            status: matchup.playerAGameStatus,
-            lastGameStats: matchup.playerAGameResult || "Game Details",
-            gameStats: matchup.playerAGameStatus !== 'Scheduled' ? (matchup.playerAGameStats || "Player Stats") : "",
-            imageUrl: matchup.playerA?.photoUrl || "/player-images/default.png"
-          },
-          playerB: matchup.playerB ? {
-            id: matchup.playerB?.id || "",
-            name: matchup.playerB?.name || "",
-            firstName: matchup.playerB?.firstName || "",
-            lastName: matchup.playerB?.lastName || "",
-            team: matchup.playerB?.team || "",
-            position: matchup.playerB?.position || "",
-            points: matchup.playerBPoints,
-            projectedPoints: matchup.playerBProjectedPoints,
-            status: matchup.playerBGameStatus,
-            lastGameStats: matchup.playerBGameResult || "Game Details",
-            gameStats: matchup.playerBGameStatus !== 'Scheduled' ? (matchup.playerBGameStats || "Player Stats") : "",
-            imageUrl: matchup.playerB?.photoUrl || "/player-images/default.png"
-          } : null
-        })));
+        setPlayerMatchups(playerMatchups);
 
         setLoading(false);
       } catch (error) {
