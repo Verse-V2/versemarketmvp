@@ -274,6 +274,22 @@ export function BetSlip() {
     }
   };
 
+  // Check if parlay has picks from same prediction event
+  const hasSamePredictionEventPicks = () => {
+    if (bets.length <= 1) return false; // Only check for parlays
+    
+    const eventIds = bets.map(bet => bet.eventId);
+    const uniqueEventIds = new Set(eventIds);
+    return uniqueEventIds.size < eventIds.length; // If unique IDs < total IDs, there are duplicates
+  };
+
+  // Check if a specific bet is part of a conflicting group
+  const isBetConflicting = (bet: any) => {
+    if (bets.length <= 1) return false;
+    const sameEventBets = bets.filter(b => b.eventId === bet.eventId);
+    return sameEventBets.length > 1;
+  };
+
   // Calculate odds multiplier
   const getOddsMultiplier = () => {
     if (bets.length === 0) return 1;
@@ -316,6 +332,13 @@ export function BetSlip() {
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  const SamePredictionEventWarning = () => (
+    <div className="flex items-center gap-2 bg-[#232323] border border-yellow-600 rounded-md px-3 py-2 mb-2">
+      <AlertTriangle className="h-5 w-5 text-yellow-500" />
+      <span className="text-xs text-yellow-100">Selections can not be combined</span>
     </div>
   );
 
@@ -363,9 +386,10 @@ export function BetSlip() {
           `}>
             <div className="flex-1 overflow-y-auto space-y-3">
               {conflictingBetsExist && <ConflictWarning />}
+              {hasSamePredictionEventPicks() && <SamePredictionEventWarning />}
               
               {bets.map((bet) => (
-                <Card key={bet.outcomeId} className="p-3">
+                <Card key={bet.outcomeId} className={`p-3 ${isBetConflicting(bet) ? 'border-red-500' : ''}`}>
                   <div className="flex items-start gap-3">
                     {bet.imageUrl && (
                       <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-md">
@@ -464,7 +488,7 @@ export function BetSlip() {
                 )}
                 <Button 
                   className="w-full" 
-                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds() || exceedsMaxRisk}
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || hasSamePredictionEventPicks() || isPlacingEntry || isLoadingBalance || hasInsufficientFunds() || exceedsMaxRisk}
                   onClick={handlePlaceBets}
                 >
                   {isPlacingEntry
@@ -473,7 +497,9 @@ export function BetSlip() {
                       ? 'Insufficient Funds'
                       : exceedsMaxRisk
                         ? 'Exceeds Max Win'
-                        : 'Place Entry'}
+                        : hasSamePredictionEventPicks()
+                          ? 'Cannot Combine Same Event Picks'
+                          : 'Place Entry'}
                 </Button>
               </div>
             )}
@@ -501,9 +527,10 @@ export function BetSlip() {
 
             <div className="mt-4 flex-1 overflow-y-auto space-y-3">
               {conflictingBetsExist && <ConflictWarning />}
+              {hasSamePredictionEventPicks() && <SamePredictionEventWarning />}
               
               {bets.map((bet) => (
-                <Card key={bet.outcomeId} className="p-3">
+                <Card key={bet.outcomeId} className={`p-3 ${isBetConflicting(bet) ? 'border-red-500' : ''}`}>
                   <div className="flex items-start gap-3">
                     {bet.imageUrl && (
                       <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-md">
@@ -602,7 +629,7 @@ export function BetSlip() {
                 )}
                 <Button 
                   className="w-full" 
-                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || isPlacingEntry || isLoadingBalance || hasInsufficientFunds() || exceedsMaxRisk}
+                  disabled={!entryAmount || Number(entryAmount) <= 0 || conflictingBetsExist || hasSamePredictionEventPicks() || isPlacingEntry || isLoadingBalance || hasInsufficientFunds() || exceedsMaxRisk}
                   onClick={handlePlaceBets}
                 >
                   {isPlacingEntry
@@ -611,7 +638,9 @@ export function BetSlip() {
                       ? 'Insufficient Funds'
                       : exceedsMaxRisk
                         ? 'Exceeds Max Win'
-                        : 'Place Entry'}
+                        : hasSamePredictionEventPicks()
+                          ? 'Cannot Combine Same Event Picks'
+                          : 'Place Entry'}
                 </Button>
               </div>
             )}
