@@ -158,7 +158,7 @@ class FirebaseService {
   // Get a single event by ID
   async getEventById(id: string): Promise<Event | null> {
     try {
-      const docRef = doc(db, 'predictionEvents', id);
+      const docRef = doc(db, 'webPredictionEvents', id);
       const docSnap = await getDoc(docRef);
       
       if (!docSnap.exists()) {
@@ -183,7 +183,7 @@ class FirebaseService {
       ];
 
       // Create the base query
-      let q = query(collection(db, 'predictionEvents'), ...conditions);
+      let q = query(collection(db, 'webPredictionEvents'), ...conditions);
 
       // Only apply limit for "all" view
       if (!tagFilter || tagFilter.toLowerCase() === 'all') {
@@ -237,7 +237,7 @@ class FirebaseService {
   async getEventsByTags(tagSlugs: string[]): Promise<Event[]> {
     try {
       const q = query(
-        collection(db, 'predictionEvents'),
+        collection(db, 'webPredictionEvents'),
         where('active', '==', true),
         where('closed', '==', false),
         limit(300) // Get a larger set to filter from
@@ -262,7 +262,7 @@ class FirebaseService {
 
   // Set up a real-time listener for a specific market
   onMarketUpdate(marketId: string, callback: (market: Market) => void): () => void {
-    const docRef = doc(db, 'predictionEvents', marketId);
+    const docRef = doc(db, 'webPredictionEvents', marketId);
     
     const unsubscribe = onSnapshot(docRef, (doc) => {
       if (doc.exists()) {
@@ -292,7 +292,7 @@ class FirebaseService {
     ];
 
     // Create the base query
-    let q = query(collection(db, 'predictionEvents'), ...conditions);
+    let q = query(collection(db, 'webPredictionEvents'), ...conditions);
 
     // Only apply pagination and limit for "all" view
     if (!tagFilter || tagFilter.toLowerCase() === 'all') {
