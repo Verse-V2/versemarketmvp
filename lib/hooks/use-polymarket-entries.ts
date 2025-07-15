@@ -37,7 +37,7 @@ export interface PolymarketEntry {
 }
 
 
-export function usePolymarketEntries() {
+export function usewebPredictionEntries() {
   const [entries, setEntries] = useState<PolymarketEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -94,7 +94,7 @@ export function usePolymarketEntries() {
     setError(null);
 
     const db = getFirestore();
-    const entriesRef = collection(db, 'polymarketEntries');
+    const entriesRef = collection(db, 'webPredictionEntries');
     
     // Log the collection path
     console.log('Collection path:', entriesRef.path);

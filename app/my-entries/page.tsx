@@ -4,7 +4,7 @@ import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { usePolymarketEntries } from "@/lib/hooks/use-polymarket-entries";
+import { usewebPredictionEntries } from "@/lib/hooks/use-polymarket-entries";
 import { useFantasyMatchupEntries } from "@/lib/hooks/use-fantasy-matchup-entries";
 import EntryCard from "@/components/ui/entry-card";
 import FantasyMatchupEntryCard from "@/components/ui/fantasy-matchup-entry-card";
@@ -13,7 +13,7 @@ import { RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 type EntryStatus = 'all' | 'open' | 'settled' | 'won' | 'lost';
 
 export default function EntriesPage() {
-  const { entries: polymarketEntries, isLoading: isLoadingPolymarket, error: polymarketError } = usePolymarketEntries();
+  const { entries: webPredictionEntries, isLoading: isLoadingPolymarket, error: polymarketError } = usewebPredictionEntries();
   const { 
     entries: fantasyEntries, 
     isLoading: isLoadingFantasy, 
@@ -41,7 +41,7 @@ export default function EntriesPage() {
 
   // Combine and sort entries by date
   const allEntries = [
-    ...polymarketEntries.map(entry => ({ ...entry, type: 'polymarket' as const })),
+    ...webPredictionEntries.map(entry => ({ ...entry, type: 'polymarket' as const })),
     ...fantasyEntries.map(entry => ({ ...entry, type: 'fantasy' as const }))
   ].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
