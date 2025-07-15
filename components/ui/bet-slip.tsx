@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useUserBalance } from "@/lib/user-balance-context";
 import { getDoc, doc, getFirestore } from "firebase/firestore";
 import { firebaseService } from "@/lib/firebase-service";
+import { BetSlipConfirmation } from "@/components/ui/bet-slip-confirmation";
 
 function americanToDecimal(odds: string): number {
   // Remove commas before parsing the number
@@ -96,6 +97,8 @@ export function BetSlip() {
   const [entryAmount, setEntryAmount] = useState('');
   const [isPlacingEntry, setIsPlacingEntry] = useState(false);
   const [configSafeguards, setConfigSafeguards] = useState<{ singleMaxWin: number; parlayMaxWin: number } | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmedEntry, setConfirmedEntry] = useState<any>(null);
 
   useEffect(() => {
     firebaseService.getConfig().then((config) => {
@@ -111,6 +114,29 @@ export function BetSlip() {
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
   };
+
+  // Handle confirmation actions
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+    setConfirmedEntry(null);
+  };
+
+  const handleViewEntries = () => {
+    setShowConfirmation(false);
+    setConfirmedEntry(null);
+    router.push('/my-entries');
+  };
+
+  // Show confirmation if entry was placed
+  if (showConfirmation && confirmedEntry) {
+    return (
+      <BetSlipConfirmation
+        entry={confirmedEntry}
+        onClose={handleCloseConfirmation}
+        onViewEntries={handleViewEntries}
+      />
+    );
+  }
 
   if (bets.length === 0) {
     return null;
@@ -238,7 +264,7 @@ export function BetSlip() {
       // Create and place entry
       await polymarketService.placeEntry(request);
 
-      addEntry({
+      const entryData = {
         entry,
         prize,
         currency,
@@ -248,12 +274,17 @@ export function BetSlip() {
           outcomeName: bet.outcomeName,
           odds: bet.odds,
           imageUrl: bet.imageUrl
-        }))
-      });
+        })),
+        timestamp: new Date()
+      };
 
+      addEntry(entryData);
+
+      // Show confirmation instead of redirecting
+      setConfirmedEntry(entryData);
+      setShowConfirmation(true);
       clearBets();
       setEntryAmount('');
-      router.push('/my-entries');
       toast.success('Entry placed successfully');
     } catch (error) {
       console.error('Failed to place entry:', error);
