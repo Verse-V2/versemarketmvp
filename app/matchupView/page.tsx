@@ -384,44 +384,8 @@ export default function MatchupView() {
         
 
 
-        // Helper function to get player stats points
-        const getPlayerStatsBasedPoints = (playerId: string) => {
-          const teamA = matchup.teamA as unknown as MatchupTeam;
-          const teamB = matchup.teamB as unknown as MatchupTeam;
-          
-          if (teamA.starters.includes(playerId) && teamA.startersPoints) {
-            const starterPoints = teamA.startersPoints.find((p: StarterPoint) => p.playerId === playerId);
-            return starterPoints ? starterPoints.statsBasedPoints : 0;
-          } else if (teamB.starters.includes(playerId) && teamB.startersPoints) {
-            const starterPoints = teamB.startersPoints.find((p: StarterPoint) => p.playerId === playerId);
-            return starterPoints ? starterPoints.statsBasedPoints : 0;
-          }
-          return 0;
-        };
-
-        // Helper function to get player projected points
-        const getPlayerProjectedPoints = (playerId: string) => {
-          const teamA = matchup.teamA as unknown as MatchupTeam;
-          const teamB = matchup.teamB as unknown as MatchupTeam;
-          
-          // Check if starterProjectedPoints exists and contains data for this player
-          if (teamA.starters.includes(playerId) && teamA.starterProjectedPoints) {
-            const projectedPoints = teamA.starterProjectedPoints.find(
-              (p: { playerId: string; projectedPoints: number }) => p.playerId === playerId
-            );
-            return projectedPoints ? projectedPoints.projectedPoints : 0;
-          } else if (teamB.starters.includes(playerId) && teamB.starterProjectedPoints) {
-            const projectedPoints = teamB.starterProjectedPoints.find(
-              (p: { playerId: string; projectedPoints: number }) => p.playerId === playerId
-            );
-            return projectedPoints ? projectedPoints.projectedPoints : 0;
-          }
-          
-          return 0;
-        };
-
         // Use starterPositions and starters from the backend for correct order and labels
-        const starterPositions = (matchup.teamA as any).starterPositions || (matchup.teamB as any).starterPositions;
+        const starterPositions = (matchup.teamA as unknown as MatchupTeam).starterPositions || (matchup.teamB as unknown as MatchupTeam).starterPositions;
         if (!starterPositions) {
           setError("No starterPositions found in matchup data");
           setLoading(false);
