@@ -38,7 +38,7 @@ export interface PolymarketEntry {
 }
 
 
-export function usewebPredictionEntries() {
+export function useWebPredictionEntries() {
   const [entries, setEntries] = useState<PolymarketEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
