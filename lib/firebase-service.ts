@@ -102,7 +102,7 @@ export interface Config {
   lastUpdated?: {
     __time__: number;
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Updated to match the actual structure from Firestore
