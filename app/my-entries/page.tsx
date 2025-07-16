@@ -4,8 +4,8 @@ import { Header } from "@/components/ui/header";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { usewebPredictionEntries } from "@/lib/hooks/use-polymarket-entries";
-import { useFantasyMatchupEntries } from "@/lib/hooks/use-fantasy-matchup-entries";
+import { useWebPredictionEntries, PolymarketEntry } from "@/lib/hooks/use-polymarket-entries";
+import { useFantasyMatchupEntries, FantasyMatchupEntry } from "@/lib/hooks/use-fantasy-matchup-entries";
 import EntryCard from "@/components/ui/entry-card";
 import FantasyMatchupEntryCard from "@/components/ui/fantasy-matchup-entry-card";
 import { RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
@@ -13,7 +13,7 @@ import { RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 type EntryStatus = 'all' | 'open' | 'settled' | 'won' | 'lost';
 
 export default function EntriesPage() {
-  const { entries: webPredictionEntries, isLoading: isLoadingPolymarket, error: polymarketError } = usewebPredictionEntries();
+  const { entries: webPredictionEntries, isLoading: isLoadingPolymarket, error: polymarketError } = useWebPredictionEntries();
   const { 
     entries: fantasyEntries, 
     isLoading: isLoadingFantasy, 
@@ -46,7 +46,7 @@ export default function EntriesPage() {
   ].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
   // Filter entries based on active tab
-  const filteredEntries = allEntries.filter(entry => {
+  const filteredEntries = allEntries.filter((entry: (PolymarketEntry | FantasyMatchupEntry) & { type: 'polymarket' | 'fantasy' }) => {
     switch (activeTab) {
       case 'open':
         return entry.status === 'submitted';
