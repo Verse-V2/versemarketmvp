@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useBetSlip } from '@/lib/bet-slip-context';
+import { useBetSlip, Bet } from '@/lib/bet-slip-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useUserBalance } from "@/lib/user-balance-context";
 import { getDoc, doc, getFirestore } from "firebase/firestore";
 import { firebaseService } from "@/lib/firebase-service";
-import { BetSlipConfirmation } from "@/components/ui/bet-slip-confirmation";
+import { BetSlipConfirmation, ConfirmationEntry } from "@/components/ui/bet-slip-confirmation";
 
 function americanToDecimal(odds: string): number {
   // Remove commas before parsing the number
@@ -98,7 +98,7 @@ export function BetSlip() {
   const [isPlacingEntry, setIsPlacingEntry] = useState(false);
   const [configSafeguards, setConfigSafeguards] = useState<{ singleMaxWin: number; parlayMaxWin: number } | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmedEntry, setConfirmedEntry] = useState<any>(null);
+  const [confirmedEntry, setConfirmedEntry] = useState<ConfirmationEntry | null>(null);
 
   useEffect(() => {
     firebaseService.getConfig().then((config) => {
@@ -315,7 +315,7 @@ export function BetSlip() {
   };
 
   // Check if a specific bet is part of a conflicting group
-  const isBetConflicting = (bet: any) => {
+  const isBetConflicting = (bet: Bet) => {
     if (bets.length <= 1) return false;
     const sameEventBets = bets.filter(b => b.eventId === bet.eventId);
     return sameEventBets.length > 1;

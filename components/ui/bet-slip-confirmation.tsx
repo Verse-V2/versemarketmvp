@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { CheckCircle, X, Copy } from 'lucide-react';
 import Image from 'next/image';
 
-interface ConfirmationEntry {
+export interface ConfirmationEntry {
   entry: number;
   prize: number;
   currency: 'cash' | 'coins';
@@ -131,7 +131,7 @@ export function BetSlipConfirmation({ entry, onClose, onViewEntries }: BetSlipCo
            <div className="px-4 pb-4 pt-4 flex-1 overflow-y-auto space-y-4">
              {/* Selections */}
              <div className="space-y-3">
-               {entry.selections.map((selection, index) => (
+               {entry.selections.map((selection, _index) => (
                  <Card key={selection.id} className="p-3">
                    <div className="flex items-start gap-3">
                      {selection.imageUrl && (
@@ -234,7 +234,7 @@ export function BetSlipConfirmation({ entry, onClose, onViewEntries }: BetSlipCo
                          <div className="mt-4 flex-1 overflow-y-auto space-y-4">
                {/* Selections */}
                <div className="space-y-3">
-                 {entry.selections.map((selection, index) => (
+                 {entry.selections.map((selection, _index) => (
                    <Card key={selection.id} className="p-3">
                      <div className="flex items-start gap-3">
                        {selection.imageUrl && (

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
-interface Bet {
+export interface Bet {
   marketId: string;
   eventId: string;
   marketQuestion: string;
