@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ShareDialog } from "@/components/ui/share-dialog";
 import { Timestamp } from 'firebase/firestore';
 import { PolymarketEntry } from "@/lib/hooks/use-polymarket-entries";
+import { formatDistanceToNow } from "date-fns";
 
 function formatDate(timestamp: Timestamp) {
   return timestamp.toDate().toLocaleDateString('en-US', {
@@ -96,7 +97,7 @@ export default function EntryCard({ entry }: { entry: PolymarketEntry }) {
                 </h3>
               ) : (
                 <h3 className="text-base font-semibold m-0">
-                  {capitalizeOutcome(entry.picks[0]?.outcome || entry.picks[0]?.selectedOutcome)}
+                  Single
                 </h3>
               )}
               <span className={`text-base ${oddsColorClass}`}>{odds}</span>
@@ -151,34 +152,43 @@ export default function EntryCard({ entry }: { entry: PolymarketEntry }) {
                   style={{ height: 'calc(100% - 1rem)' }}
                 />
               )}
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded-full border-2 border-gray-600 shrink-0" />
-                    <h4 className="text-base font-semibold">
-                      {capitalizeOutcome(pick.outcome || pick.selectedOutcome)}
-                    </h4>
+              <div className="space-y-2">
+                {/* First line */}
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 rounded-full border-2 border-gray-600 shrink-0" />
+                  <div className="relative w-6 h-6 rounded-full overflow-hidden bg-[#2A2A2D]">
+                    {pick.imageUrl && (
+                      <Image
+                        src={pick.imageUrl}
+                        alt={pick.eventTitle || "Event"}
+                        fill
+                        className="object-cover"
+                      />
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400 ml-7">
+                  <h4 className="text-base font-semibold">
                     {pick.eventTitle || (pick.question ? pick.question.split(' - ')[0] : '')}
+                  </h4>
+                </div>
+                {/* Second line */}
+                <div className="flex justify-between items-center border border-gray-600/30 rounded-md px-2 py-1 ml-7">
+                  <p className="text-xs text-white">
+                    {pick.marketTitle && 
+                     pick.marketTitle.toLowerCase() !== (pick.outcome || pick.selectedOutcome || '').toLowerCase() &&
+                     !['yes', 'no'].includes(pick.marketTitle.toLowerCase())
+                      ? `${pick.marketTitle} - ${capitalizeOutcome(pick.outcome || pick.selectedOutcome)}`
+                      : capitalizeOutcome(pick.outcome || pick.selectedOutcome)
+                    }
                   </p>
-                  <div className="flex items-center gap-3 ml-7">
-                    <div className="relative w-6 h-6 rounded-full overflow-hidden bg-[#2A2A2D]">
-                      {pick.imageUrl && (
-                        <Image
-                          src={pick.imageUrl}
-                          alt={pick.eventTitle || "Event"}
-                          fill
-                          className="object-cover"
-                        />
-                      )}
-                    </div>
-                    <span className="text-sm">{capitalizeOutcome(pick.marketTitle || pick.selectedOutcome)}</span>
-                  </div>
+                  <span className={`text-sm ${oddsColorClass}`}>{pick.moneylineOdds || pick.outcomePrices}</span>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <span className={`text-base ${oddsColorClass}`}>{pick.moneylineOdds || pick.outcomePrices}</span>
-                </div>
+                {/* Third line - Relative time */}
+                <p className="text-xs text-gray-500 ml-7">
+                  {pick.endDate 
+                    ? `Ends ${formatDistanceToNow(new Date(pick.endDate), { addSuffix: true })}`
+                    : formatDistanceToNow(entry.createdAt.toDate(), { addSuffix: true })
+                  }
+                </p>
               </div>
             </div>
           ))}

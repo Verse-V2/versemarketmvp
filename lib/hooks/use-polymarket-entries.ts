@@ -20,6 +20,7 @@ export interface PolymarketPick {
   status: string;
   timestamp: Timestamp;
   imageUrl?: string;
+  endDate?: string;
 }
 
 export interface PolymarketEntry {
@@ -145,22 +146,23 @@ export function usewebPredictionEntries() {
           id: doc.id,
         })) as PolymarketEntry[];
         
-        // Fetch event images for each pick in each entry
+        // Fetch event images and endDate for each pick in each entry
         const enhancedEntries = await Promise.all(entriesData.map(async (entry) => {
           const enhancedPicks = await Promise.all(entry.picks.map(async (pick) => {
-            // Only fetch if we have an eventId and don't already have an imageUrl
-            if (pick.eventId && !pick.imageUrl) {
+            // Only fetch if we have an eventId and don't already have an imageUrl or endDate
+            if (pick.eventId && (!pick.imageUrl || !pick.endDate)) {
               try {
                 // Use the firebaseService to fetch the event by ID
                 const event = await firebaseService.getEventById(pick.eventId);
-                if (event && event.image) {
+                if (event) {
                   return {
                     ...pick,
-                    imageUrl: event.image
+                    imageUrl: event.image || pick.imageUrl,
+                    endDate: event.endDate || pick.endDate
                   };
                 }
               } catch (error) {
-                console.error(`Error fetching image for event ${pick.eventId}:`, error);
+                console.error(`Error fetching event data for event ${pick.eventId}:`, error);
               }
             }
             return pick;
