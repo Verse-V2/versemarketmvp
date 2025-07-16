@@ -341,7 +341,7 @@ export default function MatchupView() {
         };
 
         // Helper function to determine game status
-        const getGameStatus = async (playerId: string) => {
+        const getGameStatus = async (playerId: string): Promise<'Scheduled' | 'InProgress' | 'Final'> => {
           const player = await firebaseService.getPlayerById(playerId);
           if (!player || !player.team) return 'Scheduled';
           
@@ -418,14 +418,14 @@ export default function MatchupView() {
             const playerB = playerBId ? await firebaseService.getPlayerById(playerBId) : null;
 
             // Fetch game status, result, and stats for playerA
-            const playerAGameStatus = playerAId ? await getGameStatus(playerAId) : 'Scheduled';
+            const playerAGameStatus: 'Scheduled' | 'InProgress' | 'Final' = playerAId ? await getGameStatus(playerAId) : 'Scheduled';
             const playerAGameResult = playerAId ? await getPlayerGameResult(playerAId) : null;
             const playerAGameStats = playerAId ? await getPlayerGameStats(playerAId) : null;
             const playerAPoints = playerAGameStatus !== 'Scheduled' ? getStatsBasedPoints(matchup.teamA, idx) : 0;
             const playerAProjectedPoints = getProjectedPoints(matchup.teamA, idx);
 
             // Fetch game status, result, and stats for playerB
-            const playerBGameStatus = playerBId ? await getGameStatus(playerBId) : 'Scheduled';
+            const playerBGameStatus: 'Scheduled' | 'InProgress' | 'Final' = playerBId ? await getGameStatus(playerBId) : 'Scheduled';
             const playerBGameResult = playerBId ? await getPlayerGameResult(playerBId) : null;
             const playerBGameStats = playerBId ? await getPlayerGameStats(playerBId) : null;
             const playerBPoints = playerBGameStatus !== 'Scheduled' ? getStatsBasedPoints(matchup.teamB, idx) : 0;
@@ -442,12 +442,12 @@ export default function MatchupView() {
                 position: playerA.position || position,
                 points: playerAPoints,
                 projectedPoints: playerAProjectedPoints,
-                status: playerAGameStatus,
+                status: playerAGameStatus as 'Scheduled' | 'InProgress' | 'Final',
                 lastGameStats: playerAGameResult || 'Game Details',
                 gameStats: playerAGameStatus !== 'Scheduled' ? (playerAGameStats || 'Player Stats') : '',
                 imageUrl: playerA.photoUrl || '/player-images/default.png',
               } : {
-                id: '', name: '', firstName: '', lastName: '', team: '', position, points: 0, projectedPoints: 0, status: 'Scheduled', lastGameStats: '', gameStats: '', imageUrl: '/player-images/default.png'
+                id: '', name: '', firstName: '', lastName: '', team: '', position, points: 0, projectedPoints: 0, status: 'Scheduled' as 'Scheduled' | 'InProgress' | 'Final', lastGameStats: '', gameStats: '', imageUrl: '/player-images/default.png'
               },
               playerB: playerB ? {
                 id: playerB.id || '',
@@ -458,7 +458,7 @@ export default function MatchupView() {
                 position: playerB.position || position,
                 points: playerBPoints,
                 projectedPoints: playerBProjectedPoints,
-                status: playerBGameStatus,
+                status: playerBGameStatus as 'Scheduled' | 'InProgress' | 'Final',
                 lastGameStats: playerBGameResult || 'Game Details',
                 gameStats: playerBGameStatus !== 'Scheduled' ? (playerBGameStats || 'Player Stats') : '',
                 imageUrl: playerB.photoUrl || '/player-images/default.png',
