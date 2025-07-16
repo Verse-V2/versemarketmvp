@@ -131,7 +131,7 @@ export function BetSlipConfirmation({ entry, onClose, onViewEntries }: BetSlipCo
            <div className="px-4 pb-4 pt-4 flex-1 overflow-y-auto space-y-4">
              {/* Selections */}
              <div className="space-y-3">
-               {entry.selections.map((selection, _index) => (
+               {entry.selections.map((selection) => (
                  <Card key={selection.id} className="p-3">
                    <div className="flex items-start gap-3">
                      {selection.imageUrl && (
@@ -234,7 +234,7 @@ export function BetSlipConfirmation({ entry, onClose, onViewEntries }: BetSlipCo
                          <div className="mt-4 flex-1 overflow-y-auto space-y-4">
                {/* Selections */}
                <div className="space-y-3">
-                 {entry.selections.map((selection, _index) => (
+                 {entry.selections.map((selection) => (
                    <Card key={selection.id} className="p-3">
                      <div className="flex items-start gap-3">
                        {selection.imageUrl && (
