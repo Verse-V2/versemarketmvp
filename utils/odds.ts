@@ -6,13 +6,19 @@ export function toAmericanOdds(prob: number): string {
   if (prob <= 0) return 'N/A' // Handle edge cases
   if (prob >= 1) return '-∞'  // Very close to certainty
   
-  if (prob > 0.5) {
+  // First convert probability to decimal odds
+  const decimalOdds = 1 / prob;
+  
+  // Then convert decimal odds to American odds
+  if (decimalOdds < 2.0) {
     // Favorite: negative odds
-    const odds = Math.round(-100 / (prob - 1))
-    return `-${Math.abs(odds).toLocaleString()}`
+    // For decimal < 2.0, use formula: (-100)/(decimal-1)
+    const americanOdds = Math.round(-100 / (decimalOdds - 1));
+    return `-${Math.abs(americanOdds).toLocaleString()}`;
   } else {
     // Underdog: positive odds
-    const odds = Math.round(100 / prob - 100)
-    return `+${odds.toLocaleString()}`
+    // For decimal >= 2.0, use formula: (decimal-1)*100
+    const americanOdds = Math.round((decimalOdds - 1) * 100);
+    return `+${americanOdds.toLocaleString()}`;
   }
 } 
