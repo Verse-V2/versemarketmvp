@@ -28,11 +28,12 @@ export default function PaymentSuccessPage() {
         const amount = searchParams.get('amount');
         const points = searchParams.get('points');
         const bonusCash = searchParams.get('bonus_cash');
+        const invoiceId = searchParams.get('invoice_id');
         const status = searchParams.get('status');
 
         // Check if we have the required parameters and payment was successful
-        if (!amount || !points || !user || status !== 'ORDER_COMPLETED') {
-          console.log('Payment validation failed:', { amount, points, user: !!user, status });
+        if (!amount || !points || !invoiceId || !user || status !== 'ORDER_COMPLETED') {
+          console.log('Payment validation failed:', { amount, points, invoiceId, user: !!user, status });
           setStatus('error');
           return;
         }
@@ -41,6 +42,29 @@ export default function PaymentSuccessPage() {
         const parsedAmount = parseFloat(amount);
         const parsedPoints = parseInt(points);
         const parsedBonusCash = parseFloat(bonusCash || '0');
+
+        // Verify payment with our backend
+        const verificationResponse = await fetch('/api/payment/3thix/verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            invoiceId,
+            amount: parsedAmount,
+            points: parsedPoints,
+            bonusCash: parsedBonusCash,
+            userId: user.uid,
+          }),
+        });
+
+        const verificationData = await verificationResponse.json();
+
+        if (!verificationResponse.ok || !verificationData.success) {
+          console.error('Payment verification failed:', verificationData);
+          setStatus('error');
+          return;
+        }
 
         // Update user balance in Firestore
         const userRef = doc(db, 'users', user.uid);

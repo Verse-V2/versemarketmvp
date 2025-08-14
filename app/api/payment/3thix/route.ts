@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
 
     const paymentData: ThrixPaymentResponse = await thrixResponse.json();
 
-    // Construct callback URL with payment data
-    const successCallbackUrl = `${baseUrl}/payment/success?amount=${amount.toFixed(2)}&points=${points}&bonus_cash=${bonusCash}`;
+    // Construct callback URL with payment data including invoice ID
+    const successCallbackUrl = `${baseUrl}/payment/success?amount=${amount.toFixed(2)}&points=${points}&bonus_cash=${bonusCash}&invoice_id=${paymentData.invoice_id}`;
     const encodedCallbackUrl = encodeURIComponent(successCallbackUrl);
 
     return NextResponse.json({
