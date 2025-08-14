@@ -73,11 +73,34 @@ export async function POST(request: NextRequest) {
     const successCallbackUrl = `${baseUrl}/payment/success?amount=${amount.toFixed(2)}&points=${points}&bonus_cash=${bonusCash}&invoice_id=${paymentData.invoice_id}`;
     const encodedCallbackUrl = encodeURIComponent(successCallbackUrl);
 
+    // Construct theme parameters for 3thix widget customization
+    const logoUrl = encodeURIComponent(`${baseUrl}/Logo_F_White3x.png`);
+    const themeParams = [
+      `logo_url=${logoUrl}`,
+      `primary_color=%230BC700`,              // Your main green
+      `secondary_color=%23FFB800`,            // Your gold/yellow  
+      `background_primary_color=%2318181B`,   // Your main dark background
+      `background_secondary_color=%2327272A`, // Your secondary dark background
+      `background_card_color=%2327272A`,      // Your card background
+      `text_primary_color=%23FFFFFF`,         // White text
+      `text_secondary_color=%239CA3AF`,       // Gray text
+      `button_background_color=%230BC700`,    // Your green for buttons
+      `button_background_hover_color=%230AB100`, // Your hover green
+      `button_text_color=%23FFFFFF`,          // White button text
+      `success_color=%230BC700`,              // Your green for success
+      `input_background_color=%23374151`,     // Lighter gray input background for visibility
+      `input_focus_border_color=%230BC700`,   // Your green for focus
+      `input_text_color=%23FFFFFF`,           // White input text
+      `input_border_color=%236B7280`          // Lighter gray border for better visibility
+    ].join('&');
+
+    const paymentUrl = `https://sandbox-pay.3thix.com/?invoiceId=${paymentData.invoice_id}&callbackUrl=${encodedCallbackUrl}&${themeParams}`;
+
     return NextResponse.json({
       success: true,
       invoice_id: paymentData.invoice_id,
       order_id: paymentData.order_id,
-      payment_url: `https://sandbox-pay.3thix.com/?invoiceId=${paymentData.invoice_id}&callbackUrl=${encodedCallbackUrl}`,
+      payment_url: paymentUrl,
     });
 
   } catch (error) {
