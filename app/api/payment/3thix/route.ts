@@ -8,6 +8,7 @@ interface PaymentRequest {
   amount: number;
   points: number;
   bonusCash: number;
+  paymentMethod: 'card' | 'ach';
 }
 
 interface ThrixPaymentResponse {
@@ -20,7 +21,7 @@ interface ThrixPaymentResponse {
 export async function POST(request: NextRequest) {
   try {
     const body: PaymentRequest = await request.json();
-    const { amount, points, bonusCash } = body;
+    const { amount, points, bonusCash, paymentMethod } = body;
 
     // Validate required fields
     if (!amount || !points) {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
         'X-Api-Key': THRIX_API_KEY,
       },
       body: JSON.stringify({
-        rail: 'CREDIT_CARD',
+        rail: paymentMethod === 'ach' ? 'ACH' : 'CREDIT_CARD',
         currency: 'USD',
         amount: amount.toFixed(2),
         cart: [

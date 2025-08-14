@@ -20,7 +20,7 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
   const formattedPoints = points.toLocaleString();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | '3thix'>('card');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'ach'>('card');
   const user = useAuth();
   const db = getFirestore();
 
@@ -30,56 +30,27 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
     setIsLoading(true);
     
     try {
-      if (selectedPaymentMethod === '3thix') {
-        // Handle 3thix payment
-        const response = await fetch('/api/payment/3thix', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            amount: price,
-            points,
-            bonusCash,
-          }),
-        });
+      // Both card and ACH payments go through 3thix
+      const response = await fetch('/api/payment/3thix', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: price,
+          points,
+          bonusCash,
+          paymentMethod: selectedPaymentMethod, // Pass the selected method
+        }),
+      });
 
-        const data = await response.json();
-        
-        if (data.success) {
-          // Redirect to 3thix payment widget in the same window
-          window.location.href = data.payment_url;
-        } else {
-          console.error('3thix payment error:', data.error);
-        }
+      const data = await response.json();
+      
+      if (data.success) {
+        // Redirect to 3thix payment widget in the same window
+        window.location.href = data.payment_url;
       } else {
-        // Handle regular card payment (existing logic)
-        const userRef = doc(db, 'users', user.uid);
-        
-        await runTransaction(db, async (transaction) => {
-          const userDoc = await transaction.get(userRef);
-          
-          // Get current balances or use 0 if not set
-          const currentCoinBalance = userDoc.exists() ? (userDoc.data().coinBalance || 0) : 0;
-          const currentCashBalance = userDoc.exists() ? (userDoc.data().cashBalance || 0) : 0;
-          
-          // Calculate new balances
-          const newCoinBalance = currentCoinBalance + points;
-          const newCashBalance = currentCashBalance + bonusCash;
-          
-          // Update the document
-          transaction.set(userRef, {
-            coinBalance: newCoinBalance,
-            cashBalance: newCashBalance,
-          }, { merge: true });
-        });
-
-        setIsSuccess(true);
-        // Auto close after success
-        setTimeout(() => {
-          onClose();
-          setIsSuccess(false);
-        }, 2000);
+        console.error('3thix payment error:', data.error);
       }
     } catch (error) {
       console.error('Error processing purchase:', error);
@@ -200,9 +171,20 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
                         <span className={`font-medium transition-colors ${
                           selectedPaymentMethod === 'card' ? 'text-white' : 'text-gray-300'
                         }`}>
-                          Credit Card
+                          Credit & Debit Cards
                         </span>
-                        <span className="text-sm text-gray-400">Mastercard ••••6335</span>
+                        <div className="flex items-center gap-1 text-sm text-gray-400">
+                          <span>Powered by</span>
+                          <div className="relative w-4 h-4">
+                            <Image
+                              src="/3thix.ico"
+                              alt="3thix"
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                          <span>3thix</span>
+                        </div>
                       </div>
                     </div>
                     {selectedPaymentMethod === 'card' && (
@@ -210,41 +192,53 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
                     )}
                   </div>
 
-                  {/* 3thix Option */}
+                  {/* ACH Option */}
                   <div 
                     className={`group flex items-center gap-4 bg-[#27272A] rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                      selectedPaymentMethod === '3thix' 
+                      selectedPaymentMethod === 'ach' 
                         ? 'ring-2 ring-[#0BC700] bg-[#0BC700]/10 border border-[#0BC700]/30' 
                         : 'hover:bg-[#323235] border border-transparent'
                     }`}
-                    onClick={() => setSelectedPaymentMethod('3thix')}
+                    onClick={() => setSelectedPaymentMethod('ach')}
                   >
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                      selectedPaymentMethod === '3thix' ? 'border-[#0BC700]' : 'border-gray-500 group-hover:border-gray-400'
+                      selectedPaymentMethod === 'ach' ? 'border-[#0BC700]' : 'border-gray-500 group-hover:border-gray-400'
                     }`}>
-                      {selectedPaymentMethod === '3thix' && (
+                      {selectedPaymentMethod === 'ach' && (
                         <div className="w-2.5 h-2.5 rounded-full bg-[#0BC700]" />
                       )}
                     </div>
                     <div className="flex items-center gap-3 flex-1">
-                      <div className="relative w-8 h-8">
-                        <Image
-                          src="/3thix.ico"
-                          alt="3thix"
-                          fill
-                          className="object-contain"
-                        />
+                      <div className={`p-2 rounded-md transition-colors ${
+                        selectedPaymentMethod === 'ach' ? 'bg-[#0BC700]/20' : 'bg-gray-700'
+                      }`}>
+                        <svg className={`h-5 w-5 transition-colors ${
+                          selectedPaymentMethod === 'ach' ? 'text-[#0BC700]' : 'text-gray-400'
+                        }`} fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M2 6h20v2H2zm0 5h20v6H2zm8 4h8v-2h-8z"/>
+                        </svg>
                       </div>
                       <div className="flex flex-col">
                         <span className={`font-medium transition-colors ${
-                          selectedPaymentMethod === '3thix' ? 'text-white' : 'text-gray-300'
+                          selectedPaymentMethod === 'ach' ? 'text-white' : 'text-gray-300'
                         }`}>
-                          3thix Payment
+                          Bank Transfer (ACH)
                         </span>
-                        <span className="text-sm text-gray-400">Credit, Debit, ACH, Crypto & Apple Pay</span>
+                        <div className="flex items-center gap-1 text-sm text-gray-400">
+                          <span>Powered by</span>
+                          <div className="relative w-4 h-4">
+                            <Image
+                              src="/3thix.ico"
+                              alt="3thix"
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                          <span>3thix</span>
+                        </div>
                       </div>
                     </div>
-                    {selectedPaymentMethod === '3thix' && (
+                    {selectedPaymentMethod === 'ach' && (
                       <div className="text-[#0BC700] text-sm font-medium">Selected</div>
                     )}
                   </div>
@@ -265,9 +259,9 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
                 >
                   {isLoading 
                     ? 'Processing...' 
-                    : selectedPaymentMethod === '3thix' 
-                      ? `Pay with 3thix ($${price.toFixed(2)})` 
-                      : `Complete Purchase ($${price.toFixed(2)})`
+                    : selectedPaymentMethod === 'ach' 
+                      ? `Pay with Bank Transfer ($${price.toFixed(2)})` 
+                      : `Pay with Card ($${price.toFixed(2)})`
                   }
                 </Button>
               </div>
