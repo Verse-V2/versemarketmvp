@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, CreditCard, Check } from "lucide-react";
+import { X, CreditCard, Check, Wallet } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { doc, getFirestore, runTransaction } from "firebase/firestore";
@@ -20,6 +20,7 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
   const formattedPoints = points.toLocaleString();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | '3thix'>('card');
   const user = useAuth();
   const db = getFirestore();
 
@@ -27,33 +28,59 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
     if (!user) return;
     
     setIsLoading(true);
+    
     try {
-      const userRef = doc(db, 'users', user.uid);
-      
-      await runTransaction(db, async (transaction) => {
-        const userDoc = await transaction.get(userRef);
-        
-        // Get current balances or use 0 if not set
-        const currentCoinBalance = userDoc.exists() ? (userDoc.data().coinBalance || 0) : 0;
-        const currentCashBalance = userDoc.exists() ? (userDoc.data().cashBalance || 0) : 0;
-        
-        // Calculate new balances
-        const newCoinBalance = currentCoinBalance + points;
-        const newCashBalance = currentCashBalance + bonusCash;
-        
-        // Update the document
-        transaction.set(userRef, {
-          coinBalance: newCoinBalance,
-          cashBalance: newCashBalance,
-        }, { merge: true });
-      });
+      if (selectedPaymentMethod === '3thix') {
+        // Handle 3thix payment
+        const response = await fetch('/api/payment/3thix', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: price,
+            points,
+            bonusCash,
+          }),
+        });
 
-      setIsSuccess(true);
-      // Auto close after success
-      setTimeout(() => {
-        onClose();
-        setIsSuccess(false);
-      }, 2000);
+        const data = await response.json();
+        
+        if (data.success) {
+          // Redirect to 3thix payment widget in the same window
+          window.location.href = data.payment_url;
+        } else {
+          console.error('3thix payment error:', data.error);
+        }
+      } else {
+        // Handle regular card payment (existing logic)
+        const userRef = doc(db, 'users', user.uid);
+        
+        await runTransaction(db, async (transaction) => {
+          const userDoc = await transaction.get(userRef);
+          
+          // Get current balances or use 0 if not set
+          const currentCoinBalance = userDoc.exists() ? (userDoc.data().coinBalance || 0) : 0;
+          const currentCashBalance = userDoc.exists() ? (userDoc.data().cashBalance || 0) : 0;
+          
+          // Calculate new balances
+          const newCoinBalance = currentCoinBalance + points;
+          const newCashBalance = currentCashBalance + bonusCash;
+          
+          // Update the document
+          transaction.set(userRef, {
+            coinBalance: newCoinBalance,
+            cashBalance: newCashBalance,
+          }, { merge: true });
+        });
+
+        setIsSuccess(true);
+        // Auto close after success
+        setTimeout(() => {
+          onClose();
+          setIsSuccess(false);
+        }, 2000);
+      }
     } catch (error) {
       console.error('Error processing purchase:', error);
     } finally {
@@ -142,14 +169,84 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg mb-4">Payment Methods</h3>
-                  <div className="flex items-center gap-4 bg-[#27272A] rounded-xl p-4">
-                    <div className="w-6 h-6 rounded-full border-2 border-[#0BC700] flex items-center justify-center">
-                      <div className="w-3 h-3 rounded-full bg-[#0BC700]" />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold mb-4">Payment Methods</h3>
+                  
+                  {/* Credit Card Option */}
+                  <div 
+                    className={`group flex items-center gap-4 bg-[#27272A] rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                      selectedPaymentMethod === 'card' 
+                        ? 'ring-2 ring-[#0BC700] bg-[#0BC700]/10 border border-[#0BC700]/30' 
+                        : 'hover:bg-[#323235] border border-transparent'
+                    }`}
+                    onClick={() => setSelectedPaymentMethod('card')}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      selectedPaymentMethod === 'card' ? 'border-[#0BC700]' : 'border-gray-500 group-hover:border-gray-400'
+                    }`}>
+                      {selectedPaymentMethod === 'card' && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#0BC700]" />
+                      )}
                     </div>
-                    <CreditCard className="h-6 w-6 text-gray-400" />
-                    <span className="text-gray-300">Mastercard ******6335</span>
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className={`p-2 rounded-md transition-colors ${
+                        selectedPaymentMethod === 'card' ? 'bg-[#0BC700]/20' : 'bg-gray-700'
+                      }`}>
+                        <CreditCard className={`h-5 w-5 transition-colors ${
+                          selectedPaymentMethod === 'card' ? 'text-[#0BC700]' : 'text-gray-400'
+                        }`} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`font-medium transition-colors ${
+                          selectedPaymentMethod === 'card' ? 'text-white' : 'text-gray-300'
+                        }`}>
+                          Credit Card
+                        </span>
+                        <span className="text-sm text-gray-400">Mastercard ••••6335</span>
+                      </div>
+                    </div>
+                    {selectedPaymentMethod === 'card' && (
+                      <div className="text-[#0BC700] text-sm font-medium">Selected</div>
+                    )}
+                  </div>
+
+                  {/* 3thix Option */}
+                  <div 
+                    className={`group flex items-center gap-4 bg-[#27272A] rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                      selectedPaymentMethod === '3thix' 
+                        ? 'ring-2 ring-[#0BC700] bg-[#0BC700]/10 border border-[#0BC700]/30' 
+                        : 'hover:bg-[#323235] border border-transparent'
+                    }`}
+                    onClick={() => setSelectedPaymentMethod('3thix')}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      selectedPaymentMethod === '3thix' ? 'border-[#0BC700]' : 'border-gray-500 group-hover:border-gray-400'
+                    }`}>
+                      {selectedPaymentMethod === '3thix' && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#0BC700]" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="relative w-8 h-8">
+                        <Image
+                          src="/3thix.ico"
+                          alt="3thix"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`font-medium transition-colors ${
+                          selectedPaymentMethod === '3thix' ? 'text-white' : 'text-gray-300'
+                        }`}>
+                          3thix Payment
+                        </span>
+                        <span className="text-sm text-gray-400">Credit, Debit, ACH, Crypto & Apple Pay</span>
+                      </div>
+                    </div>
+                    {selectedPaymentMethod === '3thix' && (
+                      <div className="text-[#0BC700] text-sm font-medium">Selected</div>
+                    )}
                   </div>
                 </div>
 
@@ -166,7 +263,12 @@ export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: Pur
                   onClick={handlePurchase}
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Processing...' : `Complete Purchase ($${price.toFixed(2)})`}
+                  {isLoading 
+                    ? 'Processing...' 
+                    : selectedPaymentMethod === '3thix' 
+                      ? `Pay with 3thix ($${price.toFixed(2)})` 
+                      : `Complete Purchase ($${price.toFixed(2)})`
+                  }
                 </Button>
               </div>
             </>
