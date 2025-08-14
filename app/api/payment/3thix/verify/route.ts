@@ -28,7 +28,7 @@ interface ThrixInvoiceResponse {
 export async function POST(request: NextRequest) {
   try {
     const body: VerificationRequest = await request.json();
-    const { invoiceId, amount, points, bonusCash, userId } = body;
+    const { invoiceId, amount, points, userId } = body;
 
     // Validate required fields
     if (!invoiceId || !amount || !points || !userId) {

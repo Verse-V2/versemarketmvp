@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, CreditCard, Check, Wallet } from "lucide-react";
+import { X, CreditCard, Check } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { doc, getFirestore, runTransaction } from "firebase/firestore";
