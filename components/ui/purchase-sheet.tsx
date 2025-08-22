@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { X, CreditCard, Check } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
-import { doc, getFirestore, runTransaction } from "firebase/firestore";
+
 
 interface PurchaseSheetProps {
   isOpen: boolean;
@@ -19,10 +19,9 @@ interface PurchaseSheetProps {
 export function PurchaseSheet({ isOpen, onClose, points, bonusCash, price }: PurchaseSheetProps) {
   const formattedPoints = points.toLocaleString();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [isSuccess] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'ach'>('card');
   const user = useAuth();
-  const db = getFirestore();
 
   const handlePurchase = async () => {
     if (!user) return;
